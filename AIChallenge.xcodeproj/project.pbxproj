@@ -6,6 +6,16 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA6F12F682BFA00F8AE82 /* AIChallengeApp.swift */; };
+		133DA6F62F682BFE00F8AE82 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 133DA6F52F682BFE00F8AE82 /* Assets.xcassets */; };
+		133DA71A2F682C6300F8AE82 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA7192F682C6300F8AE82 /* Constants.swift */; };
+		133DA71C2F682CFD00F8AE82 /* LLMStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA71B2F682CFD00F8AE82 /* LLMStreamer.swift */; };
+		133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA7222F684C7600F8AE82 /* OllamaStreamer.swift */; };
+		133DA7282F684D1A00F8AE82 /* LLMProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA7272F684D1A00F8AE82 /* LLMProtocol.swift */; };
+		133DA72B2F684F5F00F8AE82 /* LLMURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA72A2F684F5F00F8AE82 /* LLMURL.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		133DA6FC2F682BFE00F8AE82 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -25,8 +35,15 @@
 
 /* Begin PBXFileReference section */
 		133DA6EE2F682BFA00F8AE82 /* AIChallenge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AIChallenge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		133DA6F12F682BFA00F8AE82 /* AIChallengeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChallengeApp.swift; sourceTree = "<group>"; };
+		133DA6F52F682BFE00F8AE82 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		133DA6FB2F682BFE00F8AE82 /* AIChallengeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AIChallengeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		133DA7052F682BFE00F8AE82 /* AIChallengeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AIChallengeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		133DA7192F682C6300F8AE82 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		133DA71B2F682CFD00F8AE82 /* LLMStreamer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMStreamer.swift; sourceTree = "<group>"; };
+		133DA7222F684C7600F8AE82 /* OllamaStreamer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaStreamer.swift; sourceTree = "<group>"; };
+		133DA7272F684D1A00F8AE82 /* LLMProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMProtocol.swift; sourceTree = "<group>"; };
+		133DA72A2F684F5F00F8AE82 /* LLMURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMURL.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +92,11 @@
 		133DA6E52F682BFA00F8AE82 = {
 			isa = PBXGroup;
 			children = (
+				133DA7292F684F3500F8AE82 /* entities */,
+				133DA7262F684D0400F8AE82 /* protocols */,
+				133DA71E2F682D8600F8AE82 /* app */,
+				133DA71D2F682D5500F8AE82 /* resources */,
+				133DA7182F682C4500F8AE82 /* lib */,
 				133DA6F02F682BFA00F8AE82 /* AIChallenge */,
 				133DA6FE2F682BFE00F8AE82 /* AIChallengeTests */,
 				133DA7082F682BFE00F8AE82 /* AIChallengeUITests */,
@@ -90,6 +112,48 @@
 				133DA7052F682BFE00F8AE82 /* AIChallengeUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		133DA7182F682C4500F8AE82 /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				133DA7192F682C6300F8AE82 /* Constants.swift */,
+				133DA71B2F682CFD00F8AE82 /* LLMStreamer.swift */,
+				133DA7222F684C7600F8AE82 /* OllamaStreamer.swift */,
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
+		133DA71D2F682D5500F8AE82 /* resources */ = {
+			isa = PBXGroup;
+			children = (
+				133DA6F52F682BFE00F8AE82 /* Assets.xcassets */,
+			);
+			path = resources;
+			sourceTree = "<group>";
+		};
+		133DA71E2F682D8600F8AE82 /* app */ = {
+			isa = PBXGroup;
+			children = (
+				133DA6F12F682BFA00F8AE82 /* AIChallengeApp.swift */,
+			);
+			path = app;
+			sourceTree = "<group>";
+		};
+		133DA7262F684D0400F8AE82 /* protocols */ = {
+			isa = PBXGroup;
+			children = (
+				133DA7272F684D1A00F8AE82 /* LLMProtocol.swift */,
+			);
+			path = protocols;
+			sourceTree = "<group>";
+		};
+		133DA7292F684F3500F8AE82 /* entities */ = {
+			isa = PBXGroup;
+			children = (
+				133DA72A2F684F5F00F8AE82 /* LLMURL.swift */,
+			);
+			path = entities;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -212,6 +276,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				133DA6F62F682BFE00F8AE82 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -236,6 +301,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				133DA71C2F682CFD00F8AE82 /* LLMStreamer.swift in Sources */,
+				133DA7282F684D1A00F8AE82 /* LLMProtocol.swift in Sources */,
+				133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */,
+				133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */,
+				133DA72B2F684F5F00F8AE82 /* LLMURL.swift in Sources */,
+				133DA71A2F682C6300F8AE82 /* Constants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
