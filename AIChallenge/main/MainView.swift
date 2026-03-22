@@ -23,7 +23,7 @@ struct MainView: View {
                 }
                 
                 Button {
-                    viewModel.startOllama(prompt: .someText(text: <#T##String#>))
+                    viewModel.startOllama(prompt: .recursionExpl)
                 } label: {
                     Text("Start Ollama")
                         .font(.largeTitle)
