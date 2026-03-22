@@ -9,21 +9,21 @@ import Foundation
 
 import Foundation
 
-class LLMStreamer: NSObject, URLSessionDataDelegate, LLMProtocol {
+class OpenAIStreamer: NSObject, URLSessionDataDelegate, LLMProtocol {
     
     private var buffer = Data()
     var onToken: ((String) -> Void)?
     
-    func start(with prompt: Prompt) {
+    func start(messages: [Message], options: [String : Any]) {
         
         let url = URL(string: LLMURL.openAI.text)!
         
         let body: [String: Any] = [
             "model": "gpt-5",
-            "input": prompt.text,
-//            "temperature": 0.7,
+            "input": messages.first?.content ?? "",
             "max_output_tokens": 200,
-            "stream": true
+            "stream": true,
+            "options": options
         ]
         
         var request = URLRequest(url: url)

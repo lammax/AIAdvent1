@@ -11,6 +11,6 @@ protocol LLMProtocol {
     
     var onToken: ((String) -> Void)? { get set}
     
-    func start(with prompt: Prompt)
+    func start(messages: [Message], options: [String : Any])
     
 }

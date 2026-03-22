@@ -7,24 +7,29 @@
 
 import Foundation
 
-class OllamaStreamer: NSObject, URLSessionDataDelegate, LLMProtocol {
-    
-    var onToken: ((String) -> Void)?
-    
+class OllamaStreamer: NSObject, LLMProtocol {
     let decoder = JSONDecoder()
     
-    override init() {
-//        decoder.keyDecodingStrategy = .convertFromSnakeCase
-    }
+    private var buffer = Data()
+
+    var onToken: ((String) -> Void)?
+    var onComplete: (() -> Void)?
     
-    func start(with prompt: Prompt) {
-        
+    override init() {}
+    
+    func start(messages: [Message], options: [String : Any]) {
+            
         let url = URL(string: LLMURL.ollama.text)!
+        
+        let finalOptions = options.isEmpty ? Constants.defaultOllamaOptions : options
         
         let body: [String: Any] = [
             "model": "phi3",
-            "prompt": prompt.text,
-            "stream": true
+            "messages": messages.map {
+                ["role": $0.role.text, "content": $0.content]
+            },
+            "stream": true,
+            "options": finalOptions
         ]
         
         var request = URLRequest(url: url)
@@ -33,58 +38,57 @@ class OllamaStreamer: NSObject, URLSessionDataDelegate, LLMProtocol {
         
         request.httpBody = try! JSONSerialization.data(withJSONObject: body)
         
-        let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+//        request.setValue("close", forHTTPHeaderField: "Connection")
+        
+        let config = URLSessionConfiguration.default
+        config.waitsForConnectivity = true
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        
+        let session = URLSession(configuration: config,
+                                 delegate: self,
+                                 delegateQueue: nil)
+        
         session.dataTask(with: request).resume()
     }
-    
+}
+
+extension OllamaStreamer: URLSessionDataDelegate {
     func urlSession(_ session: URLSession,
-                    dataTask: URLSessionDataTask,
-                    didReceive data: Data) {
+                        dataTask: URLSessionDataTask,
+                        didReceive data: Data) {
+            
+        buffer.append(data)
         
-        guard let text = String(data: data, encoding: .utf8) else { return }
-        print("text:", text)
+        guard let text = String(data: buffer, encoding: .utf8) else { return }
         
         let lines = text.split(separator: "\n")
         
         for line in lines {
             
-            guard let jsonData = line.data(using: .utf8) else { return }
+            let jsonString = line //.dropFirst(5)
+            
+            guard let jsonData = jsonString.data(using: .utf8) else { continue }
+            
+            print(String(data: jsonData, encoding: .utf8)!)
             
             if let token = parseToken(from: jsonData) {
-                DispatchQueue.main.async {
-                    self.onToken?(token)
+                if token.done {
+                    onComplete?()
+                } else {
+                    onToken?(token.message.content)
                 }
+                
             }
         }
+        
+        buffer.removeAll()
     }
     
-    private func parseToken(from data: Data) -> String? {
-        
-        struct Chunk: Decodable {
-            enum CodingKeys: String, CodingKey {
-                case model, created_at, response, done, done_reason, context, total_duration
-                case load_duration, prompt_eval_count, prompt_eval_duration, eval_count, eval_duration
-            }
-            
-            let model: String
-            let created_at: String
-            let response: String
-            let done: Bool
-            let done_reason: String?
-            let context: [Int]?
-            let total_duration: Int?
-            let load_duration: Int?
-            let prompt_eval_count: Int?
-            let prompt_eval_duration: Int?
-            let eval_count: Int?
-            let eval_duration: Int?
-        }
+    private func parseToken(from data: Data) -> OllamaChunk? {
         
         do {
-            print("data:", String(data: data, encoding: .utf8)!)
             let response = try decoder
-                .decode(Chunk.self, from: data)
-                .response
+                .decode(OllamaChunk.self, from: data)
             return response
         } catch {
             print(error)
