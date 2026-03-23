@@ -14,6 +14,7 @@
 		1305B2052F71A2A6009A2D6C /* OllamaModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2042F71A2A6009A2D6C /* OllamaModel.swift */; };
 		1305B2082F71B0A8009A2D6C /* Notification+ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2072F71B0A8009A2D6C /* Notification+ext.swift */; };
 		1305B20F2F71B215009A2D6C /* SettingsObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B20E2F71B215009A2D6C /* SettingsObserver.swift */; };
+		1305B2112F71B707009A2D6C /* OllamaPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2102F71B707009A2D6C /* OllamaPreset.swift */; };
 		133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA6F12F682BFA00F8AE82 /* AIChallengeApp.swift */; };
 		133DA6F62F682BFE00F8AE82 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 133DA6F52F682BFE00F8AE82 /* Assets.xcassets */; };
 		133DA71A2F682C6300F8AE82 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA7192F682C6300F8AE82 /* Constants.swift */; };
@@ -47,6 +48,7 @@
 		1305B2042F71A2A6009A2D6C /* OllamaModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaModel.swift; sourceTree = "<group>"; };
 		1305B2072F71B0A8009A2D6C /* Notification+ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Notification+ext.swift"; sourceTree = "<group>"; };
 		1305B20E2F71B215009A2D6C /* SettingsObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsObserver.swift; sourceTree = "<group>"; };
+		1305B2102F71B707009A2D6C /* OllamaPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaPreset.swift; sourceTree = "<group>"; };
 		133DA6EE2F682BFA00F8AE82 /* AIChallenge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AIChallenge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		133DA6F12F682BFA00F8AE82 /* AIChallengeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChallengeApp.swift; sourceTree = "<group>"; };
 		133DA6F52F682BFE00F8AE82 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -186,6 +188,7 @@
 				1305B2002F70885F009A2D6C /* Message.swift */,
 				1305B2022F709919009A2D6C /* OllamaChunk.swift */,
 				1305B2042F71A2A6009A2D6C /* OllamaModel.swift */,
+				1305B2102F71B707009A2D6C /* OllamaPreset.swift */,
 			);
 			path = entities;
 			sourceTree = "<group>";
@@ -339,6 +342,7 @@
 				1305B1FC2F7081CE009A2D6C /* MessageRole.swift in Sources */,
 				1305B2052F71A2A6009A2D6C /* OllamaModel.swift in Sources */,
 				1305B20F2F71B215009A2D6C /* SettingsObserver.swift in Sources */,
+				1305B2112F71B707009A2D6C /* OllamaPreset.swift in Sources */,
 				133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */,
 				133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */,
 				1305B2012F70885F009A2D6C /* Message.swift in Sources */,

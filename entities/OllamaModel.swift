@@ -7,9 +7,20 @@
 
 import Foundation
 
-enum OllamaModel: String {
-    case phi3
+enum OllamaModel: String, CaseIterable, Identifiable {
     case llama3
+    case phi3
+    case codellama
+    case mistral
     
-    var text: String { self.rawValue }
+    var id: String { rawValue }
+    
+    var title: String {
+        switch self {
+        case .llama3: return "Llama 3"
+        case .phi3: return "Phi-3"
+        case .codellama: return "Code Llama"
+        case .mistral: return "Mistral"
+        }
+    }
 }

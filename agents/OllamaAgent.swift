@@ -13,6 +13,7 @@ class OllamaAgent: LLMAgentProtocol {
     
     private var messages: [Message] = []
     private var summary: String = ""
+    private var options: [String : Any] = Constants.defaultOllamaOptions
     
     // настройки
     private let maxMessages = 12        // окно последних сообщений
@@ -33,7 +34,7 @@ class OllamaAgent: LLMAgentProtocol {
         _ prompt: Prompt,
         options: [String : Any]
     ) {
-        
+        self.options = options
         messages.append(Message(role: .user, content: prompt.text))
         
         Task {
@@ -90,7 +91,7 @@ class OllamaAgent: LLMAgentProtocol {
             
         let summaryMessage = Message(role: .user, content: prompt)
             
-        let result = try await streamer.send(summaryMessage, options: Constants.defaultOllamaOptions)
+        let result = try await streamer.send(summaryMessage, options: options)
         
         // сохраняем summary
         summary = result

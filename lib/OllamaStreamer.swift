@@ -12,20 +12,17 @@ class OllamaStreamer: NSObject {
     
     private var buffer = Data()
     
-    private var model: OllamaModel = .phi3
-
     var onToken: ((String) -> Void)?
     var onComplete: (() -> Void)?
     
     override init() {}
     
     func send(_ message: Message, options: [String : Any]) async throws -> String {
+        
+        let finalOptions = options.isEmpty ? Constants.defaultOllamaOptions : options
             
-        let body: [String: Any] = [
-            "model": model.text,
-            "messages": [["role": message.role, "content": message.content]],
-            "options": options
-        ]
+        var body: [String: Any] = finalOptions
+        body["messages"] = [["role": message.role, "content": message.content]]
         
         let url = URL(string: LLMURL.ollama.text)!
         var request = URLRequest(url: url)
@@ -48,14 +45,10 @@ class OllamaStreamer: NSObject {
         
         let finalOptions = options.isEmpty ? Constants.defaultOllamaOptions : options
         
-        let body: [String: Any] = [
-            "model": model.text,
-            "messages": messages.map {
-                ["role": $0.role.text, "content": $0.content]
-            },
-            "stream": true,
-            "options": finalOptions
-        ]
+        var body: [String: Any] = finalOptions
+        body["messages"] = messages.map {
+            ["role": $0.role.text, "content": $0.content]
+        }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -74,9 +67,6 @@ class OllamaStreamer: NSObject {
         session.dataTask(with: request).resume()
     }
     
-    func set(model: OllamaModel) {
-        self.model = model
-    }
 }
 
 extension OllamaStreamer: URLSessionDataDelegate {

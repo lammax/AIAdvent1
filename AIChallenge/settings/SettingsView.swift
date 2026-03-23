@@ -38,7 +38,37 @@ struct SettingsView: View {
                     }
                 }
                 
+                VStack(alignment: .leading) {
+                    Text("Presets")
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack {
+                            ForEach(OllamaPreset.all, id: \.name) { preset in
+                                
+                                Button(preset.name) {
+                                    withAnimation {
+                                        vm.applyPreset(preset)
+                                    }
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(vm.selectedPreset == preset.name ? Color.blue : Color.gray.opacity(0.2))
+                                .foregroundColor(vm.selectedPreset == preset.name ? .white : .black)
+                                .cornerRadius(12)
+                            }
+                        }
+                    }
+                }
+                
                 Group {
+                    Text("Model")
+                    Picker("Model", selection: $vm.model) {
+                        ForEach(OllamaModel.allCases) { model in
+                            Text(model.title).tag(model)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    
                     Text("Temperature: \(vm.temperature, specifier: "%.2f")")
                     Slider(value: $vm.temperature, in: 0...1)
                     
@@ -47,6 +77,11 @@ struct SettingsView: View {
                     
                     Text("Top P: \(vm.topP, specifier: "%.2f")")
                     Slider(value: $vm.topP, in: 0...1)
+                    
+                    Text("Top K: \(Int(vm.topK))")
+                    Slider(value: $vm.topK, in: 0...100, step: 1)
+                    
+                    Toggle("Streaming", isOn: $vm.stream)
                 }
                 
                 Button("Apply") {
