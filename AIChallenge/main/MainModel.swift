@@ -7,11 +7,6 @@
 
 import Foundation
 
-enum LLM {
-    case openAI
-    case ollama
-}
-
 enum Prompt: CaseIterable, Hashable {
     static var allCases: [Prompt] {
         [
@@ -40,7 +35,7 @@ enum Prompt: CaseIterable, Hashable {
         switch self {
         case .recursionExpl: "Explain recursion simply"
         case .recursionExplAsJSON: "Explain recursion simply. Provide it in JSON format."
-        case .promptWithStopWord: "Help me to make a feature. You don't know what it is. So ask me answers to clarify. If I say 'stop' then start to provide solutions."
+        case .promptWithStopWord: "Let's chat. I'll type 'stop' to exit."
         case .stopWord: "stop"
         case .someText(let text): text
         }

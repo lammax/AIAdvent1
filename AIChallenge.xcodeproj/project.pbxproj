@@ -8,15 +8,17 @@
 
 /* Begin PBXBuildFile section */
 		1305B1FC2F7081CE009A2D6C /* MessageRole.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B1FB2F7081CE009A2D6C /* MessageRole.swift */; };
-		1305B1FF2F7085CF009A2D6C /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B1FE2F7085CF009A2D6C /* OllamaService.swift */; };
+		1305B1FF2F7085CF009A2D6C /* OllamaAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B1FE2F7085CF009A2D6C /* OllamaAgent.swift */; };
 		1305B2012F70885F009A2D6C /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2002F70885F009A2D6C /* Message.swift */; };
 		1305B2032F709919009A2D6C /* OllamaChunk.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2022F709919009A2D6C /* OllamaChunk.swift */; };
+		1305B2052F71A2A6009A2D6C /* OllamaModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2042F71A2A6009A2D6C /* OllamaModel.swift */; };
+		1305B2082F71B0A8009A2D6C /* Notification+ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2072F71B0A8009A2D6C /* Notification+ext.swift */; };
+		1305B20F2F71B215009A2D6C /* SettingsObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B20E2F71B215009A2D6C /* SettingsObserver.swift */; };
 		133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA6F12F682BFA00F8AE82 /* AIChallengeApp.swift */; };
 		133DA6F62F682BFE00F8AE82 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 133DA6F52F682BFE00F8AE82 /* Assets.xcassets */; };
 		133DA71A2F682C6300F8AE82 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA7192F682C6300F8AE82 /* Constants.swift */; };
-		133DA71C2F682CFD00F8AE82 /* OpenAIStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA71B2F682CFD00F8AE82 /* OpenAIStreamer.swift */; };
 		133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA7222F684C7600F8AE82 /* OllamaStreamer.swift */; };
-		133DA7282F684D1A00F8AE82 /* LLMProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA7272F684D1A00F8AE82 /* LLMProtocol.swift */; };
+		133DA7282F684D1A00F8AE82 /* LLMAgentProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA7272F684D1A00F8AE82 /* LLMAgentProtocol.swift */; };
 		133DA72B2F684F5F00F8AE82 /* LLMURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA72A2F684F5F00F8AE82 /* LLMURL.swift */; };
 /* End PBXBuildFile section */
 
@@ -39,18 +41,20 @@
 
 /* Begin PBXFileReference section */
 		1305B1FB2F7081CE009A2D6C /* MessageRole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageRole.swift; sourceTree = "<group>"; };
-		1305B1FE2F7085CF009A2D6C /* OllamaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaService.swift; sourceTree = "<group>"; };
+		1305B1FE2F7085CF009A2D6C /* OllamaAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaAgent.swift; sourceTree = "<group>"; };
 		1305B2002F70885F009A2D6C /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 		1305B2022F709919009A2D6C /* OllamaChunk.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaChunk.swift; sourceTree = "<group>"; };
+		1305B2042F71A2A6009A2D6C /* OllamaModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaModel.swift; sourceTree = "<group>"; };
+		1305B2072F71B0A8009A2D6C /* Notification+ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Notification+ext.swift"; sourceTree = "<group>"; };
+		1305B20E2F71B215009A2D6C /* SettingsObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsObserver.swift; sourceTree = "<group>"; };
 		133DA6EE2F682BFA00F8AE82 /* AIChallenge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AIChallenge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		133DA6F12F682BFA00F8AE82 /* AIChallengeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChallengeApp.swift; sourceTree = "<group>"; };
 		133DA6F52F682BFE00F8AE82 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		133DA6FB2F682BFE00F8AE82 /* AIChallengeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AIChallengeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		133DA7052F682BFE00F8AE82 /* AIChallengeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AIChallengeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		133DA7192F682C6300F8AE82 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
-		133DA71B2F682CFD00F8AE82 /* OpenAIStreamer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIStreamer.swift; sourceTree = "<group>"; };
 		133DA7222F684C7600F8AE82 /* OllamaStreamer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaStreamer.swift; sourceTree = "<group>"; };
-		133DA7272F684D1A00F8AE82 /* LLMProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMProtocol.swift; sourceTree = "<group>"; };
+		133DA7272F684D1A00F8AE82 /* LLMAgentProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMAgentProtocol.swift; sourceTree = "<group>"; };
 		133DA72A2F684F5F00F8AE82 /* LLMURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMURL.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -97,18 +101,27 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		1305B1FD2F7085C1009A2D6C /* services */ = {
+		1305B1FD2F7085C1009A2D6C /* agents */ = {
 			isa = PBXGroup;
 			children = (
-				1305B1FE2F7085CF009A2D6C /* OllamaService.swift */,
+				1305B1FE2F7085CF009A2D6C /* OllamaAgent.swift */,
 			);
-			path = services;
+			path = agents;
+			sourceTree = "<group>";
+		};
+		1305B2062F71B094009A2D6C /* extensions */ = {
+			isa = PBXGroup;
+			children = (
+				1305B2072F71B0A8009A2D6C /* Notification+ext.swift */,
+			);
+			path = extensions;
 			sourceTree = "<group>";
 		};
 		133DA6E52F682BFA00F8AE82 = {
 			isa = PBXGroup;
 			children = (
-				1305B1FD2F7085C1009A2D6C /* services */,
+				1305B2062F71B094009A2D6C /* extensions */,
+				1305B1FD2F7085C1009A2D6C /* agents */,
 				133DA7292F684F3500F8AE82 /* entities */,
 				133DA7262F684D0400F8AE82 /* protocols */,
 				133DA71E2F682D8600F8AE82 /* app */,
@@ -135,8 +148,8 @@
 			isa = PBXGroup;
 			children = (
 				133DA7192F682C6300F8AE82 /* Constants.swift */,
-				133DA71B2F682CFD00F8AE82 /* OpenAIStreamer.swift */,
 				133DA7222F684C7600F8AE82 /* OllamaStreamer.swift */,
+				1305B20E2F71B215009A2D6C /* SettingsObserver.swift */,
 			);
 			path = lib;
 			sourceTree = "<group>";
@@ -160,7 +173,7 @@
 		133DA7262F684D0400F8AE82 /* protocols */ = {
 			isa = PBXGroup;
 			children = (
-				133DA7272F684D1A00F8AE82 /* LLMProtocol.swift */,
+				133DA7272F684D1A00F8AE82 /* LLMAgentProtocol.swift */,
 			);
 			path = protocols;
 			sourceTree = "<group>";
@@ -172,6 +185,7 @@
 				1305B1FB2F7081CE009A2D6C /* MessageRole.swift */,
 				1305B2002F70885F009A2D6C /* Message.swift */,
 				1305B2022F709919009A2D6C /* OllamaChunk.swift */,
+				1305B2042F71A2A6009A2D6C /* OllamaModel.swift */,
 			);
 			path = entities;
 			sourceTree = "<group>";
@@ -321,13 +335,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				133DA71C2F682CFD00F8AE82 /* OpenAIStreamer.swift in Sources */,
-				133DA7282F684D1A00F8AE82 /* LLMProtocol.swift in Sources */,
+				133DA7282F684D1A00F8AE82 /* LLMAgentProtocol.swift in Sources */,
 				1305B1FC2F7081CE009A2D6C /* MessageRole.swift in Sources */,
+				1305B2052F71A2A6009A2D6C /* OllamaModel.swift in Sources */,
+				1305B20F2F71B215009A2D6C /* SettingsObserver.swift in Sources */,
 				133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */,
 				133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */,
 				1305B2012F70885F009A2D6C /* Message.swift in Sources */,
-				1305B1FF2F7085CF009A2D6C /* OllamaService.swift in Sources */,
+				1305B2082F71B0A8009A2D6C /* Notification+ext.swift in Sources */,
+				1305B1FF2F7085CF009A2D6C /* OllamaAgent.swift in Sources */,
 				133DA72B2F684F5F00F8AE82 /* LLMURL.swift in Sources */,
 				133DA71A2F682C6300F8AE82 /* Constants.swift in Sources */,
 				1305B2032F709919009A2D6C /* OllamaChunk.swift in Sources */,

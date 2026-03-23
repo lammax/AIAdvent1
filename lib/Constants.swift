@@ -9,7 +9,7 @@ import Foundation
 
 struct Constants {
     static let openAIAPIKey: String = ""
-    static let maxAnswerLength: Int = 400
+    static let maxAnswerLength: Int = 1000
     
     static let defaultOllamaOptions: [String: Any] = [
         "num_predict": 200,

@@ -7,15 +7,40 @@
 
 import Foundation
 
-class OllamaStreamer: NSObject, LLMProtocol {
+class OllamaStreamer: NSObject {
     let decoder = JSONDecoder()
     
     private var buffer = Data()
+    
+    private var model: OllamaModel = .phi3
 
     var onToken: ((String) -> Void)?
     var onComplete: (() -> Void)?
     
     override init() {}
+    
+    func send(_ message: Message, options: [String : Any]) async throws -> String {
+            
+        let body: [String: Any] = [
+            "model": model.text,
+            "messages": [["role": message.role, "content": message.content]],
+            "options": options
+        ]
+        
+        let url = URL(string: LLMURL.ollama.text)!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let message = (json["message"] as! [String: Any])["content"] as! String
+        
+        return message
+    }
     
     func start(messages: [Message], options: [String : Any]) {
             
@@ -24,7 +49,7 @@ class OllamaStreamer: NSObject, LLMProtocol {
         let finalOptions = options.isEmpty ? Constants.defaultOllamaOptions : options
         
         let body: [String: Any] = [
-            "model": "phi3",
+            "model": model.text,
             "messages": messages.map {
                 ["role": $0.role.text, "content": $0.content]
             },
@@ -38,8 +63,6 @@ class OllamaStreamer: NSObject, LLMProtocol {
         
         request.httpBody = try! JSONSerialization.data(withJSONObject: body)
         
-//        request.setValue("close", forHTTPHeaderField: "Connection")
-        
         let config = URLSessionConfiguration.default
         config.waitsForConnectivity = true
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
@@ -49,6 +72,10 @@ class OllamaStreamer: NSObject, LLMProtocol {
                                  delegateQueue: nil)
         
         session.dataTask(with: request).resume()
+    }
+    
+    func set(model: OllamaModel) {
+        self.model = model
     }
 }
 

@@ -12,33 +12,35 @@ class MainViewModel: ObservableObject {
     
     @Published var answer: String = ""
     
-    var currentLLM: LLM? = nil
     var currentPrompt: Prompt? = nil
+    var settings: [String : Any] = [:]
     
-    let openAIStreamer = OpenAIStreamer()
-    let ollama = OllamaService()
+    let ollama = OllamaAgent()
+    
+    let settingsObserver: SettingsObserver = SettingsObserver()
+    
+    var uns: Set<AnyCancellable> = []
+    
     
     init() {
+        setupListeners()
     }
-    
-    func startOpenAI(prompt: Prompt = .recursionExpl, maxLength: Int) {
-        currentLLM = .openAI
-        answer = ""
-        openAIStreamer.onToken = { [weak self] token in
-            guard let self else { return }
-            answer += token
-        }
 
-        openAIStreamer.start(
-            messages: [Message(role: .user, content: prompt.text)],
-            options: ["max_tokens": maxLength]
-        )
+    deinit {
+        uns.forEach { $0.cancel() }
+    }
+
+    func setupListeners() {
+        settingsObserver.settings.sink { [weak self] settings in
+            guard let self else { return }
+            if !settings.isEmpty {
+                self.settings = settings
+            }
+        }.store(in: &uns)
     }
     
-    func startOllama(prompt: Prompt? = .recursionExpl, maxLength: Int) {
+    func startOllama(prompt: Prompt? = .recursionExpl) {
         guard let prompt else { return }
-        
-        currentLLM = .ollama
         
         if currentPrompt != .promptWithStopWord {
             currentPrompt = prompt
@@ -64,12 +66,14 @@ class MainViewModel: ObservableObject {
         
         ollama.onComplete = { [weak self] token in
             guard let self else { return }
-            answer += "\n\n"
+            answer = answer
         }
 
-        ollama.sendStream(
+        answer += "\n\nYou: \(prompt.text)\n\n"
+        
+        ollama.send(
             prompt,
-            options: ["num_predict": maxLength]
+            options: settings
         )
    }
 }

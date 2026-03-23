@@ -18,11 +18,11 @@ struct AnimatedDropdownMenu: View {
 
     var body: some View {
     VStack {
-          Button(action: {
+        Button(action: {
             withAnimation(.spring()) {
               isExpanded.toggle()
             }
-          }) {
+        }) {
             HStack {
                 Text(selectedOption?.title ?? "Select a prompt")
               Spacer()
@@ -31,10 +31,10 @@ struct AnimatedDropdownMenu: View {
             .padding()
             .background(Color.blue.opacity(0.1))
             .cornerRadius(8)
-            .matchedGeometryEffect(id: "dropdown", in: animationNamespace)
-          }
+            .matchedGeometryEffect(id: "dropup", in: animationNamespace)
+        }
 
-          if isExpanded {
+        if isExpanded {
             VStack {
               ForEach(options, id: \.self) { option in
                   Text(option.title)
@@ -47,14 +47,14 @@ struct AnimatedDropdownMenu: View {
                       isExpanded = false
                     }
                   }
-                  .matchedGeometryEffect(id: "dropdown-\(option)", in: animationNamespace)
+                  .matchedGeometryEffect(id: "dropup-\(option)", in: animationNamespace)
               }
             }
             .background(Color.gray.opacity(0.1))
             .cornerRadius(8)
             .transition(.scale)
-          }
         }
-        .padding()
+    }
+    .padding()
     }
 }

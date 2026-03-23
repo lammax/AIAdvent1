@@ -7,7 +7,7 @@
 
 import Foundation
 
-class OllamaService {
+class OllamaAgent: LLMAgentProtocol {
     var onToken: ((String) -> Void)?
     var onComplete: ((String) -> Void)?
     
@@ -29,7 +29,7 @@ class OllamaService {
         )
     }
     
-    func sendStream(
+    func send(
         _ prompt: Prompt,
         options: [String : Any]
     ) {
@@ -90,7 +90,7 @@ class OllamaService {
             
         let summaryMessage = Message(role: .user, content: prompt)
             
-        let result = try await callOllama(messages: [summaryMessage], options: Constants.defaultOllamaOptions)
+        let result = try await streamer.send(summaryMessage, options: Constants.defaultOllamaOptions)
         
         // сохраняем summary
         summary = result
@@ -134,31 +134,6 @@ class OllamaService {
         context.append(contentsOf: tail)
         
         return context
-    }
-    
-    func callOllama(messages: [Message], options: [String : Any]) async throws -> String {
-            
-        let body: [String: Any] = [
-            "model": "phi3",
-            "messages": messages.map {
-                ["role": $0.role, "content": $0.content]
-            },
-            "options": options
-        ]
-        
-        let url = URL(string: LLMURL.ollama.text)!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        
-        let (data, _) = try await URLSession.shared.data(for: request)
-        
-        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
-        let message = (json["message"] as! [String: Any])["content"] as! String
-        
-        return message
     }
     
 }
