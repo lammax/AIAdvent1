@@ -10,17 +10,21 @@ import Combine
 
 final class SettingsViewModel: ObservableObject {
     
+    @Published var provider: LLMProvider = .ollama
+        
     @Published var temperature: Double = 0.7
     @Published var maxTokens: Double = 200
     @Published var topP: Double = 0.9
+    
+    // Ollama-only
     @Published var topK: Double = 40
     @Published var stream: Bool = true
-    @Published var model: OllamaModel = .llama3
+    @Published var ollamaModel: OllamaModel = .llama3
     @Published var selectedPreset: String = "Smart"
     
-    func buildSettings() -> [String: Any] {
+    func buildOllamaSettings() -> [String: Any] {
         return [
-            "model": model.rawValue,
+            "model": ollamaModel.rawValue,
             "stream": stream,
             "options": [
                 "temperature": temperature,
@@ -31,13 +35,28 @@ final class SettingsViewModel: ObservableObject {
         ]
     }
     
+    func buildOpenRouterSettings() -> [String: Any] {
+        return [
+            "model": "openrouter/free",
+            "temperature": temperature,
+            "top_p": topP,
+            "max_tokens": Int(maxTokens)
+        ]
+    }
+    
     func apply() {
-        let settings = buildSettings()
+        let settings = switch provider {
+        case .ollama: buildOllamaSettings()
+        case .openRouter: buildOpenRouterSettings()
+        }
         
         NotificationCenter.default.post(
-            name: .ollamaSettingsChanged,
+            name: .settingsChanged,
             object: nil,
-            userInfo: ["settings": settings]
+            userInfo: [
+                "settings": settings,
+                "provider": provider
+            ]
         )
     }
     
@@ -45,7 +64,7 @@ final class SettingsViewModel: ObservableObject {
         
         selectedPreset = preset.name
         
-        model = preset.settings["model"] as? OllamaModel ?? model
+        ollamaModel = preset.settings["model"] as? OllamaModel ?? ollamaModel
         stream = preset.settings["stream"] as? Bool ?? stream
         
         if let options = preset.settings["options"] as? [String: Any] {
@@ -57,4 +76,5 @@ final class SettingsViewModel: ObservableObject {
         
         apply()
     }
+    
 }

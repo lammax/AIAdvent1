@@ -12,8 +12,14 @@ struct Constants {
     static let maxAnswerLength: Int = 1000
     
     static let defaultOllamaOptions: [String: Any] = [
-        "num_predict": 200,
-        "temperature": 0.7
+        "model": OllamaModel.llama3,
+        "stream": true,
+        "options": [
+            "temperature": 0.7,
+            "top_k": 40,
+            "top_p": 0.9,
+            "num_predict": 300
+        ]
     ]
         
 }

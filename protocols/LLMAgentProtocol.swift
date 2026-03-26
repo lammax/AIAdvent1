@@ -14,4 +14,6 @@ protocol LLMAgentProtocol {
         options: [String : Any]
     )
     
+    var agentId: String { get }
+    
 }

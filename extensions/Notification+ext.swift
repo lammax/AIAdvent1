@@ -8,5 +8,5 @@
 import Foundation
 
 extension Notification.Name {
-    static let ollamaSettingsChanged = Notification.Name("ollamaSettingsChanged")
+    static let settingsChanged = Notification.Name("settingsChanged")
 }

@@ -25,74 +25,91 @@ struct SettingsView: View {
                     }
             }
             
-            VStack(alignment: .leading, spacing: 16) {
-                
-                HStack {
-                    Text("Ollama Settings")
-                        .font(.headline)
-                    Spacer()
-                    Button("Close") {
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 16) {
+                    
+                    HStack {
+                        Text("Ollama Settings")
+                            .font(.headline)
+                        Spacer()
+                        Button("Close") {
+                            withAnimation {
+                                isOpen = false
+                            }
+                        }
+                    }
+                    
+                    VStack(alignment: .leading) {
+                        Text("LLM provider")
+                        Picker("Model", selection: $vm.provider) {
+                            ForEach(LLMProvider.allCases) { provider in
+                                Text(provider.title).tag(provider)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    
+                    VStack(alignment: .leading) {
+                        Text("Presets")
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack {
+                                ForEach(OllamaPreset.all, id: \.name) { preset in
+                                    
+                                    Button(preset.name) {
+                                        withAnimation {
+                                            vm.applyPreset(preset)
+                                        }
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(vm.selectedPreset == preset.name ? Color.blue : Color.gray.opacity(0.2))
+                                    .foregroundColor(vm.selectedPreset == preset.name ? .white : .black)
+                                    .cornerRadius(12)
+                                }
+                            }
+                        }
+                    }
+                    
+                    VStack(alignment: .leading) {
+                        Text("OllamaModel")
+                        Picker("Model", selection: $vm.ollamaModel) {
+                            ForEach(OllamaModel.allCases) { model in
+                                Text(model.title).tag(model)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    .isHidden(vm.provider == .openRouter, remove: true)
+                    
+                    Group {
+                        Text("Temperature: \(vm.temperature, specifier: "%.2f")")
+                        Slider(value: $vm.temperature, in: 0...1)
+                        
+                        Text("Max Tokens: \(Int(vm.maxTokens))")
+                        Slider(value: $vm.maxTokens, in: 10...1000, step: 10)
+                        
+                        Text("Top P: \(vm.topP, specifier: "%.2f")")
+                        Slider(value: $vm.topP, in: 0...1)
+                        
+                        VStack(alignment: .leading) {
+                            Text("Top K: \(Int(vm.topK))")
+                            Slider(value: $vm.topK, in: 0...100, step: 1)
+                        }
+                        .isHidden(vm.provider == .openRouter, remove: true)
+                        
+                        Toggle("Streaming", isOn: $vm.stream)
+                            .isHidden(vm.provider == .openRouter, remove: true)
+                    }
+                    
+                    Button("Apply") {
+                        vm.apply()
                         withAnimation {
                             isOpen = false
                         }
                     }
+                    .buttonStyle(.borderedProminent)
                 }
-                
-                VStack(alignment: .leading) {
-                    Text("Presets")
-                    
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
-                            ForEach(OllamaPreset.all, id: \.name) { preset in
-                                
-                                Button(preset.name) {
-                                    withAnimation {
-                                        vm.applyPreset(preset)
-                                    }
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(vm.selectedPreset == preset.name ? Color.blue : Color.gray.opacity(0.2))
-                                .foregroundColor(vm.selectedPreset == preset.name ? .white : .black)
-                                .cornerRadius(12)
-                            }
-                        }
-                    }
-                }
-                
-                Group {
-                    Text("Model")
-                    Picker("Model", selection: $vm.model) {
-                        ForEach(OllamaModel.allCases) { model in
-                            Text(model.title).tag(model)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    
-                    Text("Temperature: \(vm.temperature, specifier: "%.2f")")
-                    Slider(value: $vm.temperature, in: 0...1)
-                    
-                    Text("Max Tokens: \(Int(vm.maxTokens))")
-                    Slider(value: $vm.maxTokens, in: 10...1000, step: 10)
-                    
-                    Text("Top P: \(vm.topP, specifier: "%.2f")")
-                    Slider(value: $vm.topP, in: 0...1)
-                    
-                    Text("Top K: \(Int(vm.topK))")
-                    Slider(value: $vm.topK, in: 0...100, step: 1)
-                    
-                    Toggle("Streaming", isOn: $vm.stream)
-                }
-                
-                Button("Apply") {
-                    vm.apply()
-                    withAnimation {
-                        isOpen = false
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                
-                Spacer()
             }
             .padding()
             .frame(width: 300)

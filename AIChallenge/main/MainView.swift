@@ -42,7 +42,7 @@ struct MainView: View {
                     )
                     
                     Button {
-                        viewModel.startOllama(
+                        viewModel.start(
                             prompt: (currentOption?.isSomeText ?? false) ? .someText(text: promptAIText) : currentOption
                         )
                         promptAIText = ""

@@ -7,9 +7,8 @@
 
 import Foundation
 
-class OllamaAgent: LLMAgentProtocol {
-    internal let agentId: String = "ollama_agent"
-    private let messageService: MessageServiceProtocol = MessageService()
+class OpenRouterAgent: LLMAgentProtocol {
+    internal let agentId: String = "open_router_agent"
     
     var onToken: ((String) -> Void)?
     var onComplete: ((String) -> Void)?
@@ -22,51 +21,30 @@ class OllamaAgent: LLMAgentProtocol {
     private let maxMessages = 12        // окно последних сообщений
     private let summaryTrigger = 16     // когда делать summary
     
-    private let streamer = OllamaStreamer()
-    
-    private var modelName: String = ""
+    private let streamer = OpenRouterStreamer()
     
     init() {
-        Task {
-            await loadHistory()
-        }
-    }
-    
-    func loadHistory() async {
-        if let stored = try? await messageService.load(agentId: agentId),
-           !stored.isEmpty {
-            messages = stored
-        } else {
-            let system = Message(
+        messages.append(
+            Message(
                 agentId: agentId,
                 role: .system,
                 content: "You are a helpful assistant. Answer concisely."
             )
-            
-            messages = [system]
-            await messageService.append(system)
-        }
+        )
     }
     
     func send(
         _ prompt: Prompt,
         options: [String : Any]
     ) {
-        if let modelName = options["model"] as? String {
-            self.modelName = modelName
-        }
-        
         self.options = options
-        
-        let userMessage = Message(
-            agentId: agentId,
-            role: .user,
-            content: prompt.text
+        messages.append(
+            Message(
+                agentId: agentId,
+                role: .user,
+                content: prompt.text
+            )
         )
-        messages.append(userMessage)
-        Task {
-            await messageService.append(userMessage)
-        }
         
         Task {
             if messages.count > summaryTrigger {
@@ -86,19 +64,13 @@ class OllamaAgent: LLMAgentProtocol {
             
             streamer.onComplete = { [weak self] in
                 guard let self else { return }
-                
-                let assistantMessage = Message(
-                    agentId: self.agentId,
-                    role: .assistant,
-                    content: fullResponse
+                self.messages.append(
+                    Message(
+                        agentId: agentId,
+                        role: .assistant,
+                        content: fullResponse
+                    )
                 )
-                
-                self.messages.append(assistantMessage)
-                
-                Task {
-                    await self.messageService.append(assistantMessage)
-                }
-            
                 self.trimMessages()
                 
                 DispatchQueue.main.async {
@@ -117,8 +89,7 @@ class OllamaAgent: LLMAgentProtocol {
     }
     
     func summarizeHistory() async throws {
-        try await messageService.deleteAll(agentId: agentId)
-        
+            
         // берём старую часть (кроме последних сообщений)
         let oldMessages = messages.dropLast(maxMessages)
         
@@ -159,7 +130,6 @@ class OllamaAgent: LLMAgentProtocol {
                 at: 0
             )
         }
-        await messageService.append(messages)
     }
     
     func buildContext() -> [Message] {
