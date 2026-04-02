@@ -9,6 +9,8 @@ import Foundation
 
 final class SlidingWindowStrategy: ContextStrategyProtocol {
     
+    let title: String = "Sliding Window"
+    
     private let maxMessages: Int
     
     init(maxMessages: Int) {
@@ -16,9 +18,21 @@ final class SlidingWindowStrategy: ContextStrategyProtocol {
     }
     
     func onUserMessage(_ message: Message) {}
+    
     func onAssistantMessage(_ message: Message) {}
     
     func buildContext(messages: [Message], summary: String) -> [Message] {
-        return Array(messages.suffix(maxMessages))
+        let dialog = messages.filter { $0.role != .system }
+        return Array(dialog.suffix(maxMessages))
+    }
+    
+    func reset() {}
+    
+    func rebuild(from messages: [Message]) {
+        // Ничего не нужно: стратегия stateless
+    }
+    
+    func makeCleanCopy() -> ContextStrategyProtocol {
+        SlidingWindowStrategy(maxMessages: maxMessages)
     }
 }

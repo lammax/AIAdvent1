@@ -44,11 +44,37 @@ final class SQLiteDB {
     private var migrator: DatabaseMigrator {
         var migrator = DatabaseMigrator()
         
+        // MARK: - Messages
         migrator.registerMigration("createMessages") { db in
             try db.create(table: "messages") { t in
                 t.column("id", .text).primaryKey()
                 t.column("agent_id", .text).notNull().indexed()
                 t.column("role", .text).notNull()
+                t.column("content", .text).notNull()
+                t.column("created_at", .double).notNull()
+            }
+        }
+        
+        // MARK: - Working Memory
+        migrator.registerMigration("createWorkingMemory") { db in
+            try db.create(table: "working_memory") { t in
+                t.column("id", .text).primaryKey()
+                t.column("agent_id", .text).notNull().indexed()
+                t.column("key", .text).notNull()
+                t.uniqueKey(["agent_id", "key"])
+                t.column("value", .text).notNull()
+                t.column("updated_at", .double).notNull()
+            }
+            
+            try db.create(index: "idx_working_agent_key", on: "working_memory", columns: ["agent_id", "key"])
+        }
+        
+        // MARK: - Long Term Memory
+        migrator.registerMigration("createLongTermMemory") { db in
+            try db.create(table: "long_term_memory") { t in
+                t.column("id", .text).primaryKey()
+                t.column("user_id", .text).notNull().indexed()
+                t.column("category", .text).notNull()
                 t.column("content", .text).notNull()
                 t.column("created_at", .double).notNull()
             }

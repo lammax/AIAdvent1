@@ -22,8 +22,6 @@
 		1305B21E2F731607009A2D6C /* HiddenModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B21D2F731607009A2D6C /* HiddenModifier.swift */; };
 		1305B22E2F75AEF0009A2D6C /* MessageRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B22D2F75AEF0009A2D6C /* MessageRepository.swift */; };
 		1305B2302F75AEFB009A2D6C /* MessageRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B22F2F75AEFB009A2D6C /* MessageRepositoryProtocol.swift */; };
-		1305B2352F75AFED009A2D6C /* MessageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2342F75AFED009A2D6C /* MessageService.swift */; };
-		1305B2372F75AFF6009A2D6C /* MessageServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2362F75AFF6009A2D6C /* MessageServiceProtocol.swift */; };
 		1305B23A2F75B405009A2D6C /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 1305B2392F75B405009A2D6C /* GRDB */; };
 		1305B23E2F75B58A009A2D6C /* SQLiteDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B23D2F75B58A009A2D6C /* SQLiteDB.swift */; };
 		133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA6F12F682BFA00F8AE82 /* AIChallengeApp.swift */; };
@@ -37,6 +35,14 @@
 		13BD3A392F7E47B90059C0A5 /* SlidingWindowStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A382F7E47B90059C0A5 /* SlidingWindowStrategy.swift */; };
 		13BD3A3B2F7E47CA0059C0A5 /* FactsStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A3A2F7E47CA0059C0A5 /* FactsStrategy.swift */; };
 		13BD3A3D2F7E47F20059C0A5 /* BranchingStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A3C2F7E47F20059C0A5 /* BranchingStrategy.swift */; };
+		13BD3A402F7EE55F0059C0A5 /* WorkingMemoryRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A3F2F7EE55F0059C0A5 /* WorkingMemoryRepositoryProtocol.swift */; };
+		13BD3A422F7EE5750059C0A5 /* WorkingMemoryRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A412F7EE5750059C0A5 /* WorkingMemoryRepository.swift */; };
+		13BD3A452F7EE5CD0059C0A5 /* LongTermMemoryRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A442F7EE5CD0059C0A5 /* LongTermMemoryRepositoryProtocol.swift */; };
+		13BD3A472F7EE5F90059C0A5 /* LongTermMemoryRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A462F7EE5F90059C0A5 /* LongTermMemoryRepository.swift */; };
+		13BD3A4A2F7EE6810059C0A5 /* MemoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A492F7EE6810059C0A5 /* MemoryService.swift */; };
+		13BD3A4C2F7EE6F40059C0A5 /* WorkingMemoryItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A4B2F7EE6F40059C0A5 /* WorkingMemoryItem.swift */; };
+		13BD3A4E2F7EE7070059C0A5 /* LongTermMemoryItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A4D2F7EE7070059C0A5 /* LongTermMemoryItem.swift */; };
+		13BD3A502F7EE7AC0059C0A5 /* MemoryServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A4F2F7EE7AC0059C0A5 /* MemoryServiceProtocol.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,8 +78,6 @@
 		1305B21D2F731607009A2D6C /* HiddenModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiddenModifier.swift; sourceTree = "<group>"; };
 		1305B22D2F75AEF0009A2D6C /* MessageRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageRepository.swift; sourceTree = "<group>"; };
 		1305B22F2F75AEFB009A2D6C /* MessageRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageRepositoryProtocol.swift; sourceTree = "<group>"; };
-		1305B2342F75AFED009A2D6C /* MessageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageService.swift; sourceTree = "<group>"; };
-		1305B2362F75AFF6009A2D6C /* MessageServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageServiceProtocol.swift; sourceTree = "<group>"; };
 		1305B23D2F75B58A009A2D6C /* SQLiteDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SQLiteDB.swift; sourceTree = "<group>"; };
 		133DA6EE2F682BFA00F8AE82 /* AIChallenge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AIChallenge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		133DA6F12F682BFA00F8AE82 /* AIChallengeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChallengeApp.swift; sourceTree = "<group>"; };
@@ -89,6 +93,14 @@
 		13BD3A382F7E47B90059C0A5 /* SlidingWindowStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlidingWindowStrategy.swift; sourceTree = "<group>"; };
 		13BD3A3A2F7E47CA0059C0A5 /* FactsStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactsStrategy.swift; sourceTree = "<group>"; };
 		13BD3A3C2F7E47F20059C0A5 /* BranchingStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BranchingStrategy.swift; sourceTree = "<group>"; };
+		13BD3A3F2F7EE55F0059C0A5 /* WorkingMemoryRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkingMemoryRepositoryProtocol.swift; sourceTree = "<group>"; };
+		13BD3A412F7EE5750059C0A5 /* WorkingMemoryRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkingMemoryRepository.swift; sourceTree = "<group>"; };
+		13BD3A442F7EE5CD0059C0A5 /* LongTermMemoryRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LongTermMemoryRepositoryProtocol.swift; sourceTree = "<group>"; };
+		13BD3A462F7EE5F90059C0A5 /* LongTermMemoryRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LongTermMemoryRepository.swift; sourceTree = "<group>"; };
+		13BD3A492F7EE6810059C0A5 /* MemoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryService.swift; sourceTree = "<group>"; };
+		13BD3A4B2F7EE6F40059C0A5 /* WorkingMemoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkingMemoryItem.swift; sourceTree = "<group>"; };
+		13BD3A4D2F7EE7070059C0A5 /* LongTermMemoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LongTermMemoryItem.swift; sourceTree = "<group>"; };
+		13BD3A4F2F7EE7AC0059C0A5 /* MemoryServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryServiceProtocol.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -138,6 +150,7 @@
 		1305B1FD2F7085C1009A2D6C /* agents */ = {
 			isa = PBXGroup;
 			children = (
+				133DA7272F684D1A00F8AE82 /* LLMAgentProtocol.swift */,
 				1305B1FE2F7085CF009A2D6C /* OllamaAgent.swift */,
 				1305B2142F71C775009A2D6C /* OpenRouterAgent.swift */,
 			);
@@ -163,6 +176,8 @@
 		1305B22B2F75AEC7009A2D6C /* repositories */ = {
 			isa = PBXGroup;
 			children = (
+				13BD3A432F7EE5B30059C0A5 /* longtermmemory */,
+				13BD3A3E2F7EE53F0059C0A5 /* workingmemory */,
 				1305B22C2F75AED8009A2D6C /* message */,
 			);
 			path = repositories;
@@ -188,18 +203,9 @@
 		1305B2322F75AFCA009A2D6C /* services */ = {
 			isa = PBXGroup;
 			children = (
-				1305B2332F75AFD7009A2D6C /* message */,
+				13BD3A482F7EE66F0059C0A5 /* memory */,
 			);
 			path = services;
-			sourceTree = "<group>";
-		};
-		1305B2332F75AFD7009A2D6C /* message */ = {
-			isa = PBXGroup;
-			children = (
-				1305B2342F75AFED009A2D6C /* MessageService.swift */,
-				1305B2362F75AFF6009A2D6C /* MessageServiceProtocol.swift */,
-			);
-			path = message;
 			sourceTree = "<group>";
 		};
 		133DA6E52F682BFA00F8AE82 = {
@@ -213,7 +219,6 @@
 				1305B2062F71B094009A2D6C /* extensions */,
 				1305B1FD2F7085C1009A2D6C /* agents */,
 				133DA7292F684F3500F8AE82 /* entities */,
-				133DA7262F684D0400F8AE82 /* protocols */,
 				133DA71E2F682D8600F8AE82 /* app */,
 				133DA71D2F682D5500F8AE82 /* resources */,
 				133DA7182F682C4500F8AE82 /* lib */,
@@ -261,15 +266,6 @@
 			path = app;
 			sourceTree = "<group>";
 		};
-		133DA7262F684D0400F8AE82 /* protocols */ = {
-			isa = PBXGroup;
-			children = (
-				133DA7272F684D1A00F8AE82 /* LLMAgentProtocol.swift */,
-				13BD3A352F7E47850059C0A5 /* ContextStrategyProtocol.swift */,
-			);
-			path = protocols;
-			sourceTree = "<group>";
-		};
 		133DA7292F684F3500F8AE82 /* entities */ = {
 			isa = PBXGroup;
 			children = (
@@ -282,6 +278,8 @@
 				1305B2182F730A2B009A2D6C /* LLMOptions.swift */,
 				1305B21A2F730BE0009A2D6C /* LLMProvider.swift */,
 				13BD3A332F7E46E40059C0A5 /* ContextStrategy.swift */,
+				13BD3A4B2F7EE6F40059C0A5 /* WorkingMemoryItem.swift */,
+				13BD3A4D2F7EE7070059C0A5 /* LongTermMemoryItem.swift */,
 			);
 			path = entities;
 			sourceTree = "<group>";
@@ -289,11 +287,39 @@
 		13BD3A372F7E47A40059C0A5 /* strategy */ = {
 			isa = PBXGroup;
 			children = (
+				13BD3A352F7E47850059C0A5 /* ContextStrategyProtocol.swift */,
 				13BD3A382F7E47B90059C0A5 /* SlidingWindowStrategy.swift */,
 				13BD3A3A2F7E47CA0059C0A5 /* FactsStrategy.swift */,
 				13BD3A3C2F7E47F20059C0A5 /* BranchingStrategy.swift */,
 			);
 			path = strategy;
+			sourceTree = "<group>";
+		};
+		13BD3A3E2F7EE53F0059C0A5 /* workingmemory */ = {
+			isa = PBXGroup;
+			children = (
+				13BD3A3F2F7EE55F0059C0A5 /* WorkingMemoryRepositoryProtocol.swift */,
+				13BD3A412F7EE5750059C0A5 /* WorkingMemoryRepository.swift */,
+			);
+			path = workingmemory;
+			sourceTree = "<group>";
+		};
+		13BD3A432F7EE5B30059C0A5 /* longtermmemory */ = {
+			isa = PBXGroup;
+			children = (
+				13BD3A442F7EE5CD0059C0A5 /* LongTermMemoryRepositoryProtocol.swift */,
+				13BD3A462F7EE5F90059C0A5 /* LongTermMemoryRepository.swift */,
+			);
+			path = longtermmemory;
+			sourceTree = "<group>";
+		};
+		13BD3A482F7EE66F0059C0A5 /* memory */ = {
+			isa = PBXGroup;
+			children = (
+				13BD3A492F7EE6810059C0A5 /* MemoryService.swift */,
+				13BD3A4F2F7EE7AC0059C0A5 /* MemoryServiceProtocol.swift */,
+			);
+			path = memory;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -447,32 +473,38 @@
 			files = (
 				1305B2132F71C6B0009A2D6C /* OpenRouterStreamer.swift in Sources */,
 				13BD3A392F7E47B90059C0A5 /* SlidingWindowStrategy.swift in Sources */,
+				13BD3A422F7EE5750059C0A5 /* WorkingMemoryRepository.swift in Sources */,
 				133DA7282F684D1A00F8AE82 /* LLMAgentProtocol.swift in Sources */,
+				13BD3A452F7EE5CD0059C0A5 /* LongTermMemoryRepositoryProtocol.swift in Sources */,
+				13BD3A502F7EE7AC0059C0A5 /* MemoryServiceProtocol.swift in Sources */,
 				1305B1FC2F7081CE009A2D6C /* MessageRole.swift in Sources */,
+				13BD3A4C2F7EE6F40059C0A5 /* WorkingMemoryItem.swift in Sources */,
 				13BD3A3D2F7E47F20059C0A5 /* BranchingStrategy.swift in Sources */,
 				1305B2052F71A2A6009A2D6C /* OllamaModel.swift in Sources */,
-				1305B2372F75AFF6009A2D6C /* MessageServiceProtocol.swift in Sources */,
 				1305B22E2F75AEF0009A2D6C /* MessageRepository.swift in Sources */,
 				13BD3A362F7E47850059C0A5 /* ContextStrategyProtocol.swift in Sources */,
+				13BD3A4A2F7EE6810059C0A5 /* MemoryService.swift in Sources */,
 				1305B2112F71B707009A2D6C /* OllamaPreset.swift in Sources */,
 				1305B2192F730A2B009A2D6C /* LLMOptions.swift in Sources */,
 				1305B21B2F730BE0009A2D6C /* LLMProvider.swift in Sources */,
 				133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */,
 				13BD3A342F7E46E40059C0A5 /* ContextStrategy.swift in Sources */,
 				13BD3A3B2F7E47CA0059C0A5 /* FactsStrategy.swift in Sources */,
+				13BD3A402F7EE55F0059C0A5 /* WorkingMemoryRepositoryProtocol.swift in Sources */,
 				133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */,
 				1305B2012F70885F009A2D6C /* Message.swift in Sources */,
 				1305B2172F7309F6009A2D6C /* OptionsBuilder.swift in Sources */,
+				13BD3A472F7EE5F90059C0A5 /* LongTermMemoryRepository.swift in Sources */,
 				1305B2082F71B0A8009A2D6C /* Notification+ext.swift in Sources */,
 				1305B1FF2F7085CF009A2D6C /* OllamaAgent.swift in Sources */,
 				133DA72B2F684F5F00F8AE82 /* LLMURL.swift in Sources */,
-				1305B2352F75AFED009A2D6C /* MessageService.swift in Sources */,
 				133DA71A2F682C6300F8AE82 /* Constants.swift in Sources */,
 				1305B2302F75AEFB009A2D6C /* MessageRepositoryProtocol.swift in Sources */,
 				1305B2032F709919009A2D6C /* OllamaChunk.swift in Sources */,
 				1305B23E2F75B58A009A2D6C /* SQLiteDB.swift in Sources */,
 				1305B21E2F731607009A2D6C /* HiddenModifier.swift in Sources */,
 				1305B2152F71C775009A2D6C /* OpenRouterAgent.swift in Sources */,
+				13BD3A4E2F7EE7070059C0A5 /* LongTermMemoryItem.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
