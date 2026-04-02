@@ -11,9 +11,10 @@ import Combine
 class MainViewModel: ObservableObject {
     
     @Published var answer: String = ""
+    @Published var ollamaChunk: OllamaChunk?
     
     var currentPrompt: Prompt? = nil
-    var settings: [String : Any] = [:]
+    var settings: [String : Encodable] = [:]
     var provider: LLMProvider = .ollama
     
     let ollama = OllamaAgent()
@@ -31,6 +32,11 @@ class MainViewModel: ObservableObject {
     deinit {
         uns.forEach { $0.cancel() }
     }
+    
+    // TODO: Show statistics view
+    var isStatisticsBtnDisabled: Bool {
+        ollamaChunk == nil
+    }
 
     func setupListeners() {
         settingsObserver.settings.sink { [weak self] settings in
@@ -44,6 +50,18 @@ class MainViewModel: ObservableObject {
             guard let self else { return }
             self.provider = provider
         }.store(in: &uns)
+        
+        settingsObserver.contextStrategy.sink { [weak self] contextStrategy in
+            guard let self else { return }
+            switch contextStrategy {
+            case .slidingWindow:
+                ollama.set(strategy: SlidingWindowStrategy(maxMessages: Constants.maxMessages))
+            case .facts:
+                ollama.set(strategy: FactsStrategy(maxMessages: Constants.maxMessages, agentId: provider.agentId))
+            case .branching:
+                ollama.set(strategy: BranchingStrategy())
+            }
+        }.store(in: &uns)
     }
     
     func start(prompt: Prompt? = .recursionExpl) {
@@ -52,6 +70,16 @@ class MainViewModel: ObservableObject {
             startOllama(prompt: prompt)
         case .openRouter:
             startOpenRouter(prompt: prompt)
+        }
+    }
+    
+    func deleteAll() {
+        answer = ""
+        switch provider {
+        case .ollama:
+            ollama.deleteAllMessages()
+        case .openRouter:
+            openRouter.deleteAllMessages()
         }
     }
     
@@ -80,9 +108,9 @@ class MainViewModel: ObservableObject {
             answer += token
         }
         
-        ollama.onComplete = { [weak self] token in
+        ollama.onComplete = { [weak self] ollamaChunk in
             guard let self else { return }
-            answer = answer
+            self.ollamaChunk = ollamaChunk
         }
 
         answer += "\n\nYou: \(prompt.text)\n\n"

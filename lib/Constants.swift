@@ -10,8 +10,9 @@ import Foundation
 struct Constants {
     static let openAIAPIKey: String = ""
     static let maxAnswerLength: Int = 1000
+    static let maxMessages: Int = 10
     
-    static let defaultOllamaOptions: [String: Any] = [
+    static let defaultOllamaOptions: [String: Encodable] = [
         "model": OllamaModel.llama3,
         "stream": true,
         "options": [

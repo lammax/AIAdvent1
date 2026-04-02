@@ -10,8 +10,10 @@ import Combine
 
 final class SettingsObserver {
     
-    let settings: CurrentValueSubject<[String: Any], Never> = CurrentValueSubject(Constants.defaultOllamaOptions)
+    let settings: CurrentValueSubject<[String: Encodable], Never> = CurrentValueSubject(Constants.defaultOllamaOptions)
     let provider: CurrentValueSubject<LLMProvider, Never> = CurrentValueSubject(.ollama)
+    let contextStrategy: CurrentValueSubject<ContextStrategy, Never> = CurrentValueSubject(.facts)
+    
     
     init() {
         NotificationCenter.default.addObserver(
@@ -24,12 +26,16 @@ final class SettingsObserver {
     
     @objc private func handleSettings(_ notification: Notification) {
         
-        if let settings = notification.userInfo?["settings"] as? [String: Any] {
+        if let settings = notification.userInfo?["settings"] as? [String: Encodable] {
             self.settings.send(settings)
         }
 
         if let provider = notification.userInfo?["provider"] as? LLMProvider {
             self.provider.send(provider)
+        }
+        
+        if let contextStrategy = notification.userInfo?["contextStrategy"] as? ContextStrategy {
+            self.contextStrategy.send(contextStrategy)
         }
         
     }

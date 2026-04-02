@@ -22,6 +22,13 @@ enum LLMProvider: Identifiable, CaseIterable {
         }
     }
     
+    var agentId: String {
+        switch self {
+        case .ollama: return "ollama_agent"
+        case .openRouter: return "openRouter_agent"
+        }
+    }
+    
     case ollama
     case openRouter
 }

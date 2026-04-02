@@ -17,12 +17,66 @@ struct OllamaChunkMessage: Decodable {
 }
 
 struct OllamaChunk: Decodable {
-    enum CodingKeys: String, CodingKey {
-        case model, created_at, message, done
-    }
     
     let model: String
-    let created_at: String
+    let createdAt: Date
     let message: OllamaChunkMessage
     let done: Bool
+    
+    let doneReason: String?
+    
+    let totalDuration: TimeInterval?
+    let loadDuration: TimeInterval?
+    let promptEvalCount: Int?
+    let promptEvalDuration: TimeInterval?
+    let evalCount: Int?
+    let evalDuration: TimeInterval?
+    
+    enum CodingKeys: String, CodingKey {
+        case model
+        case createdAt = "created_at"
+        case message
+        case done
+        case doneReason = "done_reason"
+        
+        case totalDuration = "total_duration"
+        case loadDuration = "load_duration"
+        case promptEvalCount = "prompt_eval_count"
+        case promptEvalDuration = "prompt_eval_duration"
+        case evalCount = "eval_count"
+        case evalDuration = "eval_duration"
+    }
 }
+
+extension OllamaChunk {
+    
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        
+        self.model = try c.decode(String.self, forKey: .model)
+        
+        let iso = ISO8601DateFormatter()
+        let dateString = try c.decode(String.self, forKey: .createdAt)
+        self.createdAt = iso.date(from: dateString) ?? Date()
+        self.message = try c.decode(OllamaChunkMessage.self, forKey: .message)
+        self.done = try c.decode(Bool.self, forKey: .done)
+        
+        self.doneReason = try? c.decode(String.self, forKey: .doneReason)
+        
+        func nsToSec(_ value: Double?) -> TimeInterval? {
+            guard let value else { return nil }
+            return value / 1_000_000_000
+        }
+        
+        self.totalDuration = nsToSec(try? c.decode(Double.self, forKey: .totalDuration))
+        self.loadDuration = nsToSec(try? c.decode(Double.self, forKey: .loadDuration))
+        self.promptEvalCount = try? c.decode(Int.self, forKey: .promptEvalCount)
+        self.promptEvalDuration = nsToSec(try? c.decode(Double.self, forKey: .promptEvalDuration))
+        self.evalCount = try? c.decode(Int.self, forKey: .evalCount)
+        self.evalDuration = nsToSec(try? c.decode(Double.self, forKey: .evalDuration))
+    }
+}
+
+//{"model":"llama3","created_at":"2026-03-27T11:05:45.212052Z","message":{"role":"assistant","content":"С"},"done":false}
+
+//{"model":"llama3","created_at":"2026-03-26T19:35:10.846989Z","message":{"role":"assistant","content":""},"done":true,"done_reason":"stop","total_duration":684048667,"load_duration":166305834,"prompt_eval_count":171,"prompt_eval_duration":202414167,"eval_count":8,"eval_duration":263927791}

@@ -13,7 +13,7 @@ class OllamaStreamer: NSObject {
     private var buffer = Data()
     
     var onToken: ((String) -> Void)?
-    var onComplete: (() -> Void)?
+    var onComplete: ((OllamaChunk) -> Void)?
     
     override init() {}
     
@@ -39,32 +39,38 @@ class OllamaStreamer: NSObject {
         return message
     }
     
-    func start(messages: [Message], options: [String : Any]) {
+    func start(messages: [Message], options: [String : Encodable]) {
+        do {
+            let url = URL(string: LLMURL.ollama.text)!
             
-        let url = URL(string: LLMURL.ollama.text)!
-        
-        let finalOptions = options.isEmpty ? Constants.defaultOllamaOptions : options
-        
-        var body: [String: Any] = finalOptions
-        body["messages"] = messages.map {
-            ["role": $0.role.text, "content": $0.content]
+            let finalOptions = options.isEmpty ? Constants.defaultOllamaOptions : options
+            
+            var body: [String: Encodable] = finalOptions
+            body["messages"] = messages.map {
+                ["role": $0.role.text, "content": $0.content]
+            }
+            
+            print("body", "\(body)")
+            
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [.withoutEscapingSlashes])
+            
+            let config = URLSessionConfiguration.default
+            config.waitsForConnectivity = true
+            config.requestCachePolicy = .reloadIgnoringLocalCacheData
+            
+            let session = URLSession(configuration: config,
+                                     delegate: self,
+                                     delegateQueue: nil)
+            
+            session.dataTask(with: request).resume()
+        } catch {
+            print(error)
+            print(error.localizedDescription)
         }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        request.httpBody = try! JSONSerialization.data(withJSONObject: body)
-        
-        let config = URLSessionConfiguration.default
-        config.waitsForConnectivity = true
-        config.requestCachePolicy = .reloadIgnoringLocalCacheData
-        
-        let session = URLSession(configuration: config,
-                                 delegate: self,
-                                 delegateQueue: nil)
-        
-        session.dataTask(with: request).resume()
     }
     
 }
@@ -90,7 +96,7 @@ extension OllamaStreamer: URLSessionDataDelegate {
             
             if let token = parseToken(from: jsonData) {
                 if token.done {
-                    onComplete?()
+                    onComplete?(token)
                 } else {
                     onToken?(token.message.content)
                 }

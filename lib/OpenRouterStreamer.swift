@@ -41,13 +41,13 @@ class OpenRouterStreamer: NSObject {
         return message
     }
     
-    func start(messages: [Message], options: [String : Any]) {
+    func start(messages: [Message], options: [String : Encodable]) {
             
         let url = URL(string: LLMURL.ollama.text)!
         
         let finalOptions = options.isEmpty ? Constants.defaultOllamaOptions : options
         
-        var body: [String: Any] = finalOptions
+        var body: [String: Encodable] = finalOptions
         body["messages"] = messages.map {
             ["role": $0.role.text, "content": $0.content]
         }

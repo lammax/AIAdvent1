@@ -12,11 +12,11 @@ class OllamaAgent: LLMAgentProtocol {
     private let messageService: MessageServiceProtocol = MessageService()
     
     var onToken: ((String) -> Void)?
-    var onComplete: ((String) -> Void)?
+    var onComplete: ((OllamaChunk) -> Void)?
     
     private var messages: [Message] = []
     private var summary: String = ""
-    private var options: [String : Any] = Constants.defaultOllamaOptions
+    private var options: [String : Encodable] = Constants.defaultOllamaOptions
     
     // настройки
     private let maxMessages = 12        // окно последних сообщений
@@ -25,6 +25,8 @@ class OllamaAgent: LLMAgentProtocol {
     private let streamer = OllamaStreamer()
     
     private var modelName: String = ""
+    
+    private var strategy: ContextStrategyProtocol?
     
     init() {
         Task {
@@ -50,13 +52,16 @@ class OllamaAgent: LLMAgentProtocol {
     
     func send(
         _ prompt: Prompt,
-        options: [String : Any]
+        options: [String : Encodable]
     ) {
-        if let modelName = options["model"] as? String {
-            self.modelName = modelName
+        var newOptions = options
+        
+        if let modelName = newOptions["model"] as? OllamaModel {
+            self.modelName = modelName.rawValue
+            newOptions["model"] = modelName.rawValue
         }
         
-        self.options = options
+        self.options = newOptions
         
         let userMessage = Message(
             agentId: agentId,
@@ -64,6 +69,8 @@ class OllamaAgent: LLMAgentProtocol {
             content: prompt.text
         )
         messages.append(userMessage)
+        strategy?.onUserMessage(userMessage)
+        
         Task {
             await messageService.append(userMessage)
         }
@@ -75,48 +82,45 @@ class OllamaAgent: LLMAgentProtocol {
             
             let context = buildContext()
             
-            var fullResponse: String = ""
-            
             streamer.onToken = { [weak self] token in
-                fullResponse += token
                 DispatchQueue.main.async {
                     self?.onToken?(token)
                 }
             }
             
-            streamer.onComplete = { [weak self] in
+            streamer.onComplete = { [weak self] ollamaChunk in
                 guard let self else { return }
-                
                 let assistantMessage = Message(
-                    agentId: self.agentId,
+                    agentId: agentId,
                     role: .assistant,
-                    content: fullResponse
+                    content: ollamaChunk.message.content
                 )
-                
-                self.messages.append(assistantMessage)
-                
-                Task {
-                    await self.messageService.append(assistantMessage)
-                }
-            
-                self.trimMessages()
+
+                self.strategy?.onAssistantMessage(assistantMessage)
                 
                 DispatchQueue.main.async {
-                    self.onComplete?(fullResponse)
+                    self.onComplete?(ollamaChunk)
                 }
             }
             
-            streamer.start(messages: context, options: options)
+            streamer.start(messages: context, options: self.options)
         }
     }
     
-    func trimMessages() {
+    private func trimMessages() {
         if messages.count > maxMessages {
             messages = Array(messages.suffix(maxMessages))
         }
     }
     
-    func summarizeHistory() async throws {
+    func deleteAllMessages() {
+        self.messages = []
+        Task {
+            try await messageService.deleteAll(agentId: agentId)
+        }
+    }
+    
+    private func summarizeHistory() async throws {
         try await messageService.deleteAll(agentId: agentId)
         
         // берём старую часть (кроме последних сообщений)
@@ -162,31 +166,14 @@ class OllamaAgent: LLMAgentProtocol {
         await messageService.append(messages)
     }
     
-    func buildContext() -> [Message] {
-            
-        var context: [Message] = []
-        
-        // system prompt всегда первый
-        if let system = messages.first {
-            context.append(system)
-        }
-        
-        // добавляем summary если есть
-        if !summary.isEmpty {
-            context.append(
-                Message(
-                    agentId: agentId,
-                    role: .system,
-                    content: "Conversation summary:\n\(summary)"
-                )
-            )
-        }
-        
-        // последние сообщения
-        let tail = messages.suffix(maxMessages)
-        context.append(contentsOf: tail)
-        
-        return context
+    private func buildContext() -> [Message] {
+        return strategy?.buildContext(
+            messages: messages,
+            summary: summary
+        ) ?? []
     }
     
+    func set(strategy: ContextStrategyProtocol) {
+        self.strategy = strategy
+    }
 }

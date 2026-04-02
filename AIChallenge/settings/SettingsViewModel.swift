@@ -11,6 +11,7 @@ import Combine
 final class SettingsViewModel: ObservableObject {
     
     @Published var provider: LLMProvider = .ollama
+    @Published var contextStrategy: ContextStrategy = .slidingWindow
         
     @Published var temperature: Double = 0.7
     @Published var maxTokens: Double = 200
@@ -55,7 +56,8 @@ final class SettingsViewModel: ObservableObject {
             object: nil,
             userInfo: [
                 "settings": settings,
-                "provider": provider
+                "provider": provider,
+                "contextStrategy": contextStrategy
             ]
         )
     }

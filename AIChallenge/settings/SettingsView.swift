@@ -82,6 +82,17 @@ struct SettingsView: View {
                     }
                     .isHidden(vm.provider == .openRouter, remove: true)
                     
+                    VStack(alignment: .leading) {
+                        Text("Context Strategy")
+                        
+                        Picker("Strategy", selection: $vm.contextStrategy) {
+                            ForEach(ContextStrategy.allCases) { strategy in
+                                Text(strategy.title).tag(strategy)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    
                     Group {
                         Text("Temperature: \(vm.temperature, specifier: "%.2f")")
                         Slider(value: $vm.temperature, in: 0...1)

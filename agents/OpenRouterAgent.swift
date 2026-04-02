@@ -35,7 +35,7 @@ class OpenRouterAgent: LLMAgentProtocol {
     
     func send(
         _ prompt: Prompt,
-        options: [String : Any]
+        options: [String : Encodable]
     ) {
         self.options = options
         messages.append(
@@ -71,6 +71,7 @@ class OpenRouterAgent: LLMAgentProtocol {
                         content: fullResponse
                     )
                 )
+                
                 self.trimMessages()
                 
                 DispatchQueue.main.async {
@@ -82,13 +83,17 @@ class OpenRouterAgent: LLMAgentProtocol {
         }
     }
     
-    func trimMessages() {
+    private func trimMessages() {
         if messages.count > maxMessages {
             messages = Array(messages.suffix(maxMessages))
         }
     }
     
-    func summarizeHistory() async throws {
+    func deleteAllMessages() {
+        self.messages = []
+    }
+    
+    private func summarizeHistory() async throws {
             
         // берём старую часть (кроме последних сообщений)
         let oldMessages = messages.dropLast(maxMessages)
@@ -132,7 +137,7 @@ class OpenRouterAgent: LLMAgentProtocol {
         }
     }
     
-    func buildContext() -> [Message] {
+    private func buildContext() -> [Message] {
             
         var context: [Message] = []
         

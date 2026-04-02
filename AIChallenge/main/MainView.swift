@@ -15,7 +15,8 @@ struct MainView: View {
     @State var promptAIText: String = ""
     @State var currentOption: Prompt?
     
-    @State private var showSettings = false
+    @State private var showSettings: Bool = false
+    @State private var showStatistics: Bool = false
     
     let formatterInt: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -35,6 +36,15 @@ struct MainView: View {
                 .padding(.top, 80)
                 
                 HStack {
+                    Button {
+                        viewModel.deleteAll()
+                        promptAIText = ""
+                    } label: {
+                        Image(systemName: "xmark.bin")
+                            .foregroundStyle(Color.red)
+                            .frame(width: 20, height: 20)
+                    }
+                    
                     TextField(
                         "",
                         text: $promptAIText,
@@ -56,6 +66,16 @@ struct MainView: View {
 
             VStack {
                 HStack(alignment: .top) {
+                    Button {
+                        showStatistics.toggle()
+                    } label: {
+                        Image(systemName: "chart.bar.xaxis.descending")
+                            .foregroundStyle(Color.black)
+                            .frame(width: 40, height: 40)
+                            .padding(.top, 20)
+                    }
+                    .disabled(viewModel.isStatisticsBtnDisabled)
+                    
                     AnimatedDropdownMenu(
                         options: Prompt.allCases,
                         selectedOption: $currentOption
@@ -80,6 +100,8 @@ struct MainView: View {
             }
             
             SettingsView(vm: settingsVM, isOpen: $showSettings)
+            
+            StatisticsView(vm: StatisticsViewModel(chunk: viewModel.ollamaChunk), isOpen: $showStatistics)
         }
         .padding()
         .navigationBarTitle("AI Challenge")

@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum OllamaModel: String, CaseIterable, Identifiable {
+enum OllamaModel: String, CaseIterable, Identifiable, Codable {
     case llama3
     case phi3
     case codellama

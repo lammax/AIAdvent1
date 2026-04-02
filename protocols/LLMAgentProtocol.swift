@@ -11,7 +11,7 @@ protocol LLMAgentProtocol {
     
     func send(
         _ prompt: Prompt,
-        options: [String : Any]
+        options: [String : Encodable]
     )
     
     var agentId: String { get }

@@ -13,7 +13,6 @@
 		1305B2032F709919009A2D6C /* OllamaChunk.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2022F709919009A2D6C /* OllamaChunk.swift */; };
 		1305B2052F71A2A6009A2D6C /* OllamaModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2042F71A2A6009A2D6C /* OllamaModel.swift */; };
 		1305B2082F71B0A8009A2D6C /* Notification+ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2072F71B0A8009A2D6C /* Notification+ext.swift */; };
-		1305B20F2F71B215009A2D6C /* SettingsObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B20E2F71B215009A2D6C /* SettingsObserver.swift */; };
 		1305B2112F71B707009A2D6C /* OllamaPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2102F71B707009A2D6C /* OllamaPreset.swift */; };
 		1305B2132F71C6B0009A2D6C /* OpenRouterStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2122F71C6B0009A2D6C /* OpenRouterStreamer.swift */; };
 		1305B2152F71C775009A2D6C /* OpenRouterAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1305B2142F71C775009A2D6C /* OpenRouterAgent.swift */; };
@@ -33,6 +32,11 @@
 		133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA7222F684C7600F8AE82 /* OllamaStreamer.swift */; };
 		133DA7282F684D1A00F8AE82 /* LLMAgentProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA7272F684D1A00F8AE82 /* LLMAgentProtocol.swift */; };
 		133DA72B2F684F5F00F8AE82 /* LLMURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA72A2F684F5F00F8AE82 /* LLMURL.swift */; };
+		13BD3A342F7E46E40059C0A5 /* ContextStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A332F7E46E40059C0A5 /* ContextStrategy.swift */; };
+		13BD3A362F7E47850059C0A5 /* ContextStrategyProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A352F7E47850059C0A5 /* ContextStrategyProtocol.swift */; };
+		13BD3A392F7E47B90059C0A5 /* SlidingWindowStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A382F7E47B90059C0A5 /* SlidingWindowStrategy.swift */; };
+		13BD3A3B2F7E47CA0059C0A5 /* FactsStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A3A2F7E47CA0059C0A5 /* FactsStrategy.swift */; };
+		13BD3A3D2F7E47F20059C0A5 /* BranchingStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A3C2F7E47F20059C0A5 /* BranchingStrategy.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,7 +63,6 @@
 		1305B2022F709919009A2D6C /* OllamaChunk.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaChunk.swift; sourceTree = "<group>"; };
 		1305B2042F71A2A6009A2D6C /* OllamaModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaModel.swift; sourceTree = "<group>"; };
 		1305B2072F71B0A8009A2D6C /* Notification+ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Notification+ext.swift"; sourceTree = "<group>"; };
-		1305B20E2F71B215009A2D6C /* SettingsObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsObserver.swift; sourceTree = "<group>"; };
 		1305B2102F71B707009A2D6C /* OllamaPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaPreset.swift; sourceTree = "<group>"; };
 		1305B2122F71C6B0009A2D6C /* OpenRouterStreamer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenRouterStreamer.swift; sourceTree = "<group>"; };
 		1305B2142F71C775009A2D6C /* OpenRouterAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenRouterAgent.swift; sourceTree = "<group>"; };
@@ -81,6 +84,11 @@
 		133DA7222F684C7600F8AE82 /* OllamaStreamer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaStreamer.swift; sourceTree = "<group>"; };
 		133DA7272F684D1A00F8AE82 /* LLMAgentProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMAgentProtocol.swift; sourceTree = "<group>"; };
 		133DA72A2F684F5F00F8AE82 /* LLMURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMURL.swift; sourceTree = "<group>"; };
+		13BD3A332F7E46E40059C0A5 /* ContextStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextStrategy.swift; sourceTree = "<group>"; };
+		13BD3A352F7E47850059C0A5 /* ContextStrategyProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextStrategyProtocol.swift; sourceTree = "<group>"; };
+		13BD3A382F7E47B90059C0A5 /* SlidingWindowStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlidingWindowStrategy.swift; sourceTree = "<group>"; };
+		13BD3A3A2F7E47CA0059C0A5 /* FactsStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactsStrategy.swift; sourceTree = "<group>"; };
+		13BD3A3C2F7E47F20059C0A5 /* BranchingStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BranchingStrategy.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -197,6 +205,7 @@
 		133DA6E52F682BFA00F8AE82 = {
 			isa = PBXGroup;
 			children = (
+				13BD3A372F7E47A40059C0A5 /* strategy */,
 				1305B2312F75AFB2009A2D6C /* db */,
 				1305B22B2F75AEC7009A2D6C /* repositories */,
 				1305B2322F75AFCA009A2D6C /* services */,
@@ -231,7 +240,6 @@
 				133DA7192F682C6300F8AE82 /* Constants.swift */,
 				133DA7222F684C7600F8AE82 /* OllamaStreamer.swift */,
 				1305B2122F71C6B0009A2D6C /* OpenRouterStreamer.swift */,
-				1305B20E2F71B215009A2D6C /* SettingsObserver.swift */,
 				1305B2162F7309F6009A2D6C /* OptionsBuilder.swift */,
 			);
 			path = lib;
@@ -257,6 +265,7 @@
 			isa = PBXGroup;
 			children = (
 				133DA7272F684D1A00F8AE82 /* LLMAgentProtocol.swift */,
+				13BD3A352F7E47850059C0A5 /* ContextStrategyProtocol.swift */,
 			);
 			path = protocols;
 			sourceTree = "<group>";
@@ -272,8 +281,19 @@
 				1305B2102F71B707009A2D6C /* OllamaPreset.swift */,
 				1305B2182F730A2B009A2D6C /* LLMOptions.swift */,
 				1305B21A2F730BE0009A2D6C /* LLMProvider.swift */,
+				13BD3A332F7E46E40059C0A5 /* ContextStrategy.swift */,
 			);
 			path = entities;
+			sourceTree = "<group>";
+		};
+		13BD3A372F7E47A40059C0A5 /* strategy */ = {
+			isa = PBXGroup;
+			children = (
+				13BD3A382F7E47B90059C0A5 /* SlidingWindowStrategy.swift */,
+				13BD3A3A2F7E47CA0059C0A5 /* FactsStrategy.swift */,
+				13BD3A3C2F7E47F20059C0A5 /* BranchingStrategy.swift */,
+			);
+			path = strategy;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -426,16 +446,20 @@
 			buildActionMask = 2147483647;
 			files = (
 				1305B2132F71C6B0009A2D6C /* OpenRouterStreamer.swift in Sources */,
+				13BD3A392F7E47B90059C0A5 /* SlidingWindowStrategy.swift in Sources */,
 				133DA7282F684D1A00F8AE82 /* LLMAgentProtocol.swift in Sources */,
 				1305B1FC2F7081CE009A2D6C /* MessageRole.swift in Sources */,
+				13BD3A3D2F7E47F20059C0A5 /* BranchingStrategy.swift in Sources */,
 				1305B2052F71A2A6009A2D6C /* OllamaModel.swift in Sources */,
 				1305B2372F75AFF6009A2D6C /* MessageServiceProtocol.swift in Sources */,
 				1305B22E2F75AEF0009A2D6C /* MessageRepository.swift in Sources */,
-				1305B20F2F71B215009A2D6C /* SettingsObserver.swift in Sources */,
+				13BD3A362F7E47850059C0A5 /* ContextStrategyProtocol.swift in Sources */,
 				1305B2112F71B707009A2D6C /* OllamaPreset.swift in Sources */,
 				1305B2192F730A2B009A2D6C /* LLMOptions.swift in Sources */,
 				1305B21B2F730BE0009A2D6C /* LLMProvider.swift in Sources */,
 				133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */,
+				13BD3A342F7E46E40059C0A5 /* ContextStrategy.swift in Sources */,
+				13BD3A3B2F7E47CA0059C0A5 /* FactsStrategy.swift in Sources */,
 				133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */,
 				1305B2012F70885F009A2D6C /* Message.swift in Sources */,
 				1305B2172F7309F6009A2D6C /* OptionsBuilder.swift in Sources */,
