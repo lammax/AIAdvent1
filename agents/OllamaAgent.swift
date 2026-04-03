@@ -16,11 +16,13 @@ final class OllamaAgent: LLMAgentProtocol {
     // MARK: - Identity
     
     internal let agentId: String
-    private let userId: String
+    private var userId: String
+    private var userProfile: UserProfile = .defaultProfile
     
     // MARK: - Dependencies
     
     private let memoryService: MemoryServiceProtocol
+    private let userProfileService: UserProfileServiceProtocol
     private let streamer: OllamaStreamer
     
     // MARK: - Callbacks
@@ -47,6 +49,7 @@ final class OllamaAgent: LLMAgentProtocol {
         agentId: String = "ollama_agent",
         userId: String = "default_user",
         memoryService: MemoryServiceProtocol = MemoryService(),
+        userProfileService: UserProfileServiceProtocol = UserProfileService(),
         streamer: OllamaStreamer = OllamaStreamer(),
         maxMessages: Int = 12,
         summaryTrigger: Int = 16,
@@ -55,6 +58,7 @@ final class OllamaAgent: LLMAgentProtocol {
         self.agentId = agentId
         self.userId = userId
         self.memoryService = memoryService
+        self.userProfileService = userProfileService
         self.streamer = streamer
         self.maxMessages = maxMessages
         self.summaryTrigger = summaryTrigger
@@ -228,6 +232,17 @@ final class OllamaAgent: LLMAgentProtocol {
             )
         }
         
+        if let profileText = await userProfileService.makeProfilePrompt(userId: userId),
+           !profileText.isEmpty {
+            context.append(
+                Message(
+                    agentId: agentId,
+                    role: .system,
+                    content: profileText
+                )
+            )
+        }
+        
         let strategyMessages = strategy
             .buildContext(messages: messages, summary: summary)
             .filter { candidate in
@@ -384,4 +399,10 @@ final class OllamaAgent: LLMAgentProtocol {
         
         return result
     }
+    
+    func setUser(_ profile: UserProfile) {
+        self.userId = profile.userId
+        self.userProfile = profile
+    }
+    
 }

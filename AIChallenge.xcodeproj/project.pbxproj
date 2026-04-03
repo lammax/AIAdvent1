@@ -43,6 +43,11 @@
 		13BD3A4C2F7EE6F40059C0A5 /* WorkingMemoryItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A4B2F7EE6F40059C0A5 /* WorkingMemoryItem.swift */; };
 		13BD3A4E2F7EE7070059C0A5 /* LongTermMemoryItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A4D2F7EE7070059C0A5 /* LongTermMemoryItem.swift */; };
 		13BD3A502F7EE7AC0059C0A5 /* MemoryServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A4F2F7EE7AC0059C0A5 /* MemoryServiceProtocol.swift */; };
+		13BD3A522F7EFFFB0059C0A5 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A512F7EFFFB0059C0A5 /* UserProfile.swift */; };
+		13BD3A552F7F00730059C0A5 /* UserProfileRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A542F7F00730059C0A5 /* UserProfileRepositoryProtocol.swift */; };
+		13BD3A572F7F00840059C0A5 /* UserProfileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A562F7F00840059C0A5 /* UserProfileRepository.swift */; };
+		13BD3A5A2F7F01110059C0A5 /* UserProfileServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A592F7F01110059C0A5 /* UserProfileServiceProtocol.swift */; };
+		13BD3A5C2F7F01190059C0A5 /* UserProfileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A5B2F7F01190059C0A5 /* UserProfileService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -101,6 +106,11 @@
 		13BD3A4B2F7EE6F40059C0A5 /* WorkingMemoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkingMemoryItem.swift; sourceTree = "<group>"; };
 		13BD3A4D2F7EE7070059C0A5 /* LongTermMemoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LongTermMemoryItem.swift; sourceTree = "<group>"; };
 		13BD3A4F2F7EE7AC0059C0A5 /* MemoryServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryServiceProtocol.swift; sourceTree = "<group>"; };
+		13BD3A512F7EFFFB0059C0A5 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
+		13BD3A542F7F00730059C0A5 /* UserProfileRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileRepositoryProtocol.swift; sourceTree = "<group>"; };
+		13BD3A562F7F00840059C0A5 /* UserProfileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileRepository.swift; sourceTree = "<group>"; };
+		13BD3A592F7F01110059C0A5 /* UserProfileServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileServiceProtocol.swift; sourceTree = "<group>"; };
+		13BD3A5B2F7F01190059C0A5 /* UserProfileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -176,6 +186,7 @@
 		1305B22B2F75AEC7009A2D6C /* repositories */ = {
 			isa = PBXGroup;
 			children = (
+				13BD3A532F7F00670059C0A5 /* userprofile */,
 				13BD3A432F7EE5B30059C0A5 /* longtermmemory */,
 				13BD3A3E2F7EE53F0059C0A5 /* workingmemory */,
 				1305B22C2F75AED8009A2D6C /* message */,
@@ -203,6 +214,7 @@
 		1305B2322F75AFCA009A2D6C /* services */ = {
 			isa = PBXGroup;
 			children = (
+				13BD3A582F7F01020059C0A5 /* userprofile */,
 				13BD3A482F7EE66F0059C0A5 /* memory */,
 			);
 			path = services;
@@ -280,6 +292,7 @@
 				13BD3A332F7E46E40059C0A5 /* ContextStrategy.swift */,
 				13BD3A4B2F7EE6F40059C0A5 /* WorkingMemoryItem.swift */,
 				13BD3A4D2F7EE7070059C0A5 /* LongTermMemoryItem.swift */,
+				13BD3A512F7EFFFB0059C0A5 /* UserProfile.swift */,
 			);
 			path = entities;
 			sourceTree = "<group>";
@@ -320,6 +333,24 @@
 				13BD3A4F2F7EE7AC0059C0A5 /* MemoryServiceProtocol.swift */,
 			);
 			path = memory;
+			sourceTree = "<group>";
+		};
+		13BD3A532F7F00670059C0A5 /* userprofile */ = {
+			isa = PBXGroup;
+			children = (
+				13BD3A542F7F00730059C0A5 /* UserProfileRepositoryProtocol.swift */,
+				13BD3A562F7F00840059C0A5 /* UserProfileRepository.swift */,
+			);
+			path = userprofile;
+			sourceTree = "<group>";
+		};
+		13BD3A582F7F01020059C0A5 /* userprofile */ = {
+			isa = PBXGroup;
+			children = (
+				13BD3A592F7F01110059C0A5 /* UserProfileServiceProtocol.swift */,
+				13BD3A5B2F7F01190059C0A5 /* UserProfileService.swift */,
+			);
+			path = userprofile;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -471,6 +502,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				13BD3A572F7F00840059C0A5 /* UserProfileRepository.swift in Sources */,
 				1305B2132F71C6B0009A2D6C /* OpenRouterStreamer.swift in Sources */,
 				13BD3A392F7E47B90059C0A5 /* SlidingWindowStrategy.swift in Sources */,
 				13BD3A422F7EE5750059C0A5 /* WorkingMemoryRepository.swift in Sources */,
@@ -486,10 +518,14 @@
 				13BD3A4A2F7EE6810059C0A5 /* MemoryService.swift in Sources */,
 				1305B2112F71B707009A2D6C /* OllamaPreset.swift in Sources */,
 				1305B2192F730A2B009A2D6C /* LLMOptions.swift in Sources */,
+				13BD3A522F7EFFFB0059C0A5 /* UserProfile.swift in Sources */,
 				1305B21B2F730BE0009A2D6C /* LLMProvider.swift in Sources */,
 				133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */,
+				13BD3A5C2F7F01190059C0A5 /* UserProfileService.swift in Sources */,
 				13BD3A342F7E46E40059C0A5 /* ContextStrategy.swift in Sources */,
 				13BD3A3B2F7E47CA0059C0A5 /* FactsStrategy.swift in Sources */,
+				13BD3A5A2F7F01110059C0A5 /* UserProfileServiceProtocol.swift in Sources */,
+				13BD3A552F7F00730059C0A5 /* UserProfileRepositoryProtocol.swift in Sources */,
 				13BD3A402F7EE55F0059C0A5 /* WorkingMemoryRepositoryProtocol.swift in Sources */,
 				133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */,
 				1305B2012F70885F009A2D6C /* Message.swift in Sources */,
@@ -683,7 +719,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -715,7 +751,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;

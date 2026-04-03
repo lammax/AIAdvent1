@@ -17,6 +17,7 @@ struct MainView: View {
     
     @State private var showSettings: Bool = false
     @State private var showStatistics: Bool = false
+    @State private var showUserProfile: Bool = false
     
     let formatterInt: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -65,6 +66,15 @@ struct MainView: View {
             }
 
             VStack {
+                Button {
+                    showUserProfile.toggle()
+                } label: {
+                    Image(systemName: "person.crop.circle.fill")
+                        .foregroundStyle(Color.black)
+                        .frame(width: 40, height: 40)
+                        .padding(.top, 20)
+                }
+                
                 HStack(alignment: .top) {
                     Button {
                         showStatistics.toggle()
@@ -102,6 +112,9 @@ struct MainView: View {
             SettingsView(vm: settingsVM, isOpen: $showSettings)
             
             StatisticsView(vm: StatisticsViewModel(chunk: viewModel.ollamaChunk), isOpen: $showStatistics)
+            
+            UserProfileView(vm: UserProfileViewModel(), isOpen: $showUserProfile)
+            
         }
         .padding()
         .navigationBarTitle("AI Challenge")

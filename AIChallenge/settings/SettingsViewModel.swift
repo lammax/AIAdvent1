@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine
 
+@MainActor
 final class SettingsViewModel: ObservableObject {
     
     @Published var provider: LLMProvider = .ollama

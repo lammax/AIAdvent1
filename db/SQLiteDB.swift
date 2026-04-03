@@ -80,6 +80,33 @@ final class SQLiteDB {
             }
         }
         
+        // MARK: - User profile
+        migrator.registerMigration("createUserProfiles") { db in
+            try db.create(table: "user_profiles") { t in
+                t.column("user_id", .text).primaryKey()
+                
+                // Style
+                t.column("answer_length", .text).notNull()
+                t.column("tone", .text).notNull()
+                t.column("code_examples", .text).notNull()
+                t.column("language", .text).notNull()
+                
+                // Constraints
+                t.column("tech_stacks", .text).notNull() // JSON array
+                t.column("architecture", .text).notNull()
+                t.column("dependencies_policy", .text).notNull()
+                t.column("api_budget", .text).notNull()
+                
+                // Format
+                t.column("role", .text).notNull()
+                t.column("project", .text).notNull()
+                t.column("team_size", .integer).notNull()
+                t.column("deadline_weeks", .integer).notNull()
+                
+                t.column("updated_at", .double).notNull()
+            }
+        }
+        
         return migrator
     }
 }

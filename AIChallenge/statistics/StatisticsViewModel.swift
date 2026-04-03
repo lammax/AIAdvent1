@@ -7,6 +7,7 @@
 
 import Combine
 
+@MainActor
 final class StatisticsViewModel: ObservableObject {
     
     @Published var chunk: OllamaChunk?

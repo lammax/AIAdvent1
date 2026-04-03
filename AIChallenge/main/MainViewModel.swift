@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class MainViewModel: ObservableObject {
     
     @Published var answer: String = ""
@@ -16,11 +17,14 @@ class MainViewModel: ObservableObject {
     var currentPrompt: Prompt? = nil
     var settings: [String : Encodable] = [:]
     var provider: LLMProvider = .ollama
+    var userProfile: UserProfile = UserProfile.defaultProfile
     
-    let ollama = OllamaAgent()
+    let ollama: OllamaAgent = OllamaAgent()
+    
     let openRouter = OpenRouterAgent()
     
     let settingsObserver: SettingsObserver = SettingsObserver()
+    let profileObserver: UserProfileObserver = UserProfileObserver()
     
     var uns: Set<AnyCancellable> = []
     
@@ -62,6 +66,14 @@ class MainViewModel: ObservableObject {
                 ollama.set(strategy: BranchingStrategy())
             }
         }.store(in: &uns)
+        
+        profileObserver.selectedProfile
+            .sink { [weak self] profile in
+                guard let self, let profile else { return }
+                print("Selected profile:", profile.userId)
+                ollama.setUser(profile)
+            }
+            .store(in: &uns)
     }
     
     func start(prompt: Prompt? = .recursionExpl) {

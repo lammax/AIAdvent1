@@ -9,4 +9,5 @@ import Foundation
 
 extension Notification.Name {
     static let settingsChanged = Notification.Name("settingsChanged")
+    static let userProfileChanged = Notification.Name("userProfileChanged")    
 }
