@@ -12,7 +12,8 @@ struct TaskContext: Codable, Equatable {
     let agentId: String
     
     let task: String
-    let state: TaskState
+    let phase: TaskPhase
+    let status: TaskRunStatus
     
     let step: Int
     let total: Int
@@ -28,7 +29,8 @@ struct TaskContext: Codable, Equatable {
         taskId: String = UUID().uuidString,
         agentId: String,
         task: String,
-        state: TaskState = .planning,
+        phase: TaskPhase = .planning,
+        status: TaskRunStatus = .active,
         step: Int = 1,
         total: Int = 1,
         plan: [String] = [],
@@ -40,7 +42,8 @@ struct TaskContext: Codable, Equatable {
         self.taskId = taskId
         self.agentId = agentId
         self.task = task
-        self.state = state
+        self.phase = phase
+        self.status = status
         self.step = step
         self.total = total
         self.plan = plan

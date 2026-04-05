@@ -10,7 +10,7 @@ import Foundation
 final class TaskContextService: TaskContextServiceProtocol {
     
     private let repository: TaskContextRepositoryProtocol
-    private let stateMachine = TaskStateMachine()
+    private let machine = TaskStateMachine()
     
     init(repository: TaskContextRepositoryProtocol = TaskContextRepository()) {
         self.repository = repository
@@ -28,13 +28,14 @@ final class TaskContextService: TaskContextServiceProtocol {
         let context = TaskContext(
             agentId: agentId,
             task: task,
-            state: .planning,
+            phase: .planning,
+            status: .active,
             step: 1,
             total: max(plan.count, 1),
             plan: plan,
             done: [],
             current: plan.first ?? task,
-            expectedAction: "Collect requirements and confirm the plan",
+            expectedAction: "Approve or refine the plan",
             updatedAt: Date()
         )
         
@@ -42,9 +43,20 @@ final class TaskContextService: TaskContextServiceProtocol {
         return context
     }
     
-    func transition(_ context: TaskContext, to state: TaskState) async throws -> TaskContext {
-        let updated = try stateMachine.transition(context, to: state)
-        try stateMachine.validate(updated)
+    func transition(_ context: TaskContext, to phase: TaskPhase) async throws -> TaskContext {
+        let updated = try machine.transition(context, to: phase)
+        await save(updated)
+        return updated
+    }
+    
+    func pause(_ context: TaskContext) async -> TaskContext {
+        let updated = machine.pause(context)
+        await save(updated)
+        return updated
+    }
+    
+    func resume(_ context: TaskContext) async -> TaskContext {
+        let updated = machine.resume(context)
         await save(updated)
         return updated
     }
@@ -60,7 +72,8 @@ final class TaskContextService: TaskContextServiceProtocol {
             taskId: context.taskId,
             agentId: context.agentId,
             task: context.task,
-            state: context.state,
+            phase: context.phase,
+            status: context.status,
             step: step,
             total: context.total,
             plan: context.plan,
@@ -70,7 +83,7 @@ final class TaskContextService: TaskContextServiceProtocol {
             updatedAt: Date()
         )
         
-        try stateMachine.validate(updated)
+        try machine.validate(updated)
         await save(updated)
         return updated
     }

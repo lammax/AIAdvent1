@@ -8,7 +8,7 @@
 import Foundation
 
 enum TaskStateMachineError: Error, LocalizedError {
-    case invalidTransition(from: TaskState, to: TaskState)
+    case invalidTransition(from: TaskPhase, to: TaskPhase)
     case invalidStep(step: Int, total: Int)
     
     var errorDescription: String? {
@@ -23,27 +23,66 @@ enum TaskStateMachineError: Error, LocalizedError {
 
 struct TaskStateMachine {
     
-    static let transitions: [TaskState: [TaskState]] = [
+    private let allowedTransitions: [TaskPhase: Set<TaskPhase>] = [
         .planning: [.execution],
-        .execution: [.validation, .planning],
-        .validation: [.done, .execution],
+        .execution: [.planning, .validation],
+        .validation: [.execution, .done],
         .done: []
     ]
     
-    func canTransition(from: TaskState, to: TaskState) -> Bool {
-        Self.transitions[from]?.contains(to) == true
+    func canTransition(from: TaskPhase, to: TaskPhase) -> Bool {
+        allowedTransitions[from]?.contains(to) == true
     }
     
-    func transition(_ context: TaskContext, to target: TaskState) throws -> TaskContext {
-        guard canTransition(from: context.state, to: target) else {
-            throw TaskStateMachineError.invalidTransition(from: context.state, to: target)
+    func validate(_ context: TaskContext) throws {
+        guard context.step >= 1, context.step <= max(context.total, 1) else {
+            throw TaskTransitionError.invalidStep(step: context.step, total: context.total)
+        }
+    }
+    
+    func transition(_ context: TaskContext, to target: TaskPhase) throws -> TaskContext {
+        if context.status == .paused {
+            throw TaskTransitionError.taskIsPaused
         }
         
-        return TaskContext(
+        guard canTransition(from: context.phase, to: target) else {
+            throw TaskTransitionError.invalidPhaseTransition(from: context.phase, to: target)
+        }
+        
+        if target == .execution && context.plan.isEmpty {
+            throw TaskTransitionError.cannotExecuteWithoutApprovedPlan
+        }
+        
+        if target == .done && context.phase != .validation {
+            throw TaskTransitionError.cannotFinishWithoutValidation
+        }
+        
+        let updated = TaskContext(
             taskId: context.taskId,
             agentId: context.agentId,
             task: context.task,
-            state: target,
+            phase: target,
+            status: context.status,
+            step: context.step,
+            total: context.total,
+            plan: context.plan,
+            done: context.done,
+            current: context.current,
+            expectedAction: context.expectedAction,
+            updatedAt: Date()
+        )
+        
+        try validate(updated)
+        return updated
+    }
+    
+    func pause(_ context: TaskContext) -> TaskContext {
+        TaskContext(
+            taskId: context.taskId,
+            agentId: context.agentId,
+            task: context.task,
+            phase: context.phase,
+            status: .paused,
             step: context.step,
             total: context.total,
             plan: context.plan,
@@ -54,9 +93,20 @@ struct TaskStateMachine {
         )
     }
     
-    func validate(_ context: TaskContext) throws {
-        guard context.step >= 1, context.step <= max(context.total, 1) else {
-            throw TaskStateMachineError.invalidStep(step: context.step, total: context.total)
-        }
+    func resume(_ context: TaskContext) -> TaskContext {
+        TaskContext(
+            taskId: context.taskId,
+            agentId: context.agentId,
+            task: context.task,
+            phase: context.phase,
+            status: .active,
+            step: context.step,
+            total: context.total,
+            plan: context.plan,
+            done: context.done,
+            current: context.current,
+            expectedAction: context.expectedAction,
+            updatedAt: Date()
+        )
     }
 }

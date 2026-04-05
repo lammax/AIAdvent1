@@ -86,6 +86,24 @@ final class OllamaAgent: LLMAgentProtocol {
             _ prompt: Prompt,
             options: [String: Encodable]
         ) {
+            
+        if let task = self.currentTaskContext, task.status == .paused {
+            let pausedText = """
+            The current task is paused.
+
+            Current phase: \(task.phase.rawValue)
+            Current step: \(task.step)/\(task.total)
+            Current item: \(task.current)
+
+            Resume the task before continuing.
+            """
+            
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(pausedText)
+            }
+            return
+        }
+            
         Task { [weak self] in
             guard let self else { return }
             guard !isSending else { return }
@@ -333,7 +351,7 @@ final class OllamaAgent: LLMAgentProtocol {
                     role: .system,
                     content: """
                     Current task state:
-                    - state: \(taskContext.state.rawValue)
+                    - phase: \(taskContext.phase.title)
                     - step: \(taskContext.step)/\(taskContext.total)
                     - current: \(taskContext.current)
                     - expected action: \(taskContext.expectedAction)
@@ -527,7 +545,7 @@ final class OllamaAgent: LLMAgentProtocol {
 
         Current task context:
         - task: \(context.task)
-        - state: \(context.state.rawValue)
+        - phase: \(context.phase.title)
         - step: \(context.step)
         - total: \(context.total)
         - current: \(context.current)
@@ -574,18 +592,22 @@ final class OllamaAgent: LLMAgentProtocol {
     private func applyTaskProgressUpdate(
         _ update: TaskProgressUpdate,
         currentContext: TaskContext
-    ) async {
-        guard let targetState = TaskState(rawValue: update.nextState.lowercased()) else {
-            return
+    ) async -> String? {
+        guard let targetPhase = TaskPhase(rawValue: update.nextState.lowercased()) else {
+            return "Invalid next phase proposed by the analyzer."
         }
         
         var context = currentContext
         
-        if context.state != targetState {
+        if context.phase != targetPhase {
             do {
-                context = try await taskContextService.transition(context, to: targetState)
+                context = try await taskContextService.transition(context, to: targetPhase)
+            } catch let error as TaskTransitionError {
+                self.currentTaskContext = context
+                return taskTransitionRefusal(for: error)
             } catch {
-                print("Task transition error:", error)
+                self.currentTaskContext = context
+                return "Task transition failed."
             }
         }
         
@@ -600,8 +622,24 @@ final class OllamaAgent: LLMAgentProtocol {
                 expectedAction: update.expectedAction
             )
             self.currentTaskContext = context
+            return nil
         } catch {
-            print("Task step update error:", error)
+            self.currentTaskContext = context
+            return "Task step update failed."
+        }
+    }
+    
+    func pauseTask() {
+        Task {
+            guard let context = currentTaskContext else { return }
+            currentTaskContext = await taskContextService.pause(context)
+        }
+    }
+
+    func resumeTask() {
+        Task {
+            guard let context = currentTaskContext else { return }
+            currentTaskContext = await taskContextService.resume(context)
         }
     }
     
@@ -682,6 +720,45 @@ final class OllamaAgent: LLMAgentProtocol {
         }
         
         return result
+    }
+    
+    private func taskTransitionRefusal(for error: TaskTransitionError) -> String {
+        switch error {
+        case .cannotExecuteWithoutApprovedPlan:
+            return """
+            I can’t start implementation yet because the plan is not approved.
+
+            Next valid step:
+            - review and confirm the plan
+            """
+            
+        case .cannotFinishWithoutValidation:
+            return """
+            I can’t finalize the task yet because validation has not been completed.
+
+            Next valid step:
+            - run validation
+            - confirm that acceptance criteria are met
+            """
+            
+        case let .invalidPhaseTransition(from, to):
+            return """
+            I can’t move the task from \(from.rawValue) to \(to.rawValue).
+
+            Allowed next transitions are enforced by the task state machine.
+            """
+            
+        case .taskIsPaused:
+            return """
+            The task is currently paused.
+
+            Resume it first, then continue from:
+            \(currentTaskContext?.phase.rawValue ?? "unknown") / step \(currentTaskContext?.step ?? 0)
+            """
+            
+        case .invalidStep:
+            return "The task step is inconsistent. Please reload the task state."
+        }
     }
     
     func setUser(_ profile: UserProfile) {

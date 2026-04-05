@@ -18,6 +18,7 @@ struct MainView: View {
     @State private var showSettings: Bool = false
     @State private var showStatistics: Bool = false
     @State private var showUserProfile: Bool = false
+    @State private var isTaskPaused: Bool = false
     
     let formatterInt: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -59,6 +60,15 @@ struct MainView: View {
                         promptAIText = ""
                     } label: {
                         Image(systemName: "magnifyingglass")
+                            .foregroundStyle(Color.black)
+                            .frame(width: 20, height: 20)
+                    }
+                    
+                    Button {
+                        isTaskPaused.toggle()
+                        viewModel.setTaskRunState(isPause: isTaskPaused)
+                    } label: {
+                        Image(systemName: isTaskPaused ? "play.fill" : "pause.fill")
                             .foregroundStyle(Color.black)
                             .frame(width: 20, height: 20)
                     }

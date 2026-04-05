@@ -25,7 +25,7 @@ struct TaskPromptBuilder {
         let profileText = (profilePrompt?.isEmpty == false) ? profilePrompt! : "-"
         
         return """
-        [STATE] \(context.state.title), step \(context.step)/\(context.total)
+        [PHASE] \(context.phase.title), step \(context.step)/\(context.total)
         [CURRENT] \(context.current)
         [PLAN] \(planText)
         [DONE] \(doneText)

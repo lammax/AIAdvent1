@@ -11,6 +11,16 @@ protocol TaskContextServiceProtocol {
     func loadCurrent(agentId: String) async -> TaskContext?
     func save(_ context: TaskContext) async
     func startTask(agentId: String, task: String, plan: [String]) async -> TaskContext
-    func transition(_ context: TaskContext, to state: TaskState) async throws -> TaskContext
-    func updateStep(_ context: TaskContext, step: Int, current: String, done: [String], expectedAction: String) async throws -> TaskContext
+    
+    func transition(_ context: TaskContext, to phase: TaskPhase) async throws -> TaskContext
+    func pause(_ context: TaskContext) async -> TaskContext
+    func resume(_ context: TaskContext) async -> TaskContext
+    
+    func updateStep(
+        _ context: TaskContext,
+        step: Int,
+        current: String,
+        done: [String],
+        expectedAction: String
+    ) async throws -> TaskContext
 }

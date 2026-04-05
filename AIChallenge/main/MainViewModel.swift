@@ -170,4 +170,12 @@ class MainViewModel: ObservableObject {
             options: settings
         )
    }
+    
+    func setTaskRunState(isPause: Bool) {
+        if isPause {
+            ollama.pauseTask()
+        } else {
+            ollama.resumeTask()
+        }
+    }
 }

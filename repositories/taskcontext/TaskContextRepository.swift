@@ -25,8 +25,7 @@ final class TaskContextRepository: TaskContextRepositoryProtocol {
             ) else {
                 return nil
             }
-            
-            return Self.mapContext(row: row)
+            return Self.map(row: row)
         }
     }
     
@@ -44,39 +43,27 @@ final class TaskContextRepository: TaskContextRepositoryProtocol {
             ) else {
                 return nil
             }
-            
-            return Self.mapContext(row: row)
+            return Self.map(row: row)
         }
     }
     
     func save(_ context: TaskContext) async throws {
         try await db.dbQueue.write { db in
-            let planData = try JSONEncoder().encode(context.plan)
-            let doneData = try JSONEncoder().encode(context.done)
-            
-            let planJSON = String(data: planData, encoding: .utf8) ?? "[]"
-            let doneJSON = String(data: doneData, encoding: .utf8) ?? "[]"
+            let planJSON = String(data: try JSONEncoder().encode(context.plan), encoding: .utf8) ?? "[]"
+            let doneJSON = String(data: try JSONEncoder().encode(context.done), encoding: .utf8) ?? "[]"
             
             try db.execute(
                 sql: """
                 INSERT INTO task_contexts (
-                    task_id,
-                    agent_id,
-                    task,
-                    state,
-                    step,
-                    total,
-                    plan,
-                    done,
-                    current,
-                    expected_action,
-                    updated_at
+                    task_id, agent_id, task, phase, status,
+                    step, total, plan, done, current, expected_action, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(task_id) DO UPDATE SET
                     agent_id = excluded.agent_id,
                     task = excluded.task,
-                    state = excluded.state,
+                    phase = excluded.phase,
+                    status = excluded.status,
                     step = excluded.step,
                     total = excluded.total,
                     plan = excluded.plan,
@@ -89,7 +76,8 @@ final class TaskContextRepository: TaskContextRepositoryProtocol {
                     context.taskId,
                     context.agentId,
                     context.task,
-                    context.state.rawValue,
+                    context.phase.rawValue,
+                    context.status.rawValue,
                     context.step,
                     context.total,
                     planJSON,
@@ -105,27 +93,22 @@ final class TaskContextRepository: TaskContextRepositoryProtocol {
     func delete(taskId: String) async throws {
         try await db.dbQueue.write { db in
             try db.execute(
-                sql: """
-                DELETE FROM task_contexts
-                WHERE task_id = ?
-                """,
+                sql: "DELETE FROM task_contexts WHERE task_id = ?",
                 arguments: [taskId]
             )
         }
     }
     
-    private static func mapContext(row: Row) -> TaskContext {
-        let planJSON: String = row["plan"]
-        let doneJSON: String = row["done"]
-        
-        let plan = (try? JSONDecoder().decode([String].self, from: Data(planJSON.utf8))) ?? []
-        let done = (try? JSONDecoder().decode([String].self, from: Data(doneJSON.utf8))) ?? []
+    private static func map(row: Row) -> TaskContext {
+        let plan = ((try? JSONDecoder().decode([String].self, from: Data((row["plan"] as String).utf8))) ?? [])
+        let done = ((try? JSONDecoder().decode([String].self, from: Data((row["done"] as String).utf8))) ?? [])
         
         return TaskContext(
             taskId: row["task_id"],
             agentId: row["agent_id"],
             task: row["task"],
-            state: TaskState(rawValue: row["state"]) ?? .planning,
+            phase: TaskPhase(rawValue: row["phase"]) ?? .planning,
+            status: TaskRunStatus(rawValue: row["status"]) ?? .active,
             step: row["step"],
             total: row["total"],
             plan: plan,

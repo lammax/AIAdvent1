@@ -48,7 +48,6 @@
 		13BD3A572F7F00840059C0A5 /* UserProfileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A562F7F00840059C0A5 /* UserProfileRepository.swift */; };
 		13BD3A5A2F7F01110059C0A5 /* UserProfileServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A592F7F01110059C0A5 /* UserProfileServiceProtocol.swift */; };
 		13BD3A5C2F7F01190059C0A5 /* UserProfileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A5B2F7F01190059C0A5 /* UserProfileService.swift */; };
-		13BD3A652F82B1EB0059C0A5 /* TaskState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A642F82B1EB0059C0A5 /* TaskState.swift */; };
 		13BD3A672F82B20C0059C0A5 /* TaskContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A662F82B20C0059C0A5 /* TaskContext.swift */; };
 		13BD3A692F82B2360059C0A5 /* TaskStateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A682F82B2360059C0A5 /* TaskStateMachine.swift */; };
 		13BD3A6B2F82B29E0059C0A5 /* TaskPromptBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A6A2F82B29E0059C0A5 /* TaskPromptBuilder.swift */; };
@@ -63,6 +62,10 @@
 		13BD3A822F82C2230059C0A5 /* InvariantServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A812F82C2230059C0A5 /* InvariantServiceProtocol.swift */; };
 		13BD3A842F82C2480059C0A5 /* InvariantValidationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A832F82C2480059C0A5 /* InvariantValidationResult.swift */; };
 		13BD3A862F82C2680059C0A5 /* InvariantService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A852F82C2680059C0A5 /* InvariantService.swift */; };
+		13BD3A882F82D9520059C0A5 /* TaskPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A872F82D9520059C0A5 /* TaskPhase.swift */; };
+		13BD3A8A2F82D9700059C0A5 /* TaskRunStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A892F82D9700059C0A5 /* TaskRunStatus.swift */; };
+		13BD3A8C2F82D9B40059C0A5 /* TaskTransitionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A8B2F82D9B40059C0A5 /* TaskTransitionError.swift */; };
+		13BD3A8E2F82DBA30059C0A5 /* OllamaChunk+Mock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A8D2F82DBA30059C0A5 /* OllamaChunk+Mock.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -126,7 +129,6 @@
 		13BD3A562F7F00840059C0A5 /* UserProfileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileRepository.swift; sourceTree = "<group>"; };
 		13BD3A592F7F01110059C0A5 /* UserProfileServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileServiceProtocol.swift; sourceTree = "<group>"; };
 		13BD3A5B2F7F01190059C0A5 /* UserProfileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileService.swift; sourceTree = "<group>"; };
-		13BD3A642F82B1EB0059C0A5 /* TaskState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskState.swift; sourceTree = "<group>"; };
 		13BD3A662F82B20C0059C0A5 /* TaskContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskContext.swift; sourceTree = "<group>"; };
 		13BD3A682F82B2360059C0A5 /* TaskStateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskStateMachine.swift; sourceTree = "<group>"; };
 		13BD3A6A2F82B29E0059C0A5 /* TaskPromptBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskPromptBuilder.swift; sourceTree = "<group>"; };
@@ -141,6 +143,10 @@
 		13BD3A812F82C2230059C0A5 /* InvariantServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvariantServiceProtocol.swift; sourceTree = "<group>"; };
 		13BD3A832F82C2480059C0A5 /* InvariantValidationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvariantValidationResult.swift; sourceTree = "<group>"; };
 		13BD3A852F82C2680059C0A5 /* InvariantService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvariantService.swift; sourceTree = "<group>"; };
+		13BD3A872F82D9520059C0A5 /* TaskPhase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskPhase.swift; sourceTree = "<group>"; };
+		13BD3A892F82D9700059C0A5 /* TaskRunStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRunStatus.swift; sourceTree = "<group>"; };
+		13BD3A8B2F82D9B40059C0A5 /* TaskTransitionError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTransitionError.swift; sourceTree = "<group>"; };
+		13BD3A8D2F82DBA30059C0A5 /* OllamaChunk+Mock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OllamaChunk+Mock.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -317,23 +323,26 @@
 		133DA7292F684F3500F8AE82 /* entities */ = {
 			isa = PBXGroup;
 			children = (
+				13BD3A332F7E46E40059C0A5 /* ContextStrategy.swift */,
+				13BD3A792F82C0ED0059C0A5 /* Invariant.swift */,
+				13BD3A832F82C2480059C0A5 /* InvariantValidationResult.swift */,
+				1305B2182F730A2B009A2D6C /* LLMOptions.swift */,
+				1305B21A2F730BE0009A2D6C /* LLMProvider.swift */,
 				133DA72A2F684F5F00F8AE82 /* LLMURL.swift */,
-				1305B1FB2F7081CE009A2D6C /* MessageRole.swift */,
+				13BD3A4D2F7EE7070059C0A5 /* LongTermMemoryItem.swift */,
 				1305B2002F70885F009A2D6C /* Message.swift */,
+				1305B1FB2F7081CE009A2D6C /* MessageRole.swift */,
 				1305B2022F709919009A2D6C /* OllamaChunk.swift */,
 				1305B2042F71A2A6009A2D6C /* OllamaModel.swift */,
 				1305B2102F71B707009A2D6C /* OllamaPreset.swift */,
-				1305B2182F730A2B009A2D6C /* LLMOptions.swift */,
-				1305B21A2F730BE0009A2D6C /* LLMProvider.swift */,
-				13BD3A332F7E46E40059C0A5 /* ContextStrategy.swift */,
-				13BD3A4B2F7EE6F40059C0A5 /* WorkingMemoryItem.swift */,
-				13BD3A4D2F7EE7070059C0A5 /* LongTermMemoryItem.swift */,
-				13BD3A512F7EFFFB0059C0A5 /* UserProfile.swift */,
-				13BD3A642F82B1EB0059C0A5 /* TaskState.swift */,
 				13BD3A662F82B20C0059C0A5 /* TaskContext.swift */,
 				13BD3A682F82B2360059C0A5 /* TaskStateMachine.swift */,
-				13BD3A792F82C0ED0059C0A5 /* Invariant.swift */,
-				13BD3A832F82C2480059C0A5 /* InvariantValidationResult.swift */,
+				13BD3A512F7EFFFB0059C0A5 /* UserProfile.swift */,
+				13BD3A4B2F7EE6F40059C0A5 /* WorkingMemoryItem.swift */,
+				13BD3A872F82D9520059C0A5 /* TaskPhase.swift */,
+				13BD3A892F82D9700059C0A5 /* TaskRunStatus.swift */,
+				13BD3A8B2F82D9B40059C0A5 /* TaskTransitionError.swift */,
+				13BD3A8D2F82DBA30059C0A5 /* OllamaChunk+Mock.swift */,
 			);
 			path = entities;
 			sourceTree = "<group>";
@@ -600,21 +609,23 @@
 				13BD3A502F7EE7AC0059C0A5 /* MemoryServiceProtocol.swift in Sources */,
 				13BD3A7F2F82C1410059C0A5 /* MarkdownInvariantRepository.swift in Sources */,
 				1305B1FC2F7081CE009A2D6C /* MessageRole.swift in Sources */,
+				13BD3A8C2F82D9B40059C0A5 /* TaskTransitionError.swift in Sources */,
 				13BD3A4C2F7EE6F40059C0A5 /* WorkingMemoryItem.swift in Sources */,
 				13BD3A3D2F7E47F20059C0A5 /* BranchingStrategy.swift in Sources */,
 				1305B2052F71A2A6009A2D6C /* OllamaModel.swift in Sources */,
 				1305B22E2F75AEF0009A2D6C /* MessageRepository.swift in Sources */,
 				13BD3A362F7E47850059C0A5 /* ContextStrategyProtocol.swift in Sources */,
-				13BD3A652F82B1EB0059C0A5 /* TaskState.swift in Sources */,
 				13BD3A672F82B20C0059C0A5 /* TaskContext.swift in Sources */,
 				13BD3A4A2F7EE6810059C0A5 /* MemoryService.swift in Sources */,
 				1305B2112F71B707009A2D6C /* OllamaPreset.swift in Sources */,
+				13BD3A8E2F82DBA30059C0A5 /* OllamaChunk+Mock.swift in Sources */,
 				1305B2192F730A2B009A2D6C /* LLMOptions.swift in Sources */,
 				13BD3A522F7EFFFB0059C0A5 /* UserProfile.swift in Sources */,
 				1305B21B2F730BE0009A2D6C /* LLMProvider.swift in Sources */,
 				133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */,
 				13BD3A5C2F7F01190059C0A5 /* UserProfileService.swift in Sources */,
 				13BD3A702F82B30E0059C0A5 /* TaskContextRepository.swift in Sources */,
+				13BD3A882F82D9520059C0A5 /* TaskPhase.swift in Sources */,
 				13BD3A342F7E46E40059C0A5 /* ContextStrategy.swift in Sources */,
 				13BD3A3B2F7E47CA0059C0A5 /* FactsStrategy.swift in Sources */,
 				13BD3A5A2F7F01110059C0A5 /* UserProfileServiceProtocol.swift in Sources */,
@@ -633,6 +644,7 @@
 				13BD3A7D2F82C1250059C0A5 /* InvariantRepositoryProtocol.swift in Sources */,
 				13BD3A6E2F82B2E90059C0A5 /* TaskContextRepositoryProtocol.swift in Sources */,
 				133DA71A2F682C6300F8AE82 /* Constants.swift in Sources */,
+				13BD3A8A2F82D9700059C0A5 /* TaskRunStatus.swift in Sources */,
 				1305B2302F75AEFB009A2D6C /* MessageRepositoryProtocol.swift in Sources */,
 				1305B2032F709919009A2D6C /* OllamaChunk.swift in Sources */,
 				1305B23E2F75B58A009A2D6C /* SQLiteDB.swift in Sources */,
