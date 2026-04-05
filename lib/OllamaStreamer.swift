@@ -22,7 +22,7 @@ class OllamaStreamer: NSObject {
         let finalOptions = options.isEmpty ? Constants.defaultOllamaOptions : options
             
         var body: [String: Any] = finalOptions
-        body["messages"] = [["role": message.role, "content": message.content]]
+        body["messages"] = [["role": message.role.text, "content": message.content]]
         
         let url = URL(string: LLMURL.ollama.text)!
         var request = URLRequest(url: url)

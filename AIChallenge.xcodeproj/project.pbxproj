@@ -48,6 +48,14 @@
 		13BD3A572F7F00840059C0A5 /* UserProfileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A562F7F00840059C0A5 /* UserProfileRepository.swift */; };
 		13BD3A5A2F7F01110059C0A5 /* UserProfileServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A592F7F01110059C0A5 /* UserProfileServiceProtocol.swift */; };
 		13BD3A5C2F7F01190059C0A5 /* UserProfileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A5B2F7F01190059C0A5 /* UserProfileService.swift */; };
+		13BD3A652F82B1EB0059C0A5 /* TaskState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A642F82B1EB0059C0A5 /* TaskState.swift */; };
+		13BD3A672F82B20C0059C0A5 /* TaskContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A662F82B20C0059C0A5 /* TaskContext.swift */; };
+		13BD3A692F82B2360059C0A5 /* TaskStateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A682F82B2360059C0A5 /* TaskStateMachine.swift */; };
+		13BD3A6B2F82B29E0059C0A5 /* TaskPromptBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A6A2F82B29E0059C0A5 /* TaskPromptBuilder.swift */; };
+		13BD3A6E2F82B2E90059C0A5 /* TaskContextRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A6D2F82B2E90059C0A5 /* TaskContextRepositoryProtocol.swift */; };
+		13BD3A702F82B30E0059C0A5 /* TaskContextRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A6F2F82B30E0059C0A5 /* TaskContextRepository.swift */; };
+		13BD3A732F82B38F0059C0A5 /* TaskContextServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A722F82B38F0059C0A5 /* TaskContextServiceProtocol.swift */; };
+		13BD3A752F82B3BF0059C0A5 /* TaskContextService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A742F82B3BF0059C0A5 /* TaskContextService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -111,6 +119,14 @@
 		13BD3A562F7F00840059C0A5 /* UserProfileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileRepository.swift; sourceTree = "<group>"; };
 		13BD3A592F7F01110059C0A5 /* UserProfileServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileServiceProtocol.swift; sourceTree = "<group>"; };
 		13BD3A5B2F7F01190059C0A5 /* UserProfileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileService.swift; sourceTree = "<group>"; };
+		13BD3A642F82B1EB0059C0A5 /* TaskState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskState.swift; sourceTree = "<group>"; };
+		13BD3A662F82B20C0059C0A5 /* TaskContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskContext.swift; sourceTree = "<group>"; };
+		13BD3A682F82B2360059C0A5 /* TaskStateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskStateMachine.swift; sourceTree = "<group>"; };
+		13BD3A6A2F82B29E0059C0A5 /* TaskPromptBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskPromptBuilder.swift; sourceTree = "<group>"; };
+		13BD3A6D2F82B2E90059C0A5 /* TaskContextRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskContextRepositoryProtocol.swift; sourceTree = "<group>"; };
+		13BD3A6F2F82B30E0059C0A5 /* TaskContextRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskContextRepository.swift; sourceTree = "<group>"; };
+		13BD3A722F82B38F0059C0A5 /* TaskContextServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskContextServiceProtocol.swift; sourceTree = "<group>"; };
+		13BD3A742F82B3BF0059C0A5 /* TaskContextService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskContextService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -186,6 +202,7 @@
 		1305B22B2F75AEC7009A2D6C /* repositories */ = {
 			isa = PBXGroup;
 			children = (
+				13BD3A6C2F82B2D50059C0A5 /* taskcontext */,
 				13BD3A532F7F00670059C0A5 /* userprofile */,
 				13BD3A432F7EE5B30059C0A5 /* longtermmemory */,
 				13BD3A3E2F7EE53F0059C0A5 /* workingmemory */,
@@ -214,6 +231,7 @@
 		1305B2322F75AFCA009A2D6C /* services */ = {
 			isa = PBXGroup;
 			children = (
+				13BD3A712F82B3800059C0A5 /* taskcontext */,
 				13BD3A582F7F01020059C0A5 /* userprofile */,
 				13BD3A482F7EE66F0059C0A5 /* memory */,
 			);
@@ -258,6 +276,7 @@
 				133DA7222F684C7600F8AE82 /* OllamaStreamer.swift */,
 				1305B2122F71C6B0009A2D6C /* OpenRouterStreamer.swift */,
 				1305B2162F7309F6009A2D6C /* OptionsBuilder.swift */,
+				13BD3A6A2F82B29E0059C0A5 /* TaskPromptBuilder.swift */,
 			);
 			path = lib;
 			sourceTree = "<group>";
@@ -293,6 +312,9 @@
 				13BD3A4B2F7EE6F40059C0A5 /* WorkingMemoryItem.swift */,
 				13BD3A4D2F7EE7070059C0A5 /* LongTermMemoryItem.swift */,
 				13BD3A512F7EFFFB0059C0A5 /* UserProfile.swift */,
+				13BD3A642F82B1EB0059C0A5 /* TaskState.swift */,
+				13BD3A662F82B20C0059C0A5 /* TaskContext.swift */,
+				13BD3A682F82B2360059C0A5 /* TaskStateMachine.swift */,
 			);
 			path = entities;
 			sourceTree = "<group>";
@@ -351,6 +373,24 @@
 				13BD3A5B2F7F01190059C0A5 /* UserProfileService.swift */,
 			);
 			path = userprofile;
+			sourceTree = "<group>";
+		};
+		13BD3A6C2F82B2D50059C0A5 /* taskcontext */ = {
+			isa = PBXGroup;
+			children = (
+				13BD3A6D2F82B2E90059C0A5 /* TaskContextRepositoryProtocol.swift */,
+				13BD3A6F2F82B30E0059C0A5 /* TaskContextRepository.swift */,
+			);
+			path = taskcontext;
+			sourceTree = "<group>";
+		};
+		13BD3A712F82B3800059C0A5 /* taskcontext */ = {
+			isa = PBXGroup;
+			children = (
+				13BD3A722F82B38F0059C0A5 /* TaskContextServiceProtocol.swift */,
+				13BD3A742F82B3BF0059C0A5 /* TaskContextService.swift */,
+			);
+			path = taskcontext;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -507,7 +547,9 @@
 				13BD3A392F7E47B90059C0A5 /* SlidingWindowStrategy.swift in Sources */,
 				13BD3A422F7EE5750059C0A5 /* WorkingMemoryRepository.swift in Sources */,
 				133DA7282F684D1A00F8AE82 /* LLMAgentProtocol.swift in Sources */,
+				13BD3A6B2F82B29E0059C0A5 /* TaskPromptBuilder.swift in Sources */,
 				13BD3A452F7EE5CD0059C0A5 /* LongTermMemoryRepositoryProtocol.swift in Sources */,
+				13BD3A692F82B2360059C0A5 /* TaskStateMachine.swift in Sources */,
 				13BD3A502F7EE7AC0059C0A5 /* MemoryServiceProtocol.swift in Sources */,
 				1305B1FC2F7081CE009A2D6C /* MessageRole.swift in Sources */,
 				13BD3A4C2F7EE6F40059C0A5 /* WorkingMemoryItem.swift in Sources */,
@@ -515,6 +557,8 @@
 				1305B2052F71A2A6009A2D6C /* OllamaModel.swift in Sources */,
 				1305B22E2F75AEF0009A2D6C /* MessageRepository.swift in Sources */,
 				13BD3A362F7E47850059C0A5 /* ContextStrategyProtocol.swift in Sources */,
+				13BD3A652F82B1EB0059C0A5 /* TaskState.swift in Sources */,
+				13BD3A672F82B20C0059C0A5 /* TaskContext.swift in Sources */,
 				13BD3A4A2F7EE6810059C0A5 /* MemoryService.swift in Sources */,
 				1305B2112F71B707009A2D6C /* OllamaPreset.swift in Sources */,
 				1305B2192F730A2B009A2D6C /* LLMOptions.swift in Sources */,
@@ -522,10 +566,12 @@
 				1305B21B2F730BE0009A2D6C /* LLMProvider.swift in Sources */,
 				133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */,
 				13BD3A5C2F7F01190059C0A5 /* UserProfileService.swift in Sources */,
+				13BD3A702F82B30E0059C0A5 /* TaskContextRepository.swift in Sources */,
 				13BD3A342F7E46E40059C0A5 /* ContextStrategy.swift in Sources */,
 				13BD3A3B2F7E47CA0059C0A5 /* FactsStrategy.swift in Sources */,
 				13BD3A5A2F7F01110059C0A5 /* UserProfileServiceProtocol.swift in Sources */,
 				13BD3A552F7F00730059C0A5 /* UserProfileRepositoryProtocol.swift in Sources */,
+				13BD3A732F82B38F0059C0A5 /* TaskContextServiceProtocol.swift in Sources */,
 				13BD3A402F7EE55F0059C0A5 /* WorkingMemoryRepositoryProtocol.swift in Sources */,
 				133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */,
 				1305B2012F70885F009A2D6C /* Message.swift in Sources */,
@@ -534,6 +580,8 @@
 				1305B2082F71B0A8009A2D6C /* Notification+ext.swift in Sources */,
 				1305B1FF2F7085CF009A2D6C /* OllamaAgent.swift in Sources */,
 				133DA72B2F684F5F00F8AE82 /* LLMURL.swift in Sources */,
+				13BD3A752F82B3BF0059C0A5 /* TaskContextService.swift in Sources */,
+				13BD3A6E2F82B2E90059C0A5 /* TaskContextRepositoryProtocol.swift in Sources */,
 				133DA71A2F682C6300F8AE82 /* Constants.swift in Sources */,
 				1305B2302F75AEFB009A2D6C /* MessageRepositoryProtocol.swift in Sources */,
 				1305B2032F709919009A2D6C /* OllamaChunk.swift in Sources */,

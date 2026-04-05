@@ -23,6 +23,8 @@ final class OllamaAgent: LLMAgentProtocol {
     
     private let memoryService: MemoryServiceProtocol
     private let userProfileService: UserProfileServiceProtocol
+    private let taskContextService: TaskContextServiceProtocol
+    private let promptBuilder = TaskPromptBuilder()
     private let streamer: OllamaStreamer
     
     // MARK: - Callbacks
@@ -43,6 +45,9 @@ final class OllamaAgent: LLMAgentProtocol {
     private var isPrepared = false
     private var isSending = false
     
+    // MARK: - Task context
+    private var currentTaskContext: TaskContext?
+    
     // MARK: - Init
     
     init(
@@ -50,6 +55,7 @@ final class OllamaAgent: LLMAgentProtocol {
         userId: String = "default_user",
         memoryService: MemoryServiceProtocol = MemoryService(),
         userProfileService: UserProfileServiceProtocol = UserProfileService(),
+        taskContextService: TaskContextServiceProtocol = TaskContextService(),
         streamer: OllamaStreamer = OllamaStreamer(),
         maxMessages: Int = 12,
         summaryTrigger: Int = 16,
@@ -59,6 +65,7 @@ final class OllamaAgent: LLMAgentProtocol {
         self.userId = userId
         self.memoryService = memoryService
         self.userProfileService = userProfileService
+        self.taskContextService = taskContextService
         self.streamer = streamer
         self.maxMessages = maxMessages
         self.summaryTrigger = summaryTrigger
@@ -72,9 +79,9 @@ final class OllamaAgent: LLMAgentProtocol {
     // MARK: - Public
     
     func send(
-        _ prompt: Prompt,
-        options: [String: Encodable]
-    ) {
+            _ prompt: Prompt,
+            options: [String: Encodable]
+        ) {
         Task { [weak self] in
             guard let self else { return }
             guard !isSending else { return }
@@ -87,10 +94,30 @@ final class OllamaAgent: LLMAgentProtocol {
             let normalizedOptions = normalizeOptions(options)
             self.options = normalizedOptions
             
+            // 1. Убедимся, что есть TaskContext
+            if self.currentTaskContext == nil {
+                let plan = await generateInitialPlan(for: prompt.text)
+                self.currentTaskContext = await taskContextService.startTask(
+                    agentId: agentId,
+                    task: prompt.text,
+                    plan: plan
+                )
+            }
+            
+            guard let taskContext = self.currentTaskContext else { return }
+            
+            // 2. Формируем task-aware prompt
+            let profilePrompt = await userProfileService.makeProfilePrompt(userId: userId)
+            let finalPromptText = promptBuilder.buildPrompt(
+                query: prompt.text,
+                context: taskContext,
+                profilePrompt: profilePrompt
+            )
+            
             let userMessage = Message(
                 agentId: agentId,
                 role: .user,
-                content: prompt.text
+                content: finalPromptText
             )
             
             messages.append(userMessage)
@@ -131,6 +158,12 @@ final class OllamaAgent: LLMAgentProtocol {
                 
                 Task {
                     await self.memoryService.appendMessage(assistantMessage)
+                    
+                    // 3. Авто-обновление TaskContext после ответа модели
+                    await self.advanceTaskStateIfNeeded(
+                        userQuery: prompt.text,
+                        assistantResponse: content
+                    )
                 }
                 
                 DispatchQueue.main.async {
@@ -142,6 +175,16 @@ final class OllamaAgent: LLMAgentProtocol {
         }
     }
     
+    func startTask(title: String, plan: [String]) {
+        Task {
+            self.currentTaskContext = await taskContextService.startTask(
+                agentId: agentId,
+                task: title,
+                plan: plan
+            )
+        }
+    }
+    
     func deleteAllMessages() {
         Task { [weak self] in
             guard let self else { return }
@@ -150,6 +193,7 @@ final class OllamaAgent: LLMAgentProtocol {
             
             self.summary = ""
             self.messages = [system]
+            self.currentTaskContext = nil
             self.strategy = self.strategy.makeCleanCopy()
             
             await self.memoryService.deleteMessages(agentId: self.agentId)
@@ -166,7 +210,11 @@ final class OllamaAgent: LLMAgentProtocol {
     
     private func prepareIfNeeded() async {
         guard !isPrepared else { return }
+        
         await loadHistory()
+        self.currentTaskContext = await taskContextService.loadCurrent(agentId: agentId)
+        self.userProfile = await userProfileService.fetchProfile(userId: userId) ??  self.userProfile
+        
         isPrepared = true
     }
     
@@ -187,7 +235,7 @@ final class OllamaAgent: LLMAgentProtocol {
             }
         }
         
-        replayMessagesIntoStrategy()
+        strategy.rebuild(from: messages)
     }
     
     // MARK: - Context
@@ -201,6 +249,17 @@ final class OllamaAgent: LLMAgentProtocol {
         
         let system = messages.first(where: { $0.role == .system }) ?? makeSystemMessage()
         context.append(system)
+        
+        if let profileText = await userProfileService.makeProfilePrompt(userId: userId),
+           !profileText.isEmpty {
+            context.append(
+                Message(
+                    agentId: agentId,
+                    role: .system,
+                    content: profileText
+                )
+            )
+        }
         
         let working = await memoryService.fetchWorking(agentId: agentId)
         if !working.isEmpty {
@@ -227,18 +286,23 @@ final class OllamaAgent: LLMAgentProtocol {
                 Message(
                     agentId: agentId,
                     role: .system,
-                    content: "User profile:\n\(text)"
+                    content: "Long-term memory:\n\(text)"
                 )
             )
         }
         
-        if let profileText = await userProfileService.makeProfilePrompt(userId: userId),
-           !profileText.isEmpty {
+        if let taskContext = currentTaskContext {
             context.append(
                 Message(
                     agentId: agentId,
                     role: .system,
-                    content: profileText
+                    content: """
+                    Current task state:
+                    - state: \(taskContext.state.rawValue)
+                    - step: \(taskContext.step)/\(taskContext.total)
+                    - current: \(taskContext.current)
+                    - expected action: \(taskContext.expectedAction)
+                    """
                 )
             )
         }
@@ -295,7 +359,215 @@ final class OllamaAgent: LLMAgentProtocol {
         await memoryService.deleteMessages(agentId: agentId)
         await memoryService.appendMessages(messages)
         
-        replayMessagesIntoStrategy()
+        strategy.rebuild(from: messages)
+    }
+    
+    // MARK: - Task Planning
+    
+    private func generateInitialPlan(for task: String) async -> [String] {
+        let profilePrompt = await userProfileService.makeProfilePrompt(userId: userId) ?? ""
+        
+        let planningPrompt = """
+        Break down the following task into a short sequential implementation plan.
+
+        Task:
+        \(task)
+
+        User profile:
+        \(profilePrompt)
+
+        Requirements:
+        - 3 to 7 steps
+        - each step must be concise
+        - steps must be sequential
+        - adapt to user profile, tech stack, architecture, and constraints
+        - return ONLY a JSON array of strings
+        - no markdown
+        - no explanations
+
+        Example:
+        ["Collect requirements", "Design the solution", "Implement core functionality", "Validate result"]
+        """
+        
+        let message = Message(
+            agentId: agentId,
+            role: .user,
+            content: planningPrompt
+        )
+        
+        do {
+            let response = try await streamer.send(
+                message,
+                options: makeAnyOptions(from: options)
+            )
+            
+            let cleaned = response
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: "```json", with: "")
+                .replacingOccurrences(of: "```", with: "")
+            
+            if let data = cleaned.data(using: .utf8),
+               let plan = try? JSONDecoder().decode([String].self, from: data),
+               !plan.isEmpty {
+                return plan
+            }
+        } catch {
+            print("generateInitialPlan error:", error)
+        }
+        
+        return fallbackPlan(for: task)
+    }
+    
+    private func fallbackPlan(for task: String) -> [String] {
+        [
+            "Collect and confirm requirements",
+            "Design the solution and implementation steps",
+            "Implement the core functionality",
+            "Validate and test the result",
+            "Finalize and document the outcome"
+        ]
+    }
+    
+    // MARK: - Task Auto-Progression
+    
+    private struct TaskProgressUpdate: Decodable {
+        let nextState: String
+        let step: Int
+        let current: String
+        let done: [String]
+        let expectedAction: String
+    }
+    
+    private func advanceTaskStateIfNeeded(
+        userQuery: String,
+        assistantResponse: String
+    ) async {
+        guard let context = currentTaskContext else { return }
+        
+        let analysisPrompt = buildTaskAnalysisPrompt(
+            context: context,
+            userQuery: userQuery,
+            assistantResponse: assistantResponse
+        )
+        
+        let message = Message(
+            agentId: agentId,
+            role: .user,
+            content: analysisPrompt
+        )
+        
+        do {
+            let raw = try await streamer.send(
+                message,
+                options: makeAnyOptions(from: options)
+            )
+            
+            let cleaned = raw
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: "```json", with: "")
+                .replacingOccurrences(of: "```", with: "")
+            
+            guard let data = cleaned.data(using: .utf8),
+                  let update = try? JSONDecoder().decode(TaskProgressUpdate.self, from: data) else {
+                return
+            }
+            
+            await applyTaskProgressUpdate(update, currentContext: context)
+            
+        } catch {
+            print("advanceTaskStateIfNeeded error:", error)
+        }
+    }
+    
+    private func buildTaskAnalysisPrompt(
+        context: TaskContext,
+        userQuery: String,
+        assistantResponse: String
+    ) -> String {
+        let planText = context.plan.isEmpty ? "-" : context.plan.joined(separator: ", ")
+        let doneText = context.done.isEmpty ? "-" : context.done.joined(separator: ", ")
+        
+        return """
+        Analyze the task progress and update the task state machine.
+
+        Current task context:
+        - task: \(context.task)
+        - state: \(context.state.rawValue)
+        - step: \(context.step)
+        - total: \(context.total)
+        - current: \(context.current)
+        - plan: \(planText)
+        - done: \(doneText)
+        - expected_action: \(context.expectedAction)
+
+        Latest user query:
+        \(userQuery)
+
+        Latest assistant response:
+        \(assistantResponse)
+
+        Allowed transitions:
+        - planning -> execution
+        - execution -> validation or planning
+        - validation -> done or execution
+        - done -> done
+
+        Rules:
+        - If planning is finished and a concrete plan exists, move to execution.
+        - If the current execution step is completed, advance to the next step.
+        - If all execution steps are completed, move to validation.
+        - If validation confirms success, move to done.
+        - If validation finds problems, move back to execution.
+        - Never skip directly from planning to validation.
+        - Never skip directly from execution to done.
+        - step must stay in range 1...total
+        - done must contain already completed items only
+        - current must describe the active item
+        - expectedAction must describe the next expected action
+
+        Return ONLY valid JSON:
+        {
+          "nextState": "planning|execution|validation|done",
+          "step": 1,
+          "current": "string",
+          "done": ["string"],
+          "expectedAction": "string"
+        }
+        """
+    }
+    
+    private func applyTaskProgressUpdate(
+        _ update: TaskProgressUpdate,
+        currentContext: TaskContext
+    ) async {
+        guard let targetState = TaskState(rawValue: update.nextState.lowercased()) else {
+            return
+        }
+        
+        var context = currentContext
+        
+        if context.state != targetState {
+            do {
+                context = try await taskContextService.transition(context, to: targetState)
+            } catch {
+                print("Task transition error:", error)
+            }
+        }
+        
+        let safeStep = max(1, min(update.step, max(context.total, 1)))
+        
+        do {
+            context = try await taskContextService.updateStep(
+                context,
+                step: safeStep,
+                current: update.current,
+                done: update.done,
+                expectedAction: update.expectedAction
+            )
+            self.currentTaskContext = context
+        } catch {
+            print("Task step update error:", error)
+        }
     }
     
     // MARK: - Memory extraction
@@ -330,29 +602,6 @@ final class OllamaAgent: LLMAgentProtocol {
         }
     }
     
-    // MARK: - Strategy sync
-    
-    private func replayMessagesIntoStrategy() {
-        let cleanStrategy = strategy.makeCleanCopy()
-        cleanStrategy.rebuild(from: messages)
-        strategy = cleanStrategy
-    }
-    
-    private func makeEmptyStrategyLikeCurrent() -> ContextStrategyProtocol {
-        makeFreshVersion(of: strategy)
-    }
-    
-    private func makeFreshVersion(of strategy: ContextStrategyProtocol) -> ContextStrategyProtocol {
-        switch strategy {
-        case is FactsStrategy:
-            return FactsStrategy(maxMessages: maxMessages, agentId: agentId)
-        case is BranchingStrategy:
-            return BranchingStrategy()
-        default:
-            return SlidingWindowStrategy(maxMessages: maxMessages)
-        }
-    }
-    
     // MARK: - Helpers
     
     private func makeSystemMessage() -> Message {
@@ -364,7 +613,7 @@ final class OllamaAgent: LLMAgentProtocol {
     }
     
     private func normalizeOptions(_ options: [String: Encodable]) -> [String: Encodable] {
-        var result: [String: Encodable] = options
+        var result = options
         
         if let model = result["model"] as? OllamaModel {
             result["model"] = model.rawValue

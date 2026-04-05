@@ -107,6 +107,22 @@ final class SQLiteDB {
             }
         }
         
+        migrator.registerMigration("createTaskContexts") { db in
+            try db.create(table: "task_contexts") { t in
+                t.column("task_id", .text).primaryKey()
+                t.column("agent_id", .text).notNull().indexed()
+                t.column("task", .text).notNull()
+                t.column("state", .text).notNull()
+                t.column("step", .integer).notNull()
+                t.column("total", .integer).notNull()
+                t.column("plan", .text).notNull()
+                t.column("done", .text).notNull()
+                t.column("current", .text).notNull()
+                t.column("expected_action", .text).notNull()
+                t.column("updated_at", .double).notNull()
+            }
+        }
+        
         return migrator
     }
 }
