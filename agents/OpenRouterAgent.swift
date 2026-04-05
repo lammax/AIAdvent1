@@ -5,6 +5,8 @@
 //  Created by Максим Ламанский on 22.03.26.
 //
 
+//TODO: later refactor it for distant REST API agent
+
 import Foundation
 
 class OpenRouterAgent: LLMAgentProtocol {

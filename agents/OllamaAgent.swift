@@ -26,6 +26,8 @@ final class OllamaAgent: LLMAgentProtocol {
     private let taskContextService: TaskContextServiceProtocol
     private let promptBuilder = TaskPromptBuilder()
     private let streamer: OllamaStreamer
+    private let invariantService: InvariantServiceProtocol
+    private let invariantFileName: String = "invariants"
     
     // MARK: - Callbacks
     
@@ -56,6 +58,7 @@ final class OllamaAgent: LLMAgentProtocol {
         memoryService: MemoryServiceProtocol = MemoryService(),
         userProfileService: UserProfileServiceProtocol = UserProfileService(),
         taskContextService: TaskContextServiceProtocol = TaskContextService(),
+        invariantService: InvariantServiceProtocol = InvariantService(),
         streamer: OllamaStreamer = OllamaStreamer(),
         maxMessages: Int = 12,
         summaryTrigger: Int = 16,
@@ -66,6 +69,7 @@ final class OllamaAgent: LLMAgentProtocol {
         self.memoryService = memoryService
         self.userProfileService = userProfileService
         self.taskContextService = taskContextService
+        self.invariantService = invariantService
         self.streamer = streamer
         self.maxMessages = maxMessages
         self.summaryTrigger = summaryTrigger
@@ -147,16 +151,36 @@ final class OllamaAgent: LLMAgentProtocol {
                 let finalText = fullResponse.trimmingCharacters(in: .whitespacesAndNewlines)
                 let content = finalText.isEmpty ? ollamaChunk.message.content : finalText
                 
-                let assistantMessage = Message(
-                    agentId: self.agentId,
-                    role: .assistant,
-                    content: content
-                )
-                
-                self.messages.append(assistantMessage)
-                self.strategy.onAssistantMessage(assistantMessage)
-                
                 Task {
+                    let validation = await self.invariantService.validateResponse(
+                        content,
+                        fileName: self.invariantFileName
+                    )
+                    
+                    let safeContent: String
+                    
+                    if validation.isValid {
+                        safeContent = content
+                    } else {
+                        let violations = validation.violations.joined(separator: "\n")
+                        safeContent = """
+                        I can’t recommend that option because it violates the project invariants.
+
+                        Violations:
+                        \(violations)
+
+                        Please choose an option that stays within the defined architecture, stack, and business rules.
+                        """
+                    }
+                    
+                    let assistantMessage = Message(
+                        agentId: self.agentId,
+                        role: .assistant,
+                        content: safeContent
+                    )
+                    
+                    self.messages.append(assistantMessage)
+                    self.strategy.onAssistantMessage(assistantMessage)
                     await self.memoryService.appendMessage(assistantMessage)
                     
                     // 3. Авто-обновление TaskContext после ответа модели
@@ -257,6 +281,17 @@ final class OllamaAgent: LLMAgentProtocol {
                     agentId: agentId,
                     role: .system,
                     content: profileText
+                )
+            )
+        }
+        
+        if let invariantPrompt = await invariantService.makePrompt(fileName: invariantFileName),
+           !invariantPrompt.isEmpty {
+            context.append(
+                Message(
+                    agentId: agentId,
+                    role: .system,
+                    content: invariantPrompt
                 )
             )
         }
