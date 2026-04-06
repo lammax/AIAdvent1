@@ -11,6 +11,7 @@ struct Constants {
     static let openAIAPIKey: String = ""
     static let maxAnswerLength: Int = 1000
     static let maxMessages: Int = 10
+    static let githubCopilotURI: String = "https://api.githubcopilot.com/mcp/"
     
     static let defaultOllamaOptions: [String: Encodable] = [
         "model": OllamaModel.llama3,

@@ -66,6 +66,11 @@
 		13BD3A8A2F82D9700059C0A5 /* TaskRunStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A892F82D9700059C0A5 /* TaskRunStatus.swift */; };
 		13BD3A8C2F82D9B40059C0A5 /* TaskTransitionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A8B2F82D9B40059C0A5 /* TaskTransitionError.swift */; };
 		13BD3A8E2F82DBA30059C0A5 /* OllamaChunk+Mock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A8D2F82DBA30059C0A5 /* OllamaChunk+Mock.swift */; };
+		13BD3AA92F84469F0059C0A5 /* MCP in Frameworks */ = {isa = PBXBuildFile; productRef = 13BD3AA82F84469F0059C0A5 /* MCP */; };
+		13BD3AAB2F8448960059C0A5 /* MCPServerConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3AAA2F8448960059C0A5 /* MCPServerConfig.swift */; };
+		13BD3AAE2F84495A0059C0A5 /* GitHubMCPOAuthDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3AAD2F84495A0059C0A5 /* GitHubMCPOAuthDelegate.swift */; };
+		13BD3AB32F844B4D0059C0A5 /* MCPClientService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3AB22F844B4D0059C0A5 /* MCPClientService.swift */; };
+		13BD3ABA2F8457140059C0A5 /* GitHubMCPpatClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3AB92F8457140059C0A5 /* GitHubMCPpatClient.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -147,11 +152,28 @@
 		13BD3A892F82D9700059C0A5 /* TaskRunStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRunStatus.swift; sourceTree = "<group>"; };
 		13BD3A8B2F82D9B40059C0A5 /* TaskTransitionError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskTransitionError.swift; sourceTree = "<group>"; };
 		13BD3A8D2F82DBA30059C0A5 /* OllamaChunk+Mock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OllamaChunk+Mock.swift"; sourceTree = "<group>"; };
+		13BD3AAA2F8448960059C0A5 /* MCPServerConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServerConfig.swift; sourceTree = "<group>"; };
+		13BD3AAD2F84495A0059C0A5 /* GitHubMCPOAuthDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubMCPOAuthDelegate.swift; sourceTree = "<group>"; };
+		13BD3AB22F844B4D0059C0A5 /* MCPClientService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPClientService.swift; sourceTree = "<group>"; };
+		13BD3AB92F8457140059C0A5 /* GitHubMCPpatClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubMCPpatClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		13BD3AB02F844AE70059C0A5 /* Exceptions for "AIChallenge" folder in "AIChallenge" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 133DA6ED2F682BFA00F8AE82 /* AIChallenge */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		133DA6F02F682BFA00F8AE82 /* AIChallenge */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				13BD3AB02F844AE70059C0A5 /* Exceptions for "AIChallenge" folder in "AIChallenge" target */,
+			);
 			path = AIChallenge;
 			sourceTree = "<group>";
 		};
@@ -173,6 +195,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1305B23A2F75B405009A2D6C /* GRDB in Frameworks */,
+				13BD3AA92F84469F0059C0A5 /* MCP in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -252,6 +275,8 @@
 		1305B2322F75AFCA009A2D6C /* services */ = {
 			isa = PBXGroup;
 			children = (
+				13BD3AB12F844B3F0059C0A5 /* mcp */,
+				13BD3AAC2F84494C0059C0A5 /* github */,
 				13BD3A802F82C2140059C0A5 /* invariant */,
 				13BD3A712F82B3800059C0A5 /* taskcontext */,
 				13BD3A582F7F01020059C0A5 /* userprofile */,
@@ -343,6 +368,7 @@
 				13BD3A892F82D9700059C0A5 /* TaskRunStatus.swift */,
 				13BD3A8B2F82D9B40059C0A5 /* TaskTransitionError.swift */,
 				13BD3A8D2F82DBA30059C0A5 /* OllamaChunk+Mock.swift */,
+				13BD3AAA2F8448960059C0A5 /* MCPServerConfig.swift */,
 			);
 			path = entities;
 			sourceTree = "<group>";
@@ -447,6 +473,23 @@
 			path = invariant;
 			sourceTree = "<group>";
 		};
+		13BD3AAC2F84494C0059C0A5 /* github */ = {
+			isa = PBXGroup;
+			children = (
+				13BD3AAD2F84495A0059C0A5 /* GitHubMCPOAuthDelegate.swift */,
+				13BD3AB92F8457140059C0A5 /* GitHubMCPpatClient.swift */,
+			);
+			path = github;
+			sourceTree = "<group>";
+		};
+		13BD3AB12F844B3F0059C0A5 /* mcp */ = {
+			isa = PBXGroup;
+			children = (
+				13BD3AB22F844B4D0059C0A5 /* MCPClientService.swift */,
+			);
+			path = mcp;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -468,6 +511,7 @@
 			name = AIChallenge;
 			packageProductDependencies = (
 				1305B2392F75B405009A2D6C /* GRDB */,
+				13BD3AA82F84469F0059C0A5 /* MCP */,
 			);
 			productName = AIChallenge;
 			productReference = 133DA6EE2F682BFA00F8AE82 /* AIChallenge.app */;
@@ -553,6 +597,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				1305B2382F75B405009A2D6C /* XCRemoteSwiftPackageReference "GRDB" */,
+				13BD3AA72F84469F0059C0A5 /* XCRemoteSwiftPackageReference "swift-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 133DA6EF2F682BFA00F8AE82 /* Products */;
@@ -639,6 +684,7 @@
 				1305B2082F71B0A8009A2D6C /* Notification+ext.swift in Sources */,
 				1305B1FF2F7085CF009A2D6C /* OllamaAgent.swift in Sources */,
 				133DA72B2F684F5F00F8AE82 /* LLMURL.swift in Sources */,
+				13BD3AB32F844B4D0059C0A5 /* MCPClientService.swift in Sources */,
 				13BD3A842F82C2480059C0A5 /* InvariantValidationResult.swift in Sources */,
 				13BD3A752F82B3BF0059C0A5 /* TaskContextService.swift in Sources */,
 				13BD3A7D2F82C1250059C0A5 /* InvariantRepositoryProtocol.swift in Sources */,
@@ -646,12 +692,15 @@
 				133DA71A2F682C6300F8AE82 /* Constants.swift in Sources */,
 				13BD3A8A2F82D9700059C0A5 /* TaskRunStatus.swift in Sources */,
 				1305B2302F75AEFB009A2D6C /* MessageRepositoryProtocol.swift in Sources */,
+				13BD3ABA2F8457140059C0A5 /* GitHubMCPpatClient.swift in Sources */,
 				1305B2032F709919009A2D6C /* OllamaChunk.swift in Sources */,
 				1305B23E2F75B58A009A2D6C /* SQLiteDB.swift in Sources */,
 				1305B21E2F731607009A2D6C /* HiddenModifier.swift in Sources */,
 				1305B2152F71C775009A2D6C /* OpenRouterAgent.swift in Sources */,
 				13BD3A822F82C2230059C0A5 /* InvariantServiceProtocol.swift in Sources */,
 				13BD3A7A2F82C0ED0059C0A5 /* Invariant.swift in Sources */,
+				13BD3AAB2F8448960059C0A5 /* MCPServerConfig.swift in Sources */,
+				13BD3AAE2F84495A0059C0A5 /* GitHubMCPOAuthDelegate.swift in Sources */,
 				13BD3A4E2F7EE7070059C0A5 /* LongTermMemoryItem.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -817,6 +866,8 @@
 				DEVELOPMENT_TEAM = Z8JVJD6M2F;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AIChallenge/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -849,6 +900,8 @@
 				DEVELOPMENT_TEAM = Z8JVJD6M2F;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AIChallenge/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -1005,6 +1058,14 @@
 				kind = branch;
 			};
 		};
+		13BD3AA72F84469F0059C0A5 /* XCRemoteSwiftPackageReference "swift-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/modelcontextprotocol/swift-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.12.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1012,6 +1073,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1305B2382F75B405009A2D6C /* XCRemoteSwiftPackageReference "GRDB" */;
 			productName = GRDB;
+		};
+		13BD3AA82F84469F0059C0A5 /* MCP */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 13BD3AA72F84469F0059C0A5 /* XCRemoteSwiftPackageReference "swift-sdk" */;
+			productName = MCP;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

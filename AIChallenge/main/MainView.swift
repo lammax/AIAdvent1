@@ -19,6 +19,7 @@ struct MainView: View {
     @State private var showStatistics: Bool = false
     @State private var showUserProfile: Bool = false
     @State private var isTaskPaused: Bool = false
+    @State private var isMCPtest: Bool = false
     
     let formatterInt: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -76,13 +77,23 @@ struct MainView: View {
             }
 
             VStack {
-                Button {
-                    showUserProfile.toggle()
-                } label: {
-                    Image(systemName: "person.crop.circle.fill")
-                        .foregroundStyle(Color.black)
-                        .frame(width: 40, height: 40)
-                        .padding(.top, 20)
+                
+                HStack {
+                    Button {
+                        showUserProfile.toggle()
+                    } label: {
+                        Image(systemName: "person.crop.circle.fill")
+                            .foregroundStyle(Color.black)
+                            .frame(width: 40, height: 40)
+                    }
+                    
+                    Button {
+                        isMCPtest.toggle()
+                    } label: {
+                        Text("MCP test")
+                            .font(.title)
+                            .foregroundStyle(Color.black)
+                    }
                 }
                 
                 HStack(alignment: .top) {
@@ -126,6 +137,9 @@ struct MainView: View {
             UserProfileView(vm: UserProfileViewModel(), isOpen: $showUserProfile)
             
         }
+        .sheet(isPresented: $isMCPtest, content: {
+            MCPToolsScreen()
+        })
         .padding()
         .navigationBarTitle("AI Challenge")
 
