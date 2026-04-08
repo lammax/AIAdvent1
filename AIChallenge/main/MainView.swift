@@ -87,13 +87,7 @@ struct MainView: View {
                             .frame(width: 40, height: 40)
                     }
                     
-                    Button {
-                        isMCPtest.toggle()
-                    } label: {
-                        Text("MCP test")
-                            .font(.title)
-                            .foregroundStyle(Color.black)
-                    }
+                    Spacer()
                 }
                 
                 HStack(alignment: .top) {

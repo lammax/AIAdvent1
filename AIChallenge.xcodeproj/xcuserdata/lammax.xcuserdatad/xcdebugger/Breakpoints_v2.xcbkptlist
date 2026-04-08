@@ -55,38 +55,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "37DBF15E-A5D0-41A0-94A7-40213DCBA2E0"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "agents/OllamaAgent.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "632"
-            endingLineNumber = "632"
-            landmarkName = "OllamaAgent"
-            landmarkType = "3">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "3C42E303-1B92-4C98-ABDD-BD041DAFF7BA"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "agents/OllamaAgent.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "639"
-            endingLineNumber = "639"
-            landmarkName = "OllamaAgent"
-            landmarkType = "3">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "A89C1BA7-952B-45D2-9BA3-6CF02CB94D0A"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
@@ -235,6 +203,422 @@
             startingLineNumber = "281"
             endingLineNumber = "281"
             landmarkName = "sendRequest(method:params:requiresSession:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "agents/OllamaAgent.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "825"
+            endingLineNumber = "825"
+            landmarkName = "makeMCPToolResultMessageIfNeeded(for:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - b417d718cd95770a"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(1) suspend resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "825"
+                  endingLineNumber = "825">
+               </Location>
+               <Location
+                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - 7b49d778939fc2b2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(2) await resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "825"
+                  endingLineNumber = "825">
+               </Location>
+               <Location
+                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - 4369efd61027ff76"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(3) suspend resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "825"
+                  endingLineNumber = "825">
+               </Location>
+               <Location
+                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - 2b32ebb2fa013b74"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(4) suspend resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "825"
+                  endingLineNumber = "825">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "78A39C82-5D39-430A-9F11-88BE46D41013"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "agents/OllamaAgent.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "827"
+            endingLineNumber = "827"
+            landmarkName = "makeMCPToolResultMessageIfNeeded(for:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "78A39C82-5D39-430A-9F11-88BE46D41013 - b417d718cd9577b7"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(1) suspend resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "828"
+                  endingLineNumber = "828">
+               </Location>
+               <Location
+                  uuid = "78A39C82-5D39-430A-9F11-88BE46D41013 - 7b49d778939fc20f"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(2) await resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "828"
+                  endingLineNumber = "828">
+               </Location>
+               <Location
+                  uuid = "78A39C82-5D39-430A-9F11-88BE46D41013 - 2b32ebb2fa013bc9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(4) suspend resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "828"
+                  endingLineNumber = "828">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "8BE97A9D-1829-4B69-8235-14B10601AC62"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "33"
+            endingLineNumber = "33"
+            landmarkName = "healthURL()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "12A87339-4982-4372-9382-A2D7F872CA24"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "44"
+            endingLineNumber = "44"
+            landmarkName = "verifyServerReachable()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "8D4CFF20-5EF9-4D02-9DF8-F7133B6528DF"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "68"
+            endingLineNumber = "68"
+            landmarkName = "verifyServerReachable()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "DF3EC28F-CB52-4213-9AEB-270F65BE9C81"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "75"
+            endingLineNumber = "75"
+            landmarkName = "verifyServerReachable()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "DF3EC28F-CB52-4213-9AEB-270F65BE9C81 - 21b12aa16dc042e4"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(3) suspend resume partial function for AIChallenge.MCPToolExecutor.verifyServerReachable() async throws -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/services/mcp/MCPToolExecutor.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "75"
+                  endingLineNumber = "75">
+               </Location>
+               <Location
+                  uuid = "DF3EC28F-CB52-4213-9AEB-270F65BE9C81 - fe0a141be97ddce7"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(4) suspend resume partial function for AIChallenge.MCPToolExecutor.verifyServerReachable() async throws -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/services/mcp/MCPToolExecutor.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "75"
+                  endingLineNumber = "75">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "4DF4FA26-8F8B-4828-8D68-D8B4FCE66474"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "103"
+            endingLineNumber = "103"
+            landmarkName = "connectIfNeeded()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "152AC6E2-E094-4043-AACF-2DE206489823"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "56"
+            endingLineNumber = "56"
+            landmarkName = "verifyServerReachable()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "152AC6E2-E094-4043-AACF-2DE206489823 - 9900d81666b8bb7f"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(1) suspend resume partial function for AIChallenge.MCPToolExecutor.verifyServerReachable() async throws -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/services/mcp/MCPToolExecutor.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "56"
+                  endingLineNumber = "56">
+               </Location>
+               <Location
+                  uuid = "152AC6E2-E094-4043-AACF-2DE206489823 - b160502a13b7b0ab"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(2) await resume partial function for AIChallenge.MCPToolExecutor.verifyServerReachable() async throws -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/services/mcp/MCPToolExecutor.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "56"
+                  endingLineNumber = "56">
+               </Location>
+               <Location
+                  uuid = "152AC6E2-E094-4043-AACF-2DE206489823 - fe0a141be97de17a"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(4) suspend resume partial function for AIChallenge.MCPToolExecutor.verifyServerReachable() async throws -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/services/mcp/MCPToolExecutor.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "56"
+                  endingLineNumber = "56">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5A1702BB-D71A-4629-B000-766DAA9162E1"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "58"
+            endingLineNumber = "58"
+            landmarkName = "verifyServerReachable()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "44B5AE48-9036-4D91-A49B-1D67F531F933"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "59"
+            endingLineNumber = "59"
+            landmarkName = "verifyServerReachable()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "32BB0DF7-C797-49BE-B181-164313EACAF6"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "98"
+            endingLineNumber = "98"
+            landmarkName = "connectIfNeeded()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "E651C403-569E-47F9-AA44-0A4DE8E560A9"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "101"
+            endingLineNumber = "101"
+            landmarkName = "connectIfNeeded()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "15CA7461-BCA9-482E-BAAB-3D209763D69D"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "135"
+            endingLineNumber = "135"
+            landmarkName = "listTools()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "9B5E8BA0-30BB-4356-BFE6-62A621AF9EE9"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "agents/OllamaAgent.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "833"
+            endingLineNumber = "833"
+            landmarkName = "makeMCPToolResultMessageIfNeeded(for:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "6AA6E280-3764-4980-9440-42BD7AA1DB0B"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "agents/OllamaAgent.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "845"
+            endingLineNumber = "845"
+            landmarkName = "makeMCPToolResultMessageIfNeeded(for:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

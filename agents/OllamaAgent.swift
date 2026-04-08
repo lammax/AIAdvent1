@@ -26,6 +26,8 @@ final class OllamaAgent: LLMAgentProtocol {
     private let taskContextService: TaskContextServiceProtocol
     private let promptBuilder = TaskPromptBuilder()
     private let streamer: OllamaStreamer
+    private let mcpToolExecutor: MCPToolExecutor?
+    private let toolPlanner: ToolPlanningProtocol
     private let invariantService: InvariantServiceProtocol
     private let invariantFileName: String = "invariants"
     
@@ -49,6 +51,7 @@ final class OllamaAgent: LLMAgentProtocol {
     
     // MARK: - Task context
     private var currentTaskContext: TaskContext?
+    private var cachedMCPTools: [MCPToolDescriptor] = []
     
     // MARK: - Init
     
@@ -60,6 +63,8 @@ final class OllamaAgent: LLMAgentProtocol {
         taskContextService: TaskContextServiceProtocol = TaskContextService(),
         invariantService: InvariantServiceProtocol = InvariantService(),
         streamer: OllamaStreamer = OllamaStreamer(),
+        mcpToolExecutor: MCPToolExecutor = MCPToolExecutor(endpoint: URL(string: Constants.mcpServerLocalH_URI)!),
+        toolPlanner: ToolPlanningProtocol = DefaultToolPlanner(),
         maxMessages: Int = 12,
         summaryTrigger: Int = 16,
         strategy: ContextStrategyProtocol? = nil
@@ -71,6 +76,8 @@ final class OllamaAgent: LLMAgentProtocol {
         self.taskContextService = taskContextService
         self.invariantService = invariantService
         self.streamer = streamer
+        self.mcpToolExecutor = mcpToolExecutor
+        self.toolPlanner = toolPlanner
         self.maxMessages = maxMessages
         self.summaryTrigger = summaryTrigger
         self.strategy = strategy ?? SlidingWindowStrategy(maxMessages: maxMessages)
@@ -112,6 +119,7 @@ final class OllamaAgent: LLMAgentProtocol {
             defer { isSending = false }
             
             await prepareIfNeeded()
+            await refreshMCPToolsIfNeeded()
             
             let normalizedOptions = normalizeOptions(options)
             self.options = normalizedOptions
@@ -147,6 +155,12 @@ final class OllamaAgent: LLMAgentProtocol {
             await memoryService.appendMessage(userMessage)
             
             updateMemoryLayers(with: userMessage)
+            
+            if let toolResultMessage = await makeMCPToolResultMessageIfNeeded(for: prompt.text) {
+                messages.append(toolResultMessage)
+                strategy.onAssistantMessage(toolResultMessage)
+                await memoryService.appendMessage(toolResultMessage)
+            }
             
             if shouldSummarize {
                 try? await summarizeHistoryIfNeeded()
@@ -256,6 +270,7 @@ final class OllamaAgent: LLMAgentProtocol {
         await loadHistory()
         self.currentTaskContext = await taskContextService.loadCurrent(agentId: agentId)
         self.userProfile = await userProfileService.fetchProfile(userId: userId) ??  self.userProfile
+        await refreshMCPToolsIfNeeded()
         
         isPrepared = true
     }
@@ -310,6 +325,31 @@ final class OllamaAgent: LLMAgentProtocol {
                     agentId: agentId,
                     role: .system,
                     content: invariantPrompt
+                )
+            )
+        }
+        
+        if !cachedMCPTools.isEmpty {
+            let text = cachedMCPTools
+                .map { tool in
+                    if let description = tool.description, !description.isEmpty {
+                        return "- \(tool.name): \(description)"
+                    } else {
+                        return "- \(tool.name)"
+                    }
+                }
+                .joined(separator: "\n")
+
+            context.append(
+                Message(
+                    agentId: agentId,
+                    role: .system,
+                    content: """
+                    Available MCP tools:
+                    \(text)
+
+                    Use tool results when they are present in the conversation context.
+                    """
                 )
             )
         }
@@ -759,6 +799,67 @@ final class OllamaAgent: LLMAgentProtocol {
         case .invalidStep:
             return "The task step is inconsistent. Please reload the task state."
         }
+    }
+    
+    // MARK: - MCP
+    
+    private func refreshMCPToolsIfNeeded() async {
+        guard let mcpToolExecutor else { return }
+
+        do {
+            cachedMCPTools = try await mcpToolExecutor.listTools()
+            print("MCP tools loaded: \(cachedMCPTools.map(\.name))")
+        } catch {
+            print("refreshMCPToolsIfNeeded error: \(error.localizedDescription)")
+        }
+    }
+
+    private func makeMCPToolResultMessageIfNeeded(for userText: String) async -> Message? {
+        guard let mcpToolExecutor else { return nil }
+
+        let toolPlan = toolPlanner.makePlan(
+            for: userText,
+            availableTools: cachedMCPTools
+        )
+
+        guard let toolPlan else { return nil }
+
+        do {
+            let result = try await mcpToolExecutor.callTool(
+                name: toolPlan.name,
+                arguments: toolPlan.arguments
+            )
+
+            return Message(
+                agentId: agentId,
+                role: .system,
+                content: """
+                MCP tool result:
+                tool: \(result.toolName)
+                arguments: \(formatToolArguments(toolPlan.arguments))
+
+                \(result.content)
+                """
+            )
+        } catch {
+            return Message(
+                agentId: agentId,
+                role: .system,
+                content: """
+                MCP tool call failed.
+                tool: \(toolPlan.name)
+                arguments: \(formatToolArguments(toolPlan.arguments))
+                error: \(error.localizedDescription)
+                """
+            )
+        }
+    }
+
+    private func formatToolArguments(_ arguments: [String: Any]) -> String {
+        arguments
+            .sorted { $0.key < $1.key }
+            .map { "\($0.key)=\($0.value)" }
+            .joined(separator: ", ")
     }
     
     func setUser(_ profile: UserProfile) {

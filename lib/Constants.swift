@@ -12,6 +12,8 @@ struct Constants {
     static let maxAnswerLength: Int = 1000
     static let maxMessages: Int = 10
     static let githubCopilotURI: String = "https://api.githubcopilot.com/mcp/"
+    static let mcpServerURI: String = "http://127.0.0.1:3001/mcp"
+    static let mcpServerLocalH_URI: String = "http://localhost:3001/mcp"
     
     static let defaultOllamaOptions: [String: Encodable] = [
         "model": OllamaModel.llama3,

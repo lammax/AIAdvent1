@@ -71,6 +71,12 @@
 		13BD3AAE2F84495A0059C0A5 /* GitHubMCPOAuthDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3AAD2F84495A0059C0A5 /* GitHubMCPOAuthDelegate.swift */; };
 		13BD3AB32F844B4D0059C0A5 /* MCPClientService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3AB22F844B4D0059C0A5 /* MCPClientService.swift */; };
 		13BD3ABA2F8457140059C0A5 /* GitHubMCPpatClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3AB92F8457140059C0A5 /* GitHubMCPpatClient.swift */; };
+		13BD3AC22F8574EF0059C0A5 /* Claude.md in Resources */ = {isa = PBXBuildFile; fileRef = 13BD3AC12F8574EF0059C0A5 /* Claude.md */; };
+		13DD3A452F86CA7300CBB182 /* MCPToolExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A442F86CA7300CBB182 /* MCPToolExecutor.swift */; };
+		13DD3A472F86CAC900CBB182 /* MCPToolExecutorProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A462F86CAC900CBB182 /* MCPToolExecutorProtocol.swift */; };
+		13DD3A4A2F86D09100CBB182 /* DefaultToolPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A492F86D09100CBB182 /* DefaultToolPlanner.swift */; };
+		13DD3A4C2F86D0B600CBB182 /* ToolPlanningProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A4B2F86D0B600CBB182 /* ToolPlanningProtocol.swift */; };
+		13DD3A4E2F86D0EF00CBB182 /* ToolInvocationPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A4D2F86D0EF00CBB182 /* ToolInvocationPlan.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -156,6 +162,12 @@
 		13BD3AAD2F84495A0059C0A5 /* GitHubMCPOAuthDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubMCPOAuthDelegate.swift; sourceTree = "<group>"; };
 		13BD3AB22F844B4D0059C0A5 /* MCPClientService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPClientService.swift; sourceTree = "<group>"; };
 		13BD3AB92F8457140059C0A5 /* GitHubMCPpatClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubMCPpatClient.swift; sourceTree = "<group>"; };
+		13BD3AC12F8574EF0059C0A5 /* Claude.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Claude.md; sourceTree = "<group>"; };
+		13DD3A442F86CA7300CBB182 /* MCPToolExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPToolExecutor.swift; sourceTree = "<group>"; };
+		13DD3A462F86CAC900CBB182 /* MCPToolExecutorProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPToolExecutorProtocol.swift; sourceTree = "<group>"; };
+		13DD3A492F86D09100CBB182 /* DefaultToolPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultToolPlanner.swift; sourceTree = "<group>"; };
+		13DD3A4B2F86D0B600CBB182 /* ToolPlanningProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolPlanningProtocol.swift; sourceTree = "<group>"; };
+		13DD3A4D2F86D0EF00CBB182 /* ToolInvocationPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolInvocationPlan.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -275,6 +287,7 @@
 		1305B2322F75AFCA009A2D6C /* services */ = {
 			isa = PBXGroup;
 			children = (
+				13DD3A482F86D07F00CBB182 /* planning */,
 				13BD3AB12F844B3F0059C0A5 /* mcp */,
 				13BD3AAC2F84494C0059C0A5 /* github */,
 				13BD3A802F82C2140059C0A5 /* invariant */,
@@ -369,6 +382,7 @@
 				13BD3A8B2F82D9B40059C0A5 /* TaskTransitionError.swift */,
 				13BD3A8D2F82DBA30059C0A5 /* OllamaChunk+Mock.swift */,
 				13BD3AAA2F8448960059C0A5 /* MCPServerConfig.swift */,
+				13DD3A4D2F86D0EF00CBB182 /* ToolInvocationPlan.swift */,
 			);
 			path = entities;
 			sourceTree = "<group>";
@@ -451,6 +465,7 @@
 			isa = PBXGroup;
 			children = (
 				13BD3A772F82C0A60059C0A5 /* invariants.md */,
+				13BD3AC12F8574EF0059C0A5 /* Claude.md */,
 			);
 			path = support;
 			sourceTree = "<group>";
@@ -486,8 +501,19 @@
 			isa = PBXGroup;
 			children = (
 				13BD3AB22F844B4D0059C0A5 /* MCPClientService.swift */,
+				13DD3A442F86CA7300CBB182 /* MCPToolExecutor.swift */,
+				13DD3A462F86CAC900CBB182 /* MCPToolExecutorProtocol.swift */,
 			);
 			path = mcp;
+			sourceTree = "<group>";
+		};
+		13DD3A482F86D07F00CBB182 /* planning */ = {
+			isa = PBXGroup;
+			children = (
+				13DD3A492F86D09100CBB182 /* DefaultToolPlanner.swift */,
+				13DD3A4B2F86D0B600CBB182 /* ToolPlanningProtocol.swift */,
+			);
+			path = planning;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -617,6 +643,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				133DA6F62F682BFE00F8AE82 /* Assets.xcassets in Resources */,
+				13BD3AC22F8574EF0059C0A5 /* Claude.md in Resources */,
 				13BD3A782F82C0A60059C0A5 /* invariants.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -655,6 +682,7 @@
 				13BD3A7F2F82C1410059C0A5 /* MarkdownInvariantRepository.swift in Sources */,
 				1305B1FC2F7081CE009A2D6C /* MessageRole.swift in Sources */,
 				13BD3A8C2F82D9B40059C0A5 /* TaskTransitionError.swift in Sources */,
+				13DD3A472F86CAC900CBB182 /* MCPToolExecutorProtocol.swift in Sources */,
 				13BD3A4C2F7EE6F40059C0A5 /* WorkingMemoryItem.swift in Sources */,
 				13BD3A3D2F7E47F20059C0A5 /* BranchingStrategy.swift in Sources */,
 				1305B2052F71A2A6009A2D6C /* OllamaModel.swift in Sources */,
@@ -664,6 +692,8 @@
 				13BD3A4A2F7EE6810059C0A5 /* MemoryService.swift in Sources */,
 				1305B2112F71B707009A2D6C /* OllamaPreset.swift in Sources */,
 				13BD3A8E2F82DBA30059C0A5 /* OllamaChunk+Mock.swift in Sources */,
+				13DD3A452F86CA7300CBB182 /* MCPToolExecutor.swift in Sources */,
+				13DD3A4C2F86D0B600CBB182 /* ToolPlanningProtocol.swift in Sources */,
 				1305B2192F730A2B009A2D6C /* LLMOptions.swift in Sources */,
 				13BD3A522F7EFFFB0059C0A5 /* UserProfile.swift in Sources */,
 				1305B21B2F730BE0009A2D6C /* LLMProvider.swift in Sources */,
@@ -678,6 +708,7 @@
 				13BD3A732F82B38F0059C0A5 /* TaskContextServiceProtocol.swift in Sources */,
 				13BD3A402F7EE55F0059C0A5 /* WorkingMemoryRepositoryProtocol.swift in Sources */,
 				133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */,
+				13DD3A4A2F86D09100CBB182 /* DefaultToolPlanner.swift in Sources */,
 				1305B2012F70885F009A2D6C /* Message.swift in Sources */,
 				1305B2172F7309F6009A2D6C /* OptionsBuilder.swift in Sources */,
 				13BD3A472F7EE5F90059C0A5 /* LongTermMemoryRepository.swift in Sources */,
@@ -693,6 +724,7 @@
 				13BD3A8A2F82D9700059C0A5 /* TaskRunStatus.swift in Sources */,
 				1305B2302F75AEFB009A2D6C /* MessageRepositoryProtocol.swift in Sources */,
 				13BD3ABA2F8457140059C0A5 /* GitHubMCPpatClient.swift in Sources */,
+				13DD3A4E2F86D0EF00CBB182 /* ToolInvocationPlan.swift in Sources */,
 				1305B2032F709919009A2D6C /* OllamaChunk.swift in Sources */,
 				1305B23E2F75B58A009A2D6C /* SQLiteDB.swift in Sources */,
 				1305B21E2F731607009A2D6C /* HiddenModifier.swift in Sources */,
