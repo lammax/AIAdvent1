@@ -216,13 +216,13 @@
             filePath = "agents/OllamaAgent.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "825"
-            endingLineNumber = "825"
+            startingLineNumber = "826"
+            endingLineNumber = "826"
             landmarkName = "makeMCPToolResultMessageIfNeeded(for:)"
             landmarkType = "7">
             <Locations>
                <Location
-                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - b417d718cd95770a"
+                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - b417d718cd957769"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -232,11 +232,11 @@
                   urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "825"
-                  endingLineNumber = "825">
+                  startingLineNumber = "826"
+                  endingLineNumber = "826">
                </Location>
                <Location
-                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - 7b49d778939fc2b2"
+                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - 7b49d778939fc2d1"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -246,11 +246,11 @@
                   urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "825"
-                  endingLineNumber = "825">
+                  startingLineNumber = "826"
+                  endingLineNumber = "826">
                </Location>
                <Location
-                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - 4369efd61027ff76"
+                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - 4369efd61027ff15"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -260,11 +260,11 @@
                   urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "825"
-                  endingLineNumber = "825">
+                  startingLineNumber = "826"
+                  endingLineNumber = "826">
                </Location>
                <Location
-                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - 2b32ebb2fa013b74"
+                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - 2b32ebb2fa013b17"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -274,8 +274,8 @@
                   urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "825"
-                  endingLineNumber = "825">
+                  startingLineNumber = "826"
+                  endingLineNumber = "826">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -290,13 +290,13 @@
             filePath = "agents/OllamaAgent.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "827"
-            endingLineNumber = "827"
+            startingLineNumber = "828"
+            endingLineNumber = "828"
             landmarkName = "makeMCPToolResultMessageIfNeeded(for:)"
             landmarkType = "7">
             <Locations>
                <Location
-                  uuid = "78A39C82-5D39-430A-9F11-88BE46D41013 - b417d718cd9577b7"
+                  uuid = "78A39C82-5D39-430A-9F11-88BE46D41013 - b417d718cd957796"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -306,11 +306,11 @@
                   urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "828"
-                  endingLineNumber = "828">
+                  startingLineNumber = "829"
+                  endingLineNumber = "829">
                </Location>
                <Location
-                  uuid = "78A39C82-5D39-430A-9F11-88BE46D41013 - 7b49d778939fc20f"
+                  uuid = "78A39C82-5D39-430A-9F11-88BE46D41013 - 7b49d778939fc22e"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -320,11 +320,11 @@
                   urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "828"
-                  endingLineNumber = "828">
+                  startingLineNumber = "829"
+                  endingLineNumber = "829">
                </Location>
                <Location
-                  uuid = "78A39C82-5D39-430A-9F11-88BE46D41013 - 2b32ebb2fa013bc9"
+                  uuid = "78A39C82-5D39-430A-9F11-88BE46D41013 - 2b32ebb2fa013be8"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -334,8 +334,8 @@
                   urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "828"
-                  endingLineNumber = "828">
+                  startingLineNumber = "829"
+                  endingLineNumber = "829">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -600,8 +600,8 @@
             filePath = "agents/OllamaAgent.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "833"
-            endingLineNumber = "833"
+            startingLineNumber = "834"
+            endingLineNumber = "834"
             landmarkName = "makeMCPToolResultMessageIfNeeded(for:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -616,9 +616,25 @@
             filePath = "agents/OllamaAgent.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "845"
-            endingLineNumber = "845"
+            startingLineNumber = "846"
+            endingLineNumber = "846"
             landmarkName = "makeMCPToolResultMessageIfNeeded(for:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "78AB806F-DBCE-458E-8BED-D74173D1A9D1"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "agents/OllamaAgent.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "160"
+            endingLineNumber = "160"
+            landmarkName = "send(_:options:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

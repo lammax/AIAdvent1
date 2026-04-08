@@ -157,6 +157,7 @@ final class OllamaAgent: LLMAgentProtocol {
             updateMemoryLayers(with: userMessage)
             
             if let toolResultMessage = await makeMCPToolResultMessageIfNeeded(for: prompt.text) {
+                self.onToken?(toolResultMessage.content)
                 messages.append(toolResultMessage)
                 strategy.onAssistantMessage(toolResultMessage)
                 await memoryService.appendMessage(toolResultMessage)
