@@ -77,6 +77,8 @@
 		13DD3A4A2F86D09100CBB182 /* DefaultToolPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A492F86D09100CBB182 /* DefaultToolPlanner.swift */; };
 		13DD3A4C2F86D0B600CBB182 /* ToolPlanningProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A4B2F86D0B600CBB182 /* ToolPlanningProtocol.swift */; };
 		13DD3A4E2F86D0EF00CBB182 /* ToolInvocationPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A4D2F86D0EF00CBB182 /* ToolInvocationPlan.swift */; };
+		13DD3A512F881B3400CBB182 /* SummaryPollingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A502F881B3400CBB182 /* SummaryPollingService.swift */; };
+		13DD3A582F8820BB00CBB182 /* ScheduledJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A572F8820BA00CBB182 /* ScheduledJob.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -168,6 +170,8 @@
 		13DD3A492F86D09100CBB182 /* DefaultToolPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultToolPlanner.swift; sourceTree = "<group>"; };
 		13DD3A4B2F86D0B600CBB182 /* ToolPlanningProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolPlanningProtocol.swift; sourceTree = "<group>"; };
 		13DD3A4D2F86D0EF00CBB182 /* ToolInvocationPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolInvocationPlan.swift; sourceTree = "<group>"; };
+		13DD3A502F881B3400CBB182 /* SummaryPollingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryPollingService.swift; sourceTree = "<group>"; };
+		13DD3A572F8820BA00CBB182 /* ScheduledJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduledJob.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -287,6 +291,7 @@
 		1305B2322F75AFCA009A2D6C /* services */ = {
 			isa = PBXGroup;
 			children = (
+				13DD3A4F2F881B2500CBB182 /* polling */,
 				13DD3A482F86D07F00CBB182 /* planning */,
 				13BD3AB12F844B3F0059C0A5 /* mcp */,
 				13BD3AAC2F84494C0059C0A5 /* github */,
@@ -383,6 +388,7 @@
 				13BD3A8D2F82DBA30059C0A5 /* OllamaChunk+Mock.swift */,
 				13BD3AAA2F8448960059C0A5 /* MCPServerConfig.swift */,
 				13DD3A4D2F86D0EF00CBB182 /* ToolInvocationPlan.swift */,
+				13DD3A572F8820BA00CBB182 /* ScheduledJob.swift */,
 			);
 			path = entities;
 			sourceTree = "<group>";
@@ -514,6 +520,14 @@
 				13DD3A4B2F86D0B600CBB182 /* ToolPlanningProtocol.swift */,
 			);
 			path = planning;
+			sourceTree = "<group>";
+		};
+		13DD3A4F2F881B2500CBB182 /* polling */ = {
+			isa = PBXGroup;
+			children = (
+				13DD3A502F881B3400CBB182 /* SummaryPollingService.swift */,
+			);
+			path = polling;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -697,6 +711,7 @@
 				1305B2192F730A2B009A2D6C /* LLMOptions.swift in Sources */,
 				13BD3A522F7EFFFB0059C0A5 /* UserProfile.swift in Sources */,
 				1305B21B2F730BE0009A2D6C /* LLMProvider.swift in Sources */,
+				13DD3A512F881B3400CBB182 /* SummaryPollingService.swift in Sources */,
 				133DA6F22F682BFA00F8AE82 /* AIChallengeApp.swift in Sources */,
 				13BD3A5C2F7F01190059C0A5 /* UserProfileService.swift in Sources */,
 				13BD3A702F82B30E0059C0A5 /* TaskContextRepository.swift in Sources */,
@@ -724,6 +739,7 @@
 				13BD3A8A2F82D9700059C0A5 /* TaskRunStatus.swift in Sources */,
 				1305B2302F75AEFB009A2D6C /* MessageRepositoryProtocol.swift in Sources */,
 				13BD3ABA2F8457140059C0A5 /* GitHubMCPpatClient.swift in Sources */,
+				13DD3A582F8820BB00CBB182 /* ScheduledJob.swift in Sources */,
 				13DD3A4E2F86D0EF00CBB182 /* ToolInvocationPlan.swift in Sources */,
 				1305B2032F709919009A2D6C /* OllamaChunk.swift in Sources */,
 				1305B23E2F75B58A009A2D6C /* SQLiteDB.swift in Sources */,

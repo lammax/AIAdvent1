@@ -453,82 +453,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "152AC6E2-E094-4043-AACF-2DE206489823"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "services/mcp/MCPToolExecutor.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "56"
-            endingLineNumber = "56"
-            landmarkName = "verifyServerReachable()"
-            landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "152AC6E2-E094-4043-AACF-2DE206489823 - 9900d81666b8bb7f"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(1) suspend resume partial function for AIChallenge.MCPToolExecutor.verifyServerReachable() async throws -&gt; ()"
-                  moduleName = "AIChallenge.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/services/mcp/MCPToolExecutor.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "56"
-                  endingLineNumber = "56">
-               </Location>
-               <Location
-                  uuid = "152AC6E2-E094-4043-AACF-2DE206489823 - b160502a13b7b0ab"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(2) await resume partial function for AIChallenge.MCPToolExecutor.verifyServerReachable() async throws -&gt; ()"
-                  moduleName = "AIChallenge.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/services/mcp/MCPToolExecutor.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "56"
-                  endingLineNumber = "56">
-               </Location>
-               <Location
-                  uuid = "152AC6E2-E094-4043-AACF-2DE206489823 - fe0a141be97de17a"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(4) suspend resume partial function for AIChallenge.MCPToolExecutor.verifyServerReachable() async throws -&gt; ()"
-                  moduleName = "AIChallenge.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/services/mcp/MCPToolExecutor.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "56"
-                  endingLineNumber = "56">
-               </Location>
-            </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "5A1702BB-D71A-4629-B000-766DAA9162E1"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "services/mcp/MCPToolExecutor.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "58"
-            endingLineNumber = "58"
-            landmarkName = "verifyServerReachable()"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "44B5AE48-9036-4D91-A49B-1D67F531F933"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
@@ -539,54 +463,6 @@
             startingLineNumber = "59"
             endingLineNumber = "59"
             landmarkName = "verifyServerReachable()"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "32BB0DF7-C797-49BE-B181-164313EACAF6"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "services/mcp/MCPToolExecutor.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "98"
-            endingLineNumber = "98"
-            landmarkName = "connectIfNeeded()"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "E651C403-569E-47F9-AA44-0A4DE8E560A9"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "services/mcp/MCPToolExecutor.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "101"
-            endingLineNumber = "101"
-            landmarkName = "connectIfNeeded()"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "15CA7461-BCA9-482E-BAAB-3D209763D69D"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "services/mcp/MCPToolExecutor.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "135"
-            endingLineNumber = "135"
-            landmarkName = "listTools()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -635,6 +511,144 @@
             startingLineNumber = "160"
             endingLineNumber = "160"
             landmarkName = "send(_:options:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "9D85FACF-8235-4D43-B2C2-3586BB6FC0B8"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AIChallenge/main/MainViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "211"
+            endingLineNumber = "211"
+            landmarkName = "createSummaryJobAndOpen(owner:repo:openScreen:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "2441F9BE-8C27-4DBF-9682-209D62128EC3"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "193"
+            endingLineNumber = "193"
+            landmarkName = "callTool(name:arguments:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "636A0ABB-7E76-4A78-88AE-32184233DB49"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "203"
+            endingLineNumber = "203"
+            landmarkName = "callTool(name:arguments:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "636A0ABB-7E76-4A78-88AE-32184233DB49 - 2cd25e73cb70b301"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(3) suspend resume partial function for AIChallenge.MCPToolExecutor.callTool(name: Swift.String, arguments: Swift.Dictionary&lt;Swift.String, MCP.Value&gt;) async throws -&gt; AIChallenge.MCPToolCallResult"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/services/mcp/MCPToolExecutor.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "203"
+                  endingLineNumber = "203">
+               </Location>
+               <Location
+                  uuid = "636A0ABB-7E76-4A78-88AE-32184233DB49 - 7ffb9caaceed4f63"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(5) suspend resume partial function for AIChallenge.MCPToolExecutor.callTool(name: Swift.String, arguments: Swift.Dictionary&lt;Swift.String, MCP.Value&gt;) async throws -&gt; AIChallenge.MCPToolCallResult"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/services/mcp/MCPToolExecutor.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "203"
+                  endingLineNumber = "203">
+               </Location>
+               <Location
+                  uuid = "636A0ABB-7E76-4A78-88AE-32184233DB49 - 9cae971b529b34e6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(10) suspend resume partial function for AIChallenge.MCPToolExecutor.callTool(name: Swift.String, arguments: Swift.Dictionary&lt;Swift.String, MCP.Value&gt;) async throws -&gt; AIChallenge.MCPToolCallResult"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/services/mcp/MCPToolExecutor.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "203"
+                  endingLineNumber = "203">
+               </Location>
+               <Location
+                  uuid = "636A0ABB-7E76-4A78-88AE-32184233DB49 - e1bcdd92850531c9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(11) suspend resume partial function for AIChallenge.MCPToolExecutor.callTool(name: Swift.String, arguments: Swift.Dictionary&lt;Swift.String, MCP.Value&gt;) async throws -&gt; AIChallenge.MCPToolCallResult"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/services/mcp/MCPToolExecutor.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "203"
+                  endingLineNumber = "203">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "0CAEC897-8D53-4E1F-85A7-A3598D6D3A25"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "services/mcp/MCPToolExecutor.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "178"
+            endingLineNumber = "178"
+            landmarkName = "callTool(name:arguments:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5EF9F333-8E11-420F-9020-7C5D70CB80C1"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AIChallenge/main/MainViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "205"
+            endingLineNumber = "205"
+            landmarkName = "createSummaryJobAndOpen(owner:repo:openScreen:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

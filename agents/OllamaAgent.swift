@@ -63,7 +63,7 @@ final class OllamaAgent: LLMAgentProtocol {
         taskContextService: TaskContextServiceProtocol = TaskContextService(),
         invariantService: InvariantServiceProtocol = InvariantService(),
         streamer: OllamaStreamer = OllamaStreamer(),
-        mcpToolExecutor: MCPToolExecutor = MCPToolExecutor(endpoint: URL(string: Constants.mcpServerLocalH_URI)!),
+        mcpToolExecutor: MCPToolExecutor,
         toolPlanner: ToolPlanningProtocol = DefaultToolPlanner(),
         maxMessages: Int = 12,
         summaryTrigger: Int = 16,

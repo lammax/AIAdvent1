@@ -33,23 +33,23 @@ final class MCPToolsViewModel {
     }
     
     // Лучше доставать PAT из Keychain/конфига, а не хардкодить.
-        private let client = GitHubMCPpatClient(
-            pat: "",
-            clientName: "AIChallenge",
-            clientVersion: "1.0.0"
-        )
+    private let client = GitHubMCPpatClient(
+        pat: "",
+        clientName: "AIChallenge",
+        clientVersion: "1.0.0"
+    )
 
-        func loadToolsPAT() async {
-            isLoading = true
-            errorText = nil
+    func loadToolsPAT() async {
+        isLoading = true
+        errorText = nil
 
-            do {
-                toolsPAT = try await client.listTools()
-            } catch {
-                toolsPAT = []
-                errorText = error.localizedDescription
-            }
-
-            isLoading = false
+        do {
+            toolsPAT = try await client.listTools()
+        } catch {
+            toolsPAT = []
+            errorText = error.localizedDescription
         }
+
+        isLoading = false
+    }
 }

@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import MCP
 
 @MainActor
 class MainViewModel: ObservableObject {
@@ -19,7 +20,8 @@ class MainViewModel: ObservableObject {
     var provider: LLMProvider = .ollama
     var userProfile: UserProfile = UserProfile.defaultProfile
     
-    let ollama: OllamaAgent = OllamaAgent()
+    let ollama: OllamaAgent
+    let mcpToolExecutor: MCPToolExecutor = MCPToolExecutor(endpoint: URL(string: Constants.mcpServerLocalH_URI)!)
     
     let openRouter = OpenRouterAgent()
     
@@ -30,6 +32,7 @@ class MainViewModel: ObservableObject {
     
     
     init() {
+        self.ollama = OllamaAgent(mcpToolExecutor: mcpToolExecutor)
         setupListeners()
     }
 
@@ -115,9 +118,11 @@ class MainViewModel: ObservableObject {
         case .someText: storeOrErase()
         }
         
-        ollama.onToken = { [weak self] token in
-            guard let self else { return }
-            answer += token
+        ollama.onToken = { token in
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                answer += token
+            }
         }
         
         ollama.onComplete = { [weak self] ollamaChunk in
@@ -176,6 +181,35 @@ class MainViewModel: ObservableObject {
             ollama.pauseTask()
         } else {
             ollama.resumeTask()
+        }
+    }
+    
+    @MainActor
+    func createSummaryJobAndOpen(
+        owner: String,
+        repo: String,
+        openScreen: @escaping (String) -> Void
+    ) {
+        Task {
+            do {
+                let result = try await mcpToolExecutor.callTool(
+                    name: "schedule_summary",
+                    arguments: [
+                        "owner": .string(owner),
+                        "repo": .string(repo),
+                        "interval_seconds": .double(6)
+                    ]
+                )
+
+                guard let jobId = JobIDParser.extractJobID(from: result.content) else {
+                    print("Failed to parse job ID from: \(result.content)")
+                    return
+                }
+
+                openScreen(jobId)
+            } catch {
+                print("Failed to schedule summary: \(error.localizedDescription)")
+            }
         }
     }
 }

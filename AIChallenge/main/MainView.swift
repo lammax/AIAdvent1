@@ -20,6 +20,7 @@ struct MainView: View {
     @State private var showUserProfile: Bool = false
     @State private var isTaskPaused: Bool = false
     @State private var isMCPtest: Bool = false
+    @State private var scheduledJob: ScheduledJob?
     
     let formatterInt: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -88,6 +89,17 @@ struct MainView: View {
                     }
                     
                     Spacer()
+                    
+                    Button {
+                        viewModel.createSummaryJobAndOpen(
+                            owner: "apple",
+                            repo: "swift"
+                        ) { jobId in
+                            scheduledJob = ScheduledJob(id: jobId)
+                        }
+                    } label: {
+                        Text("Schedule summary for apple/swift")
+                    }
                 }
                 
                 HStack(alignment: .top) {
@@ -134,6 +146,9 @@ struct MainView: View {
         .sheet(isPresented: $isMCPtest, content: {
             MCPToolsScreen()
         })
+        .sheet(item: $scheduledJob) { job in
+            SummaryScreen(jobId: job.id, executor: viewModel.mcpToolExecutor)
+        }
         .padding()
         .navigationBarTitle("AI Challenge")
 
