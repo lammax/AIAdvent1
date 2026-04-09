@@ -21,6 +21,7 @@ struct MainView: View {
     @State private var isTaskPaused: Bool = false
     @State private var isMCPtest: Bool = false
     @State private var scheduledJob: ScheduledJob?
+    @State private var isPipelineTest: Bool = false
     
     let formatterInt: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -88,8 +89,6 @@ struct MainView: View {
                             .frame(width: 40, height: 40)
                     }
                     
-                    Spacer()
-                    
                     Button {
                         viewModel.createSummaryJobAndOpen(
                             owner: "apple",
@@ -98,7 +97,13 @@ struct MainView: View {
                             scheduledJob = ScheduledJob(id: jobId)
                         }
                     } label: {
-                        Text("Schedule summary for apple/swift")
+                        Text("Schedule summary")
+                    }
+                    
+                    Button {
+                        isPipelineTest.toggle()
+                    } label: {
+                        Text("Pipeline")
                     }
                 }
                 
@@ -145,6 +150,9 @@ struct MainView: View {
         }
         .sheet(isPresented: $isMCPtest, content: {
             MCPToolsScreen()
+        })
+        .sheet(isPresented: $isPipelineTest, content: {
+            PipelineScreen(executor: viewModel.mcpToolExecutor)
         })
         .sheet(item: $scheduledJob) { job in
             SummaryScreen(jobId: job.id, executor: viewModel.mcpToolExecutor)
