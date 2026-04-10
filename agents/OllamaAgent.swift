@@ -26,8 +26,9 @@ final class OllamaAgent: LLMAgentProtocol {
     private let taskContextService: TaskContextServiceProtocol
     private let promptBuilder = TaskPromptBuilder()
     private let streamer: OllamaStreamer
-    private let mcpToolExecutor: MCPToolExecutor?
-    private let toolPlanner: ToolPlanningProtocol
+    
+    private let mcpOrchestrator: MCPOrchestratorProtocol?
+    
     private let invariantService: InvariantServiceProtocol
     private let invariantFileName: String = "invariants"
     
@@ -63,8 +64,6 @@ final class OllamaAgent: LLMAgentProtocol {
         taskContextService: TaskContextServiceProtocol = TaskContextService(),
         invariantService: InvariantServiceProtocol = InvariantService(),
         streamer: OllamaStreamer = OllamaStreamer(),
-        mcpToolExecutor: MCPToolExecutor,
-        toolPlanner: ToolPlanningProtocol = DefaultToolPlanner(),
         maxMessages: Int = 12,
         summaryTrigger: Int = 16,
         strategy: ContextStrategyProtocol? = nil
@@ -76,8 +75,10 @@ final class OllamaAgent: LLMAgentProtocol {
         self.taskContextService = taskContextService
         self.invariantService = invariantService
         self.streamer = streamer
-        self.mcpToolExecutor = mcpToolExecutor
-        self.toolPlanner = toolPlanner
+        self.mcpOrchestrator = MCPOrchestrator(
+            streamer: streamer,
+            maxSteps: 5
+        )
         self.maxMessages = maxMessages
         self.summaryTrigger = summaryTrigger
         self.strategy = strategy ?? SlidingWindowStrategy(maxMessages: maxMessages)
@@ -156,44 +157,32 @@ final class OllamaAgent: LLMAgentProtocol {
             
             updateMemoryLayers(with: userMessage)
             
-            if let toolResultMessage = await makeMCPToolResultMessageIfNeeded(for: prompt.text) {
-                self.onToken?(toolResultMessage.content)
-                messages.append(toolResultMessage)
-                strategy.onAssistantMessage(toolResultMessage)
-                await memoryService.appendMessage(toolResultMessage)
-            }
-            
-            if shouldSummarize {
-                try? await summarizeHistoryIfNeeded()
-            }
-            
-            let context = await buildContext()
-            
-            var fullResponse = ""
-            
-            streamer.onToken = { [weak self] token in
-                fullResponse += token
-                DispatchQueue.main.async {
-                    self?.onToken?(token)
+            let baseContext = await buildContext()
+
+            if let orchestration = try? await mcpOrchestrator?.run(
+                agentId: agentId,
+                userText: prompt.text,
+                baseContext: baseContext,
+                options: makeAnyOptions(from: normalizedOptions)
+            ) {
+                for toolMessage in orchestration.toolMessages {
+                    messages.append(toolMessage)
+                    strategy.onAssistantMessage(toolMessage)
+                    await memoryService.appendMessage(toolMessage)
                 }
-            }
-            
-            streamer.onComplete = { [weak self] ollamaChunk in
-                guard let self else { return }
-                
-                let finalText = fullResponse.trimmingCharacters(in: .whitespacesAndNewlines)
-                let content = finalText.isEmpty ? ollamaChunk.message.content : finalText
-                
-                Task {
-                    let validation = await self.invariantService.validateResponse(
-                        content,
-                        fileName: self.invariantFileName
+
+                let finalText = orchestration.finalAnswer.trimmingCharacters(in: .whitespacesAndNewlines)
+
+                if !finalText.isEmpty {
+                    let validation = await invariantService.validateResponse(
+                        finalText,
+                        fileName: invariantFileName
                     )
-                    
+
                     let safeContent: String
-                    
+
                     if validation.isValid {
-                        safeContent = content
+                        safeContent = finalText
                     } else {
                         let violations = validation.violations.joined(separator: "\n")
                         safeContent = """
@@ -205,30 +194,107 @@ final class OllamaAgent: LLMAgentProtocol {
                         Please choose an option that stays within the defined architecture, stack, and business rules.
                         """
                     }
-                    
+
                     let assistantMessage = Message(
-                        agentId: self.agentId,
+                        agentId: agentId,
                         role: .assistant,
                         content: safeContent
                     )
-                    
-                    self.messages.append(assistantMessage)
-                    self.strategy.onAssistantMessage(assistantMessage)
-                    await self.memoryService.appendMessage(assistantMessage)
-                    
-                    // 3. Авто-обновление TaskContext после ответа модели
-                    await self.advanceTaskStateIfNeeded(
+
+                    messages.append(assistantMessage)
+                    strategy.onAssistantMessage(assistantMessage)
+                    await memoryService.appendMessage(assistantMessage)
+
+                    await advanceTaskStateIfNeeded(
                         userQuery: prompt.text,
-                        assistantResponse: content
+                        assistantResponse: safeContent
                     )
+                    
+                    let item = DispatchWorkItem(flags: [], block: { [weak self] in
+                        guard let self else { return }
+                        
+                        self.onToken?(safeContent)
+                        self.onComplete?(OllamaChunk(
+                            model: "",
+                            createdAt: Date(),
+                            message: .init(role: .assistant, content: safeContent),
+                            done: true
+                            ))
+                    })
+
+                    DispatchQueue.main.async(execute: item)
+
+                    return
+                }
+            } else {
+                
+                if shouldSummarize {
+                    try? await summarizeHistoryIfNeeded()
                 }
                 
-                DispatchQueue.main.async {
-                    self.onComplete?(ollamaChunk)
+                let context = await buildContext()
+                
+                var fullResponse = ""
+                
+                streamer.onToken = { [weak self] token in
+                    fullResponse += token
+                    DispatchQueue.main.async { [weak self] in
+                        self?.onToken?(token)
+                    }
                 }
+                
+                streamer.onComplete = { [weak self] ollamaChunk in
+                    guard let self else { return }
+                    
+                    let finalText = fullResponse.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let content = finalText.isEmpty ? ollamaChunk.message.content : finalText
+                    
+                    Task {
+                        let validation = await self.invariantService.validateResponse(
+                            content,
+                            fileName: self.invariantFileName
+                        )
+                        
+                        let safeContent: String
+                        
+                        if validation.isValid {
+                            safeContent = content
+                        } else {
+                            let violations = validation.violations.joined(separator: "\n")
+                            safeContent = """
+                        I can’t recommend that option because it violates the project invariants.
+                        
+                        Violations:
+                        \(violations)
+                        
+                        Please choose an option that stays within the defined architecture, stack, and business rules.
+                        """
+                        }
+                        
+                        let assistantMessage = Message(
+                            agentId: self.agentId,
+                            role: .assistant,
+                            content: safeContent
+                        )
+                        
+                        self.messages.append(assistantMessage)
+                        self.strategy.onAssistantMessage(assistantMessage)
+                        await self.memoryService.appendMessage(assistantMessage)
+                        
+                        // 3. Авто-обновление TaskContext после ответа модели
+                        await self.advanceTaskStateIfNeeded(
+                            userQuery: prompt.text,
+                            assistantResponse: content
+                        )
+                    }
+                    
+                    DispatchQueue.main.async {
+                        self.onComplete?(ollamaChunk)
+                    }
+                }
+                
+                streamer.start(messages: context, options: self.options)
             }
-            
-            streamer.start(messages: context, options: self.options)
         }
     }
     
@@ -566,8 +632,8 @@ final class OllamaAgent: LLMAgentProtocol {
                 return
             }
             
-            await applyTaskProgressUpdate(update, currentContext: context)
-            
+            let res = await applyTaskProgressUpdate(update, currentContext: context)
+            print(res ?? "")
         } catch {
             print("advanceTaskStateIfNeeded error:", error)
         }
@@ -805,62 +871,11 @@ final class OllamaAgent: LLMAgentProtocol {
     // MARK: - MCP
     
     private func refreshMCPToolsIfNeeded() async {
-        guard let mcpToolExecutor else { return }
+        guard let mcpOrchestrator else { return }
 
-        do {
-            cachedMCPTools = try await mcpToolExecutor.listTools()
-            print("MCP tools loaded: \(cachedMCPTools.map(\.name))")
-        } catch {
-            print("refreshMCPToolsIfNeeded error: \(error.localizedDescription)")
-        }
-    }
-
-    private func makeMCPToolResultMessageIfNeeded(for userText: String) async -> Message? {
-        guard let mcpToolExecutor else { return nil }
-
-        let toolPlan = toolPlanner.makePlan(
-            for: userText,
-            availableTools: cachedMCPTools
-        )
-
-        guard let toolPlan else { return nil }
-
-        do {
-            let result = try await mcpToolExecutor.callTool(
-                name: toolPlan.name,
-                arguments: toolPlan.arguments
-            )
-
-            return Message(
-                agentId: agentId,
-                role: .system,
-                content: """
-                MCP tool result:
-                tool: \(result.toolName)
-                arguments: \(formatToolArguments(toolPlan.arguments))
-
-                \(result.content)
-                """
-            )
-        } catch {
-            return Message(
-                agentId: agentId,
-                role: .system,
-                content: """
-                MCP tool call failed.
-                tool: \(toolPlan.name)
-                arguments: \(formatToolArguments(toolPlan.arguments))
-                error: \(error.localizedDescription)
-                """
-            )
-        }
-    }
-
-    private func formatToolArguments(_ arguments: [String: Any]) -> String {
-        arguments
-            .sorted { $0.key < $1.key }
-            .map { "\($0.key)=\($0.value)" }
-            .joined(separator: ", ")
+        await mcpOrchestrator.refreshTools()
+        cachedMCPTools = await mcpOrchestrator.availableTools()
+        print("MCP tools loaded: \(cachedMCPTools.map(\.name))")
     }
     
     func setUser(_ profile: UserProfile) {

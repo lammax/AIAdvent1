@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol LLMAgentProtocol {
+protocol LLMAgentProtocol: Sendable {
     
     func send(
         _ prompt: Prompt,

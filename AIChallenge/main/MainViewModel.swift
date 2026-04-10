@@ -21,7 +21,6 @@ class MainViewModel: ObservableObject {
     var userProfile: UserProfile = UserProfile.defaultProfile
     
     let ollama: OllamaAgent
-    let mcpToolExecutor: MCPToolExecutor = MCPToolExecutor(endpoint: URL(string: Constants.mcpServerLocalH_URI)!)
     
     let openRouter = OpenRouterAgent()
     
@@ -32,7 +31,7 @@ class MainViewModel: ObservableObject {
     
     
     init() {
-        self.ollama = OllamaAgent(mcpToolExecutor: mcpToolExecutor)
+        self.ollama = OllamaAgent()
         setupListeners()
     }
 
@@ -190,6 +189,8 @@ class MainViewModel: ObservableObject {
         repo: String,
         openScreen: @escaping (String) -> Void
     ) {
+        let mcpToolExecutor: MCPToolExecutor = MCPToolExecutor(endpoint: URL(string: Constants.mcpServerLocalHGitHub_URI)!)
+
         Task {
             do {
                 let result = try await mcpToolExecutor.callTool(

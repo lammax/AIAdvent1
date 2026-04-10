@@ -79,6 +79,16 @@
 		13DD3A4E2F86D0EF00CBB182 /* ToolInvocationPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A4D2F86D0EF00CBB182 /* ToolInvocationPlan.swift */; };
 		13DD3A512F881B3400CBB182 /* SummaryPollingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A502F881B3400CBB182 /* SummaryPollingService.swift */; };
 		13DD3A582F8820BB00CBB182 /* ScheduledJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A572F8820BA00CBB182 /* ScheduledJob.swift */; };
+		13DD3A612F89608800CBB182 /* MCPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A602F89608800CBB182 /* MCPServer.swift */; };
+		13DD3A632F8960CA00CBB182 /* MCPServerRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A622F8960CA00CBB182 /* MCPServerRegistry.swift */; };
+		13DD3A652F89610200CBB182 /* MCPToolRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A642F89610200CBB182 /* MCPToolRouter.swift */; };
+		13DD3A672F89611100CBB182 /* RoutedTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A662F89611100CBB182 /* RoutedTool.swift */; };
+		13DD3A692F89758500CBB182 /* MCPServerDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A682F89758500CBB182 /* MCPServerDescriptor.swift */; };
+		13DD3A6C2F8975DA00CBB182 /* MCPToolRouterError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A6B2F8975DA00CBB182 /* MCPToolRouterError.swift */; };
+		13DD3A702F89777A00CBB182 /* MCPPlannedToolCall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A6F2F89777A00CBB182 /* MCPPlannedToolCall.swift */; };
+		13DD3A722F89779200CBB182 /* MCPOrchestrationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A712F89779200CBB182 /* MCPOrchestrationResult.swift */; };
+		13DD3A752F8977CC00CBB182 /* MCPOrchestratorProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A742F8977CC00CBB182 /* MCPOrchestratorProtocol.swift */; };
+		13DD3A772F8977E700CBB182 /* MCPOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A762F8977E700CBB182 /* MCPOrchestrator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -172,6 +182,16 @@
 		13DD3A4D2F86D0EF00CBB182 /* ToolInvocationPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolInvocationPlan.swift; sourceTree = "<group>"; };
 		13DD3A502F881B3400CBB182 /* SummaryPollingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryPollingService.swift; sourceTree = "<group>"; };
 		13DD3A572F8820BA00CBB182 /* ScheduledJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduledJob.swift; sourceTree = "<group>"; };
+		13DD3A602F89608800CBB182 /* MCPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServer.swift; sourceTree = "<group>"; };
+		13DD3A622F8960CA00CBB182 /* MCPServerRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServerRegistry.swift; sourceTree = "<group>"; };
+		13DD3A642F89610200CBB182 /* MCPToolRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPToolRouter.swift; sourceTree = "<group>"; };
+		13DD3A662F89611100CBB182 /* RoutedTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutedTool.swift; sourceTree = "<group>"; };
+		13DD3A682F89758500CBB182 /* MCPServerDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServerDescriptor.swift; sourceTree = "<group>"; };
+		13DD3A6B2F8975DA00CBB182 /* MCPToolRouterError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPToolRouterError.swift; sourceTree = "<group>"; };
+		13DD3A6F2F89777A00CBB182 /* MCPPlannedToolCall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPPlannedToolCall.swift; sourceTree = "<group>"; };
+		13DD3A712F89779200CBB182 /* MCPOrchestrationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOrchestrationResult.swift; sourceTree = "<group>"; };
+		13DD3A742F8977CC00CBB182 /* MCPOrchestratorProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOrchestratorProtocol.swift; sourceTree = "<group>"; };
+		13DD3A762F8977E700CBB182 /* MCPOrchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOrchestrator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -291,6 +311,7 @@
 		1305B2322F75AFCA009A2D6C /* services */ = {
 			isa = PBXGroup;
 			children = (
+				13DD3A732F8977B400CBB182 /* mcporchestrator */,
 				13DD3A4F2F881B2500CBB182 /* polling */,
 				13DD3A482F86D07F00CBB182 /* planning */,
 				13BD3AB12F844B3F0059C0A5 /* mcp */,
@@ -306,6 +327,7 @@
 		133DA6E52F682BFA00F8AE82 = {
 			isa = PBXGroup;
 			children = (
+				13DD3A6A2F8975CC00CBB182 /* error */,
 				13BD3A762F82C0640059C0A5 /* support */,
 				13BD3A372F7E47A40059C0A5 /* strategy */,
 				1305B2312F75AFB2009A2D6C /* db */,
@@ -373,22 +395,27 @@
 				1305B21A2F730BE0009A2D6C /* LLMProvider.swift */,
 				133DA72A2F684F5F00F8AE82 /* LLMURL.swift */,
 				13BD3A4D2F7EE7070059C0A5 /* LongTermMemoryItem.swift */,
+				13DD3A712F89779200CBB182 /* MCPOrchestrationResult.swift */,
+				13DD3A6F2F89777A00CBB182 /* MCPPlannedToolCall.swift */,
+				13DD3A602F89608800CBB182 /* MCPServer.swift */,
+				13BD3AAA2F8448960059C0A5 /* MCPServerConfig.swift */,
+				13DD3A682F89758500CBB182 /* MCPServerDescriptor.swift */,
 				1305B2002F70885F009A2D6C /* Message.swift */,
 				1305B1FB2F7081CE009A2D6C /* MessageRole.swift */,
 				1305B2022F709919009A2D6C /* OllamaChunk.swift */,
+				13BD3A8D2F82DBA30059C0A5 /* OllamaChunk+Mock.swift */,
 				1305B2042F71A2A6009A2D6C /* OllamaModel.swift */,
 				1305B2102F71B707009A2D6C /* OllamaPreset.swift */,
+				13DD3A662F89611100CBB182 /* RoutedTool.swift */,
+				13DD3A572F8820BA00CBB182 /* ScheduledJob.swift */,
 				13BD3A662F82B20C0059C0A5 /* TaskContext.swift */,
-				13BD3A682F82B2360059C0A5 /* TaskStateMachine.swift */,
-				13BD3A512F7EFFFB0059C0A5 /* UserProfile.swift */,
-				13BD3A4B2F7EE6F40059C0A5 /* WorkingMemoryItem.swift */,
 				13BD3A872F82D9520059C0A5 /* TaskPhase.swift */,
 				13BD3A892F82D9700059C0A5 /* TaskRunStatus.swift */,
+				13BD3A682F82B2360059C0A5 /* TaskStateMachine.swift */,
 				13BD3A8B2F82D9B40059C0A5 /* TaskTransitionError.swift */,
-				13BD3A8D2F82DBA30059C0A5 /* OllamaChunk+Mock.swift */,
-				13BD3AAA2F8448960059C0A5 /* MCPServerConfig.swift */,
 				13DD3A4D2F86D0EF00CBB182 /* ToolInvocationPlan.swift */,
-				13DD3A572F8820BA00CBB182 /* ScheduledJob.swift */,
+				13BD3A512F7EFFFB0059C0A5 /* UserProfile.swift */,
+				13BD3A4B2F7EE6F40059C0A5 /* WorkingMemoryItem.swift */,
 			);
 			path = entities;
 			sourceTree = "<group>";
@@ -507,8 +534,10 @@
 			isa = PBXGroup;
 			children = (
 				13BD3AB22F844B4D0059C0A5 /* MCPClientService.swift */,
+				13DD3A622F8960CA00CBB182 /* MCPServerRegistry.swift */,
 				13DD3A442F86CA7300CBB182 /* MCPToolExecutor.swift */,
 				13DD3A462F86CAC900CBB182 /* MCPToolExecutorProtocol.swift */,
+				13DD3A642F89610200CBB182 /* MCPToolRouter.swift */,
 			);
 			path = mcp;
 			sourceTree = "<group>";
@@ -528,6 +557,23 @@
 				13DD3A502F881B3400CBB182 /* SummaryPollingService.swift */,
 			);
 			path = polling;
+			sourceTree = "<group>";
+		};
+		13DD3A6A2F8975CC00CBB182 /* error */ = {
+			isa = PBXGroup;
+			children = (
+				13DD3A6B2F8975DA00CBB182 /* MCPToolRouterError.swift */,
+			);
+			path = error;
+			sourceTree = "<group>";
+		};
+		13DD3A732F8977B400CBB182 /* mcporchestrator */ = {
+			isa = PBXGroup;
+			children = (
+				13DD3A742F8977CC00CBB182 /* MCPOrchestratorProtocol.swift */,
+				13DD3A762F8977E700CBB182 /* MCPOrchestrator.swift */,
+			);
+			path = mcporchestrator;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -696,17 +742,20 @@
 				13BD3A7F2F82C1410059C0A5 /* MarkdownInvariantRepository.swift in Sources */,
 				1305B1FC2F7081CE009A2D6C /* MessageRole.swift in Sources */,
 				13BD3A8C2F82D9B40059C0A5 /* TaskTransitionError.swift in Sources */,
+				13DD3A772F8977E700CBB182 /* MCPOrchestrator.swift in Sources */,
 				13DD3A472F86CAC900CBB182 /* MCPToolExecutorProtocol.swift in Sources */,
 				13BD3A4C2F7EE6F40059C0A5 /* WorkingMemoryItem.swift in Sources */,
 				13BD3A3D2F7E47F20059C0A5 /* BranchingStrategy.swift in Sources */,
 				1305B2052F71A2A6009A2D6C /* OllamaModel.swift in Sources */,
 				1305B22E2F75AEF0009A2D6C /* MessageRepository.swift in Sources */,
 				13BD3A362F7E47850059C0A5 /* ContextStrategyProtocol.swift in Sources */,
+				13DD3A632F8960CA00CBB182 /* MCPServerRegistry.swift in Sources */,
 				13BD3A672F82B20C0059C0A5 /* TaskContext.swift in Sources */,
 				13BD3A4A2F7EE6810059C0A5 /* MemoryService.swift in Sources */,
 				1305B2112F71B707009A2D6C /* OllamaPreset.swift in Sources */,
 				13BD3A8E2F82DBA30059C0A5 /* OllamaChunk+Mock.swift in Sources */,
 				13DD3A452F86CA7300CBB182 /* MCPToolExecutor.swift in Sources */,
+				13DD3A612F89608800CBB182 /* MCPServer.swift in Sources */,
 				13DD3A4C2F86D0B600CBB182 /* ToolPlanningProtocol.swift in Sources */,
 				1305B2192F730A2B009A2D6C /* LLMOptions.swift in Sources */,
 				13BD3A522F7EFFFB0059C0A5 /* UserProfile.swift in Sources */,
@@ -716,8 +765,10 @@
 				13BD3A5C2F7F01190059C0A5 /* UserProfileService.swift in Sources */,
 				13BD3A702F82B30E0059C0A5 /* TaskContextRepository.swift in Sources */,
 				13BD3A882F82D9520059C0A5 /* TaskPhase.swift in Sources */,
+				13DD3A672F89611100CBB182 /* RoutedTool.swift in Sources */,
 				13BD3A342F7E46E40059C0A5 /* ContextStrategy.swift in Sources */,
 				13BD3A3B2F7E47CA0059C0A5 /* FactsStrategy.swift in Sources */,
+				13DD3A652F89610200CBB182 /* MCPToolRouter.swift in Sources */,
 				13BD3A5A2F7F01110059C0A5 /* UserProfileServiceProtocol.swift in Sources */,
 				13BD3A552F7F00730059C0A5 /* UserProfileRepositoryProtocol.swift in Sources */,
 				13BD3A732F82B38F0059C0A5 /* TaskContextServiceProtocol.swift in Sources */,
@@ -734,20 +785,25 @@
 				13BD3A842F82C2480059C0A5 /* InvariantValidationResult.swift in Sources */,
 				13BD3A752F82B3BF0059C0A5 /* TaskContextService.swift in Sources */,
 				13BD3A7D2F82C1250059C0A5 /* InvariantRepositoryProtocol.swift in Sources */,
+				13DD3A722F89779200CBB182 /* MCPOrchestrationResult.swift in Sources */,
 				13BD3A6E2F82B2E90059C0A5 /* TaskContextRepositoryProtocol.swift in Sources */,
 				133DA71A2F682C6300F8AE82 /* Constants.swift in Sources */,
 				13BD3A8A2F82D9700059C0A5 /* TaskRunStatus.swift in Sources */,
 				1305B2302F75AEFB009A2D6C /* MessageRepositoryProtocol.swift in Sources */,
+				13DD3A692F89758500CBB182 /* MCPServerDescriptor.swift in Sources */,
 				13BD3ABA2F8457140059C0A5 /* GitHubMCPpatClient.swift in Sources */,
 				13DD3A582F8820BB00CBB182 /* ScheduledJob.swift in Sources */,
+				13DD3A752F8977CC00CBB182 /* MCPOrchestratorProtocol.swift in Sources */,
 				13DD3A4E2F86D0EF00CBB182 /* ToolInvocationPlan.swift in Sources */,
 				1305B2032F709919009A2D6C /* OllamaChunk.swift in Sources */,
 				1305B23E2F75B58A009A2D6C /* SQLiteDB.swift in Sources */,
 				1305B21E2F731607009A2D6C /* HiddenModifier.swift in Sources */,
 				1305B2152F71C775009A2D6C /* OpenRouterAgent.swift in Sources */,
+				13DD3A6C2F8975DA00CBB182 /* MCPToolRouterError.swift in Sources */,
 				13BD3A822F82C2230059C0A5 /* InvariantServiceProtocol.swift in Sources */,
 				13BD3A7A2F82C0ED0059C0A5 /* Invariant.swift in Sources */,
 				13BD3AAB2F8448960059C0A5 /* MCPServerConfig.swift in Sources */,
+				13DD3A702F89777A00CBB182 /* MCPPlannedToolCall.swift in Sources */,
 				13BD3AAE2F84495A0059C0A5 /* GitHubMCPOAuthDelegate.swift in Sources */,
 				13BD3A4E2F7EE7070059C0A5 /* LongTermMemoryItem.swift in Sources */,
 			);

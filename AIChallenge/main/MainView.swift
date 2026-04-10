@@ -19,9 +19,9 @@ struct MainView: View {
     @State private var showStatistics: Bool = false
     @State private var showUserProfile: Bool = false
     @State private var isTaskPaused: Bool = false
-    @State private var isMCPtest: Bool = false
-    @State private var scheduledJob: ScheduledJob?
-    @State private var isPipelineTest: Bool = false
+//    @State private var isMCPtest: Bool = false
+//    @State private var scheduledJob: ScheduledJob?
+//    @State private var isPipelineTest: Bool = false
     
     let formatterInt: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -89,22 +89,22 @@ struct MainView: View {
                             .frame(width: 40, height: 40)
                     }
                     
-                    Button {
-                        viewModel.createSummaryJobAndOpen(
-                            owner: "apple",
-                            repo: "swift"
-                        ) { jobId in
-                            scheduledJob = ScheduledJob(id: jobId)
-                        }
-                    } label: {
-                        Text("Schedule summary")
-                    }
-                    
-                    Button {
-                        isPipelineTest.toggle()
-                    } label: {
-                        Text("Pipeline")
-                    }
+//                    Button {
+//                        viewModel.createSummaryJobAndOpen(
+//                            owner: "apple",
+//                            repo: "swift"
+//                        ) { jobId in
+//                            scheduledJob = ScheduledJob(id: jobId)
+//                        }
+//                    } label: {
+//                        Text("Schedule summary")
+//                    }
+//                    
+//                    Button {
+//                        isPipelineTest.toggle()
+//                    } label: {
+//                        Text("Pipeline")
+//                    }
                 }
                 
                 HStack(alignment: .top) {
@@ -148,15 +148,15 @@ struct MainView: View {
             UserProfileView(vm: UserProfileViewModel(), isOpen: $showUserProfile)
             
         }
-        .sheet(isPresented: $isMCPtest, content: {
-            MCPToolsScreen()
-        })
-        .sheet(isPresented: $isPipelineTest, content: {
-            PipelineScreen(executor: viewModel.mcpToolExecutor)
-        })
-        .sheet(item: $scheduledJob) { job in
-            SummaryScreen(jobId: job.id, executor: viewModel.mcpToolExecutor)
-        }
+//        .sheet(isPresented: $isMCPtest, content: {
+//            MCPToolsScreen()
+//        })
+//        .sheet(isPresented: $isPipelineTest, content: {
+//            PipelineScreen(executor: viewModel.mcpToolExecutor)
+//        })
+//        .sheet(item: $scheduledJob) { job in
+//            SummaryScreen(jobId: job.id, executor: viewModel.mcpToolExecutor)
+//        }
         .padding()
         .navigationBarTitle("AI Challenge")
 

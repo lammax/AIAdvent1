@@ -209,140 +209,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "agents/OllamaAgent.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "826"
-            endingLineNumber = "826"
-            landmarkName = "makeMCPToolResultMessageIfNeeded(for:)"
-            landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - b417d718cd957769"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(1) suspend resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
-                  moduleName = "AIChallenge.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "826"
-                  endingLineNumber = "826">
-               </Location>
-               <Location
-                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - 7b49d778939fc2d1"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(2) await resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
-                  moduleName = "AIChallenge.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "826"
-                  endingLineNumber = "826">
-               </Location>
-               <Location
-                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - 4369efd61027ff15"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(3) suspend resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
-                  moduleName = "AIChallenge.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "826"
-                  endingLineNumber = "826">
-               </Location>
-               <Location
-                  uuid = "D3808CC6-7A7D-4E30-977C-7801760E9E3A - 2b32ebb2fa013b17"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(4) suspend resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
-                  moduleName = "AIChallenge.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "826"
-                  endingLineNumber = "826">
-               </Location>
-            </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "78A39C82-5D39-430A-9F11-88BE46D41013"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "agents/OllamaAgent.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "828"
-            endingLineNumber = "828"
-            landmarkName = "makeMCPToolResultMessageIfNeeded(for:)"
-            landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "78A39C82-5D39-430A-9F11-88BE46D41013 - b417d718cd957796"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(1) suspend resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
-                  moduleName = "AIChallenge.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "829"
-                  endingLineNumber = "829">
-               </Location>
-               <Location
-                  uuid = "78A39C82-5D39-430A-9F11-88BE46D41013 - 7b49d778939fc22e"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(2) await resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
-                  moduleName = "AIChallenge.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "829"
-                  endingLineNumber = "829">
-               </Location>
-               <Location
-                  uuid = "78A39C82-5D39-430A-9F11-88BE46D41013 - 2b32ebb2fa013be8"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(4) suspend resume partial function for AIChallenge.OllamaAgent.makeMCPToolResultMessageIfNeeded(for: Swift.String) async -&gt; Swift.Optional&lt;AIChallenge.Message&gt;"
-                  moduleName = "AIChallenge.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "829"
-                  endingLineNumber = "829">
-               </Location>
-            </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "8BE97A9D-1829-4B69-8235-14B10601AC62"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
@@ -469,54 +335,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "9B5E8BA0-30BB-4356-BFE6-62A621AF9EE9"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "agents/OllamaAgent.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "834"
-            endingLineNumber = "834"
-            landmarkName = "makeMCPToolResultMessageIfNeeded(for:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "6AA6E280-3764-4980-9440-42BD7AA1DB0B"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "agents/OllamaAgent.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "846"
-            endingLineNumber = "846"
-            landmarkName = "makeMCPToolResultMessageIfNeeded(for:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "78AB806F-DBCE-458E-8BED-D74173D1A9D1"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "agents/OllamaAgent.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "160"
-            endingLineNumber = "160"
-            landmarkName = "send(_:options:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "9D85FACF-8235-4D43-B2C2-3586BB6FC0B8"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
@@ -524,8 +342,8 @@
             filePath = "AIChallenge/main/MainViewModel.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "211"
-            endingLineNumber = "211"
+            startingLineNumber = "212"
+            endingLineNumber = "212"
             landmarkName = "createSummaryJobAndOpen(owner:repo:openScreen:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -639,16 +457,324 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "5EF9F333-8E11-420F-9020-7C5D70CB80C1"
+            uuid = "FB2FAC8A-5C24-4C9D-A496-F1FA06C4ECA6"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "AIChallenge/main/MainViewModel.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "205"
-            endingLineNumber = "205"
+            startingLineNumber = "206"
+            endingLineNumber = "206"
             landmarkName = "createSummaryJobAndOpen(owner:repo:openScreen:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "63C747BF-8357-4D04-BD2E-413F143D9A64"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "agents/OllamaAgent.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "168"
+            endingLineNumber = "168"
+            landmarkName = "send(_:options:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "63C747BF-8357-4D04-BD2E-413F143D9A64 - 5385759596fea186"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(15) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "168"
+                  endingLineNumber = "168">
+               </Location>
+               <Location
+                  uuid = "63C747BF-8357-4D04-BD2E-413F143D9A64 - 5385759596fea186"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(15) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "168"
+                  endingLineNumber = "168">
+               </Location>
+               <Location
+                  uuid = "63C747BF-8357-4D04-BD2E-413F143D9A64 - 2123d5cf9993fb84"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(17) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "168"
+                  endingLineNumber = "168">
+               </Location>
+               <Location
+                  uuid = "63C747BF-8357-4D04-BD2E-413F143D9A64 - 2123d5cf9993fb84"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(17) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "168"
+                  endingLineNumber = "168">
+               </Location>
+               <Location
+                  uuid = "63C747BF-8357-4D04-BD2E-413F143D9A64 - 30c03521eb003d82"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(19) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "168"
+                  endingLineNumber = "168">
+               </Location>
+               <Location
+                  uuid = "63C747BF-8357-4D04-BD2E-413F143D9A64 - 30c03521eb003d82"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(19) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "168"
+                  endingLineNumber = "168">
+               </Location>
+               <Location
+                  uuid = "63C747BF-8357-4D04-BD2E-413F143D9A64 - 9f1830070b45b4b9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(30) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "168"
+                  endingLineNumber = "168">
+               </Location>
+               <Location
+                  uuid = "63C747BF-8357-4D04-BD2E-413F143D9A64 - 9f1830070b45b4b9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(30) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "168"
+                  endingLineNumber = "168">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5EB0A08F-D865-466D-A8F4-4AFAD44E1B10"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "agents/OllamaAgent.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "162"
+            endingLineNumber = "162"
+            landmarkName = "send(_:options:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "5EB0A08F-D865-466D-A8F4-4AFAD44E1B10 - 5385759596fea24c"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(15) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "162"
+                  endingLineNumber = "162">
+               </Location>
+               <Location
+                  uuid = "5EB0A08F-D865-466D-A8F4-4AFAD44E1B10 - 1406802ac361037c"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(16) await resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "162"
+                  endingLineNumber = "162">
+               </Location>
+               <Location
+                  uuid = "5EB0A08F-D865-466D-A8F4-4AFAD44E1B10 - 2123d5cf9993f84e"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(17) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "162"
+                  endingLineNumber = "162">
+               </Location>
+               <Location
+                  uuid = "5EB0A08F-D865-466D-A8F4-4AFAD44E1B10 - 30c03521eb003e48"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(19) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "162"
+                  endingLineNumber = "162">
+               </Location>
+               <Location
+                  uuid = "5EB0A08F-D865-466D-A8F4-4AFAD44E1B10 - b04daa827ca444f"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(25) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "162"
+                  endingLineNumber = "162">
+               </Location>
+               <Location
+                  uuid = "5EB0A08F-D865-466D-A8F4-4AFAD44E1B10 - 9f1830070b45b773"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(30) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "162"
+                  endingLineNumber = "162">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "F1C7ECED-DCF6-44F0-A3BF-7E84CC443AC1"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "agents/OllamaAgent.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "231"
+            endingLineNumber = "231"
+            landmarkName = "send(_:options:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "F1C7ECED-DCF6-44F0-A3BF-7E84CC443AC1 - 5385759596fea961"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(15) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "231"
+                  endingLineNumber = "231">
+               </Location>
+               <Location
+                  uuid = "F1C7ECED-DCF6-44F0-A3BF-7E84CC443AC1 - 2123d5cf9993f363"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(17) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "231"
+                  endingLineNumber = "231">
+               </Location>
+               <Location
+                  uuid = "F1C7ECED-DCF6-44F0-A3BF-7E84CC443AC1 - 9f1830070b45bc5e"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(30) suspend resume partial function for closure #2 () async -&gt; () in AIChallenge.OllamaAgent.send(_: AIChallenge.Prompt, options: Swift.Dictionary&lt;Swift.String, Swift.Encodable&gt;) -&gt; ()"
+                  moduleName = "AIChallenge.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lammax/Documents/ThisIsMy/Programming/AI/AIChallenge/agents/OllamaAgent.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "231"
+                  endingLineNumber = "231">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "1ABBE95A-EC8F-4A99-B74F-3CEC536442F1"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "agents/OllamaAgent.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "216"
+            endingLineNumber = "216"
+            landmarkName = "send(_:options:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

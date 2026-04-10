@@ -17,6 +17,32 @@ struct OllamaChunkMessage: Decodable {
 }
 
 struct OllamaChunk: Decodable {
+    internal init(
+        model: String,
+        createdAt: Date,
+        message: OllamaChunkMessage,
+        done: Bool,
+        doneReason: String? = nil,
+        totalDuration: TimeInterval? = nil,
+        loadDuration: TimeInterval? = nil,
+        promptEvalCount: Int? = nil,
+        promptEvalDuration: TimeInterval? = nil,
+        evalCount: Int? = nil,
+        evalDuration: TimeInterval? = nil
+    ) {
+        self.model = model
+        self.createdAt = createdAt
+        self.message = message
+        self.done = done
+        self.doneReason = doneReason
+        self.totalDuration = totalDuration
+        self.loadDuration = loadDuration
+        self.promptEvalCount = promptEvalCount
+        self.promptEvalDuration = promptEvalDuration
+        self.evalCount = evalCount
+        self.evalDuration = evalDuration
+    }
+    
     
     let model: String
     let createdAt: Date
