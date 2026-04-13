@@ -89,6 +89,18 @@
 		13DD3A722F89779200CBB182 /* MCPOrchestrationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A712F89779200CBB182 /* MCPOrchestrationResult.swift */; };
 		13DD3A752F8977CC00CBB182 /* MCPOrchestratorProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A742F8977CC00CBB182 /* MCPOrchestratorProtocol.swift */; };
 		13DD3A772F8977E700CBB182 /* MCPOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A762F8977E700CBB182 /* MCPOrchestrator.swift */; };
+		14AA02012F90000000000001 /* RAGModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01012F90000000000001 /* RAGModels.swift */; };
+		14AA02022F90000000000002 /* EmbeddingServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01022F90000000000002 /* EmbeddingServiceProtocol.swift */; };
+		14AA02032F90000000000003 /* OllamaEmbeddingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01032F90000000000003 /* OllamaEmbeddingService.swift */; };
+		14AA02042F90000000000004 /* RAGChunker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01042F90000000000004 /* RAGChunker.swift */; };
+		14AA02052F90000000000005 /* ZipDocumentExtractorProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01052F90000000000005 /* ZipDocumentExtractorProtocol.swift */; };
+		14AA02062F90000000000006 /* ZipDocumentExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01062F90000000000006 /* ZipDocumentExtractor.swift */; };
+		14AA02072F90000000000007 /* RAGIndexingError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01072F90000000000007 /* RAGIndexingError.swift */; };
+		14AA02082F90000000000008 /* DocumentIndexingServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01082F90000000000008 /* DocumentIndexingServiceProtocol.swift */; };
+		14AA02092F90000000000009 /* DocumentIndexingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01092F90000000000009 /* DocumentIndexingService.swift */; };
+		14AA020A2F9000000000000A /* RAGIndexRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA010A2F9000000000000A /* RAGIndexRepositoryProtocol.swift */; };
+		14AA020B2F9000000000000B /* RAGIndexRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA010B2F9000000000000B /* RAGIndexRepository.swift */; };
+		14AA04032F90000000000003 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 14AA04022F90000000000002 /* ZIPFoundation */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -192,6 +204,17 @@
 		13DD3A712F89779200CBB182 /* MCPOrchestrationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOrchestrationResult.swift; sourceTree = "<group>"; };
 		13DD3A742F8977CC00CBB182 /* MCPOrchestratorProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOrchestratorProtocol.swift; sourceTree = "<group>"; };
 		13DD3A762F8977E700CBB182 /* MCPOrchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOrchestrator.swift; sourceTree = "<group>"; };
+		14AA01012F90000000000001 /* RAGModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGModels.swift; sourceTree = "<group>"; };
+		14AA01022F90000000000002 /* EmbeddingServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddingServiceProtocol.swift; sourceTree = "<group>"; };
+		14AA01032F90000000000003 /* OllamaEmbeddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaEmbeddingService.swift; sourceTree = "<group>"; };
+		14AA01042F90000000000004 /* RAGChunker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGChunker.swift; sourceTree = "<group>"; };
+		14AA01052F90000000000005 /* ZipDocumentExtractorProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZipDocumentExtractorProtocol.swift; sourceTree = "<group>"; };
+		14AA01062F90000000000006 /* ZipDocumentExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZipDocumentExtractor.swift; sourceTree = "<group>"; };
+		14AA01072F90000000000007 /* RAGIndexingError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGIndexingError.swift; sourceTree = "<group>"; };
+		14AA01082F90000000000008 /* DocumentIndexingServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentIndexingServiceProtocol.swift; sourceTree = "<group>"; };
+		14AA01092F90000000000009 /* DocumentIndexingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentIndexingService.swift; sourceTree = "<group>"; };
+		14AA010A2F9000000000000A /* RAGIndexRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGIndexRepositoryProtocol.swift; sourceTree = "<group>"; };
+		14AA010B2F9000000000000B /* RAGIndexRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGIndexRepository.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -232,6 +255,7 @@
 			files = (
 				1305B23A2F75B405009A2D6C /* GRDB in Frameworks */,
 				13BD3AA92F84469F0059C0A5 /* MCP in Frameworks */,
+				14AA04032F90000000000003 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,6 +305,7 @@
 		1305B22B2F75AEC7009A2D6C /* repositories */ = {
 			isa = PBXGroup;
 			children = (
+				14AA03032F90000000000003 /* rag */,
 				13BD3A7B2F82C1150059C0A5 /* invariant */,
 				13BD3A6C2F82B2D50059C0A5 /* taskcontext */,
 				13BD3A532F7F00670059C0A5 /* userprofile */,
@@ -311,6 +336,7 @@
 		1305B2322F75AFCA009A2D6C /* services */ = {
 			isa = PBXGroup;
 			children = (
+				14AA03022F90000000000002 /* rag */,
 				13DD3A732F8977B400CBB182 /* mcporchestrator */,
 				13DD3A4F2F881B2500CBB182 /* polling */,
 				13DD3A482F86D07F00CBB182 /* planning */,
@@ -388,6 +414,7 @@
 		133DA7292F684F3500F8AE82 /* entities */ = {
 			isa = PBXGroup;
 			children = (
+				14AA03012F90000000000001 /* rag */,
 				13BD3A332F7E46E40059C0A5 /* ContextStrategy.swift */,
 				13BD3A792F82C0ED0059C0A5 /* Invariant.swift */,
 				13BD3A832F82C2480059C0A5 /* InvariantValidationResult.swift */,
@@ -576,6 +603,38 @@
 			path = mcporchestrator;
 			sourceTree = "<group>";
 		};
+		14AA03012F90000000000001 /* rag */ = {
+			isa = PBXGroup;
+			children = (
+				14AA01012F90000000000001 /* RAGModels.swift */,
+				14AA01072F90000000000007 /* RAGIndexingError.swift */,
+			);
+			path = rag;
+			sourceTree = "<group>";
+		};
+		14AA03022F90000000000002 /* rag */ = {
+			isa = PBXGroup;
+			children = (
+				14AA01082F90000000000008 /* DocumentIndexingServiceProtocol.swift */,
+				14AA01092F90000000000009 /* DocumentIndexingService.swift */,
+				14AA01022F90000000000002 /* EmbeddingServiceProtocol.swift */,
+				14AA01032F90000000000003 /* OllamaEmbeddingService.swift */,
+				14AA01042F90000000000004 /* RAGChunker.swift */,
+				14AA01052F90000000000005 /* ZipDocumentExtractorProtocol.swift */,
+				14AA01062F90000000000006 /* ZipDocumentExtractor.swift */,
+			);
+			path = rag;
+			sourceTree = "<group>";
+		};
+		14AA03032F90000000000003 /* rag */ = {
+			isa = PBXGroup;
+			children = (
+				14AA010A2F9000000000000A /* RAGIndexRepositoryProtocol.swift */,
+				14AA010B2F9000000000000B /* RAGIndexRepository.swift */,
+			);
+			path = rag;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -598,6 +657,7 @@
 			packageProductDependencies = (
 				1305B2392F75B405009A2D6C /* GRDB */,
 				13BD3AA82F84469F0059C0A5 /* MCP */,
+				14AA04022F90000000000002 /* ZIPFoundation */,
 			);
 			productName = AIChallenge;
 			productReference = 133DA6EE2F682BFA00F8AE82 /* AIChallenge.app */;
@@ -684,6 +744,7 @@
 			packageReferences = (
 				1305B2382F75B405009A2D6C /* XCRemoteSwiftPackageReference "GRDB" */,
 				13BD3AA72F84469F0059C0A5 /* XCRemoteSwiftPackageReference "swift-sdk" */,
+				14AA04012F90000000000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 133DA6EF2F682BFA00F8AE82 /* Products */;
@@ -743,19 +804,23 @@
 				1305B1FC2F7081CE009A2D6C /* MessageRole.swift in Sources */,
 				13BD3A8C2F82D9B40059C0A5 /* TaskTransitionError.swift in Sources */,
 				13DD3A772F8977E700CBB182 /* MCPOrchestrator.swift in Sources */,
+				14AA020A2F9000000000000A /* RAGIndexRepositoryProtocol.swift in Sources */,
 				13DD3A472F86CAC900CBB182 /* MCPToolExecutorProtocol.swift in Sources */,
 				13BD3A4C2F7EE6F40059C0A5 /* WorkingMemoryItem.swift in Sources */,
 				13BD3A3D2F7E47F20059C0A5 /* BranchingStrategy.swift in Sources */,
+				14AA02062F90000000000006 /* ZipDocumentExtractor.swift in Sources */,
 				1305B2052F71A2A6009A2D6C /* OllamaModel.swift in Sources */,
 				1305B22E2F75AEF0009A2D6C /* MessageRepository.swift in Sources */,
 				13BD3A362F7E47850059C0A5 /* ContextStrategyProtocol.swift in Sources */,
 				13DD3A632F8960CA00CBB182 /* MCPServerRegistry.swift in Sources */,
 				13BD3A672F82B20C0059C0A5 /* TaskContext.swift in Sources */,
+				14AA02082F90000000000008 /* DocumentIndexingServiceProtocol.swift in Sources */,
 				13BD3A4A2F7EE6810059C0A5 /* MemoryService.swift in Sources */,
 				1305B2112F71B707009A2D6C /* OllamaPreset.swift in Sources */,
 				13BD3A8E2F82DBA30059C0A5 /* OllamaChunk+Mock.swift in Sources */,
 				13DD3A452F86CA7300CBB182 /* MCPToolExecutor.swift in Sources */,
 				13DD3A612F89608800CBB182 /* MCPServer.swift in Sources */,
+				14AA02042F90000000000004 /* RAGChunker.swift in Sources */,
 				13DD3A4C2F86D0B600CBB182 /* ToolPlanningProtocol.swift in Sources */,
 				1305B2192F730A2B009A2D6C /* LLMOptions.swift in Sources */,
 				13BD3A522F7EFFFB0059C0A5 /* UserProfile.swift in Sources */,
@@ -767,13 +832,16 @@
 				13BD3A882F82D9520059C0A5 /* TaskPhase.swift in Sources */,
 				13DD3A672F89611100CBB182 /* RoutedTool.swift in Sources */,
 				13BD3A342F7E46E40059C0A5 /* ContextStrategy.swift in Sources */,
+				14AA02092F90000000000009 /* DocumentIndexingService.swift in Sources */,
 				13BD3A3B2F7E47CA0059C0A5 /* FactsStrategy.swift in Sources */,
 				13DD3A652F89610200CBB182 /* MCPToolRouter.swift in Sources */,
 				13BD3A5A2F7F01110059C0A5 /* UserProfileServiceProtocol.swift in Sources */,
 				13BD3A552F7F00730059C0A5 /* UserProfileRepositoryProtocol.swift in Sources */,
 				13BD3A732F82B38F0059C0A5 /* TaskContextServiceProtocol.swift in Sources */,
+				14AA02072F90000000000007 /* RAGIndexingError.swift in Sources */,
 				13BD3A402F7EE55F0059C0A5 /* WorkingMemoryRepositoryProtocol.swift in Sources */,
 				133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */,
+				14AA02052F90000000000005 /* ZipDocumentExtractorProtocol.swift in Sources */,
 				13DD3A4A2F86D09100CBB182 /* DefaultToolPlanner.swift in Sources */,
 				1305B2012F70885F009A2D6C /* Message.swift in Sources */,
 				1305B2172F7309F6009A2D6C /* OptionsBuilder.swift in Sources */,
@@ -784,10 +852,13 @@
 				13BD3AB32F844B4D0059C0A5 /* MCPClientService.swift in Sources */,
 				13BD3A842F82C2480059C0A5 /* InvariantValidationResult.swift in Sources */,
 				13BD3A752F82B3BF0059C0A5 /* TaskContextService.swift in Sources */,
+				14AA02022F90000000000002 /* EmbeddingServiceProtocol.swift in Sources */,
 				13BD3A7D2F82C1250059C0A5 /* InvariantRepositoryProtocol.swift in Sources */,
 				13DD3A722F89779200CBB182 /* MCPOrchestrationResult.swift in Sources */,
+				14AA02032F90000000000003 /* OllamaEmbeddingService.swift in Sources */,
 				13BD3A6E2F82B2E90059C0A5 /* TaskContextRepositoryProtocol.swift in Sources */,
 				133DA71A2F682C6300F8AE82 /* Constants.swift in Sources */,
+				14AA020B2F9000000000000B /* RAGIndexRepository.swift in Sources */,
 				13BD3A8A2F82D9700059C0A5 /* TaskRunStatus.swift in Sources */,
 				1305B2302F75AEFB009A2D6C /* MessageRepositoryProtocol.swift in Sources */,
 				13DD3A692F89758500CBB182 /* MCPServerDescriptor.swift in Sources */,
@@ -806,6 +877,7 @@
 				13DD3A702F89777A00CBB182 /* MCPPlannedToolCall.swift in Sources */,
 				13BD3AAE2F84495A0059C0A5 /* GitHubMCPOAuthDelegate.swift in Sources */,
 				13BD3A4E2F7EE7070059C0A5 /* LongTermMemoryItem.swift in Sources */,
+				14AA02012F90000000000001 /* RAGModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1170,6 +1242,14 @@
 				minimumVersion = 0.12.0;
 			};
 		};
+		14AA04012F90000000000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.19;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1182,6 +1262,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 13BD3AA72F84469F0059C0A5 /* XCRemoteSwiftPackageReference "swift-sdk" */;
 			productName = MCP;
+		};
+		14AA04022F90000000000002 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 14AA04012F90000000000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

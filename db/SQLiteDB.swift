@@ -124,6 +124,31 @@ final class SQLiteDB {
             }
         }
         
+        migrator.registerMigration("createRAGChunks") { db in
+            try db.create(table: "rag_chunks") { t in
+                t.column("id", .text).primaryKey()
+                t.column("strategy", .text).notNull().indexed()
+                t.column("source", .text).notNull().indexed()
+                t.column("title", .text).notNull()
+                t.column("section", .text).notNull()
+                t.column("chunk_id", .integer).notNull()
+                t.column("content", .text).notNull()
+                t.column("token_count", .integer).notNull()
+                t.column("start_offset", .integer).notNull()
+                t.column("end_offset", .integer).notNull()
+                t.column("embedding", .blob).notNull()
+                t.column("embedding_dim", .integer).notNull()
+                t.column("embedding_model", .text).notNull()
+                t.column("created_at", .double).notNull()
+            }
+            
+            try db.create(
+                index: "idx_rag_chunks_strategy_source",
+                on: "rag_chunks",
+                columns: ["strategy", "source"]
+            )
+        }
+        
         return migrator
     }
 }

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct MainView: View {
     
@@ -18,10 +19,20 @@ struct MainView: View {
     @State private var showSettings: Bool = false
     @State private var showStatistics: Bool = false
     @State private var showUserProfile: Bool = false
+    @State private var showDocumentImporter: Bool = false
     @State private var isTaskPaused: Bool = false
 //    @State private var isMCPtest: Bool = false
 //    @State private var scheduledJob: ScheduledJob?
 //    @State private var isPipelineTest: Bool = false
+    
+    private var ragImportTypes: [UTType] {
+        [
+            .plainText,
+            .sourceCode,
+            .json,
+            UTType(filenameExtension: "zip") ?? .data
+        ]
+    }
     
     let formatterInt: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -34,9 +45,19 @@ struct MainView: View {
         ZStack {
             VStack {
                 ScrollView(.vertical, showsIndicators: false) {
-                    Text(viewModel.answer)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(nil)
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(viewModel.answer)
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(nil)
+                        
+                        if !viewModel.ragStatus.isEmpty {
+                            Text(viewModel.ragStatus)
+                                .font(.footnote)
+                                .foregroundStyle(Color.secondary)
+                                .multilineTextAlignment(.leading)
+                                .lineLimit(nil)
+                        }
+                    }
                 }
                 .padding(.top, 80)
                 
@@ -85,6 +106,14 @@ struct MainView: View {
                         showUserProfile.toggle()
                     } label: {
                         Image(systemName: "person.crop.circle.fill")
+                            .foregroundStyle(Color.black)
+                            .frame(width: 40, height: 40)
+                    }
+                    
+                    Button {
+                        showDocumentImporter.toggle()
+                    } label: {
+                        Image(systemName: "doc.text.magnifyingglass")
                             .foregroundStyle(Color.black)
                             .frame(width: 40, height: 40)
                     }
@@ -157,6 +186,18 @@ struct MainView: View {
 //        .sheet(item: $scheduledJob) { job in
 //            SummaryScreen(jobId: job.id, executor: viewModel.mcpToolExecutor)
 //        }
+        .fileImporter(
+            isPresented: $showDocumentImporter,
+            allowedContentTypes: ragImportTypes,
+            allowsMultipleSelection: true
+        ) { result in
+            switch result {
+            case .success(let urls):
+                viewModel.indexDocuments(urls: urls)
+            case .failure(let error):
+                viewModel.ragStatus = "Document selection failed: \(error.localizedDescription)"
+            }
+        }
         .padding()
         .navigationBarTitle("AI Challenge")
 

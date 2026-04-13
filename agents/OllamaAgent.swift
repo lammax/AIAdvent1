@@ -24,6 +24,7 @@ final class OllamaAgent: LLMAgentProtocol {
     private let memoryService: MemoryServiceProtocol
     private let userProfileService: UserProfileServiceProtocol
     private let taskContextService: TaskContextServiceProtocol
+    private let indexingService: DocumentIndexingServiceProtocol
     private let promptBuilder = TaskPromptBuilder()
     private let streamer: OllamaStreamer
     
@@ -62,6 +63,7 @@ final class OllamaAgent: LLMAgentProtocol {
         memoryService: MemoryServiceProtocol = MemoryService(),
         userProfileService: UserProfileServiceProtocol = UserProfileService(),
         taskContextService: TaskContextServiceProtocol = TaskContextService(),
+        indexingService: DocumentIndexingServiceProtocol = DocumentIndexingService(),
         invariantService: InvariantServiceProtocol = InvariantService(),
         streamer: OllamaStreamer = OllamaStreamer(),
         maxMessages: Int = 12,
@@ -73,6 +75,7 @@ final class OllamaAgent: LLMAgentProtocol {
         self.memoryService = memoryService
         self.userProfileService = userProfileService
         self.taskContextService = taskContextService
+        self.indexingService = indexingService
         self.invariantService = invariantService
         self.streamer = streamer
         self.mcpOrchestrator = MCPOrchestrator(
@@ -321,6 +324,16 @@ final class OllamaAgent: LLMAgentProtocol {
             
             await self.memoryService.deleteMessages(agentId: self.agentId)
             await self.memoryService.appendMessage(system)
+        }
+    }
+    
+    func deleteAllAgentData() {
+        deleteAllMessages()
+        
+        Task { [weak self] in
+            guard let self else { return }
+            
+            try? await self.indexingService.deleteAll()
         }
     }
     

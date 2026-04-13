@@ -14,11 +14,13 @@ class MainViewModel: ObservableObject {
     
     @Published var answer: String = ""
     @Published var ollamaChunk: OllamaChunk?
+    @Published var ragStatus: String = ""
     
     var currentPrompt: Prompt? = nil
     var settings: [String : Encodable] = [:]
     var provider: LLMProvider = .ollama
     var userProfile: UserProfile = UserProfile.defaultProfile
+    var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
     
     let ollama: OllamaAgent
     
@@ -26,6 +28,8 @@ class MainViewModel: ObservableObject {
     
     let settingsObserver: SettingsObserver = SettingsObserver()
     let profileObserver: UserProfileObserver = UserProfileObserver()
+    private let indexingService: DocumentIndexingServiceProtocol = DocumentIndexingService()
+    private var ragStatusLines: [String] = []
     
     var uns: Set<AnyCancellable> = []
     
@@ -69,6 +73,11 @@ class MainViewModel: ObservableObject {
             }
         }.store(in: &uns)
         
+        settingsObserver.ragChunkingStrategy.sink { [weak self] ragChunkingStrategy in
+            guard let self else { return }
+            self.ragChunkingStrategy = ragChunkingStrategy
+        }.store(in: &uns)
+        
         profileObserver.selectedProfile
             .sink { [weak self] profile in
                 guard let self, let profile else { return }
@@ -89,9 +98,11 @@ class MainViewModel: ObservableObject {
     
     func deleteAll() {
         answer = ""
+        ragStatus = ""
+        
         switch provider {
         case .ollama:
-            ollama.deleteAllMessages()
+            ollama.deleteAllAgentData()
         case .openRouter:
             openRouter.deleteAllMessages()
         }
@@ -181,6 +192,95 @@ class MainViewModel: ObservableObject {
         } else {
             ollama.resumeTask()
         }
+    }
+    
+    func indexDocuments(urls: [URL]) {
+        ragStatusLines = []
+        appendRAGStatus("Indexing documents...")
+        
+        Task {
+            let accessibleURLs = urls.filter { $0.startAccessingSecurityScopedResource() }
+            let indexingURLs = accessibleURLs.isEmpty ? urls : accessibleURLs
+            
+            defer {
+                accessibleURLs.forEach { $0.stopAccessingSecurityScopedResource() }
+            }
+            
+            do {
+                let progress: (RAGIndexingProgress) async -> Void = { [weak self] event in
+                    await MainActor.run {
+                        self?.appendRAGStatus(event)
+                    }
+                }
+                
+                let summary = try await indexingService.index(
+                    urls: indexingURLs,
+                    strategy: ragChunkingStrategy,
+                    progress: progress
+                )
+                
+                appendRAGStatus(
+                    """
+                    RAG index ready.
+                    
+                    Strategy: \(summary.strategy.title)
+                    chunks: \(summary.chunkCount), avg tokens: \(Int(summary.averageTokens))
+                    min tokens: \(summary.minTokens), max tokens: \(summary.maxTokens)
+                    model: \(summary.embeddingModel)
+                    duration: \(String(format: "%.2f", summary.duration))s
+                    """
+                )
+            } catch {
+                print(error)
+                print(error.localizedDescription)
+                ragStatus = "RAG indexing failed: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    private func appendRAGStatus(_ event: RAGIndexingProgress) {
+        switch event {
+        case .started(let strategy):
+            appendRAGStatus("[\(strategy.rawValue)] started")
+        case .documentsLoaded(let strategy, let files):
+            appendRAGStatus("[\(strategy.rawValue)] loaded files: \(files.count)")
+            
+            for file in files.prefix(10) {
+                appendRAGStatus("- \(file)")
+            }
+            
+            if files.count > 10 {
+                appendRAGStatus("- ... +\(files.count - 10) more")
+            }
+        case .chunksCreated(let strategy, let chunks):
+            appendRAGStatus("[\(strategy.rawValue)] chunks created: \(chunks.count)")
+            
+            for chunk in chunks.prefix(12) {
+                appendRAGStatus(
+                    "- \(chunk.title) #\(chunk.chunkId), tokens: \(chunk.tokenCount), section: \(chunk.section)"
+                )
+            }
+            
+            if chunks.count > 12 {
+                appendRAGStatus("- ... +\(chunks.count - 12) more chunks")
+            }
+        case .embeddingCreated(let strategy, let chunk, let embeddingPreview):
+            let preview = embeddingPreview
+                .map { String(format: "%.4f", Double($0)) }
+                .joined(separator: ", ")
+            
+            appendRAGStatus(
+                "[\(strategy.rawValue)] embedded \(chunk.title) #\(chunk.chunkId), tokens: \(chunk.tokenCount), vector: [\(preview)]"
+            )
+        case .saved(let strategy, let chunkCount):
+            appendRAGStatus("[\(strategy.rawValue)] saved to SQLite: \(chunkCount) chunks")
+        }
+    }
+    
+    private func appendRAGStatus(_ line: String) {
+        ragStatusLines.append(line)
+        ragStatusLines = Array(ragStatusLines.suffix(50))
+        ragStatus = ragStatusLines.joined(separator: "\n")
     }
     
     @MainActor

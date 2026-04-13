@@ -13,6 +13,7 @@ final class SettingsObserver {
     let settings: CurrentValueSubject<[String: Encodable], Never> = CurrentValueSubject(Constants.defaultOllamaOptions)
     let provider: CurrentValueSubject<LLMProvider, Never> = CurrentValueSubject(.ollama)
     let contextStrategy: CurrentValueSubject<ContextStrategy, Never> = CurrentValueSubject(.facts)
+    let ragChunkingStrategy: CurrentValueSubject<RAGChunkingStrategy, Never> = CurrentValueSubject(.fixedTokens)
     
     
     init() {
@@ -36,6 +37,10 @@ final class SettingsObserver {
         
         if let contextStrategy = notification.userInfo?["contextStrategy"] as? ContextStrategy {
             self.contextStrategy.send(contextStrategy)
+        }
+        
+        if let ragChunkingStrategy = notification.userInfo?["ragChunkingStrategy"] as? RAGChunkingStrategy {
+            self.ragChunkingStrategy.send(ragChunkingStrategy)
         }
         
     }

@@ -13,6 +13,7 @@ final class SettingsViewModel: ObservableObject {
     
     @Published var provider: LLMProvider = .ollama
     @Published var contextStrategy: ContextStrategy = .slidingWindow
+    @Published var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
         
     @Published var temperature: Double = 0.7
     @Published var maxTokens: Double = 200
@@ -58,7 +59,8 @@ final class SettingsViewModel: ObservableObject {
             userInfo: [
                 "settings": settings,
                 "provider": provider,
-                "contextStrategy": contextStrategy
+                "contextStrategy": contextStrategy,
+                "ragChunkingStrategy": ragChunkingStrategy
             ]
         )
     }

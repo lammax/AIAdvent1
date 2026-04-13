@@ -93,6 +93,17 @@ struct SettingsView: View {
                         .pickerStyle(.segmented)
                     }
                     
+                    VStack(alignment: .leading) {
+                        Text("RAG Chunking Strategy")
+                        
+                        Picker("Strategy", selection: $vm.ragChunkingStrategy) {
+                            ForEach(RAGChunkingStrategy.allCases, id: \.self) { strategy in
+                                Text(strategy.title).tag(strategy)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    
                     Group {
                         Text("Temperature: \(vm.temperature, specifier: "%.2f")")
                         Slider(value: $vm.temperature, in: 0...1)
