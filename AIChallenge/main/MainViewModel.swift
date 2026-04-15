@@ -23,6 +23,8 @@ class MainViewModel: ObservableObject {
     var isTaskPlanningEnabled: Bool = false
     var ragAnswerMode: RAGAnswerMode = .disabled
     var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
+    var ragRetrievalMode: RAGRetrievalMode = .basic
+    var ragRetrievalSettings: RAGRetrievalSettings = .default
     
     let ollama: OllamaAgent
     
@@ -91,6 +93,18 @@ class MainViewModel: ObservableObject {
             guard let self else { return }
             self.ragAnswerMode = ragAnswerMode
             ollama.setRAGAnswerMode(ragAnswerMode)
+        }.store(in: &uns)
+        
+        settingsObserver.ragRetrievalMode.sink { [weak self] ragRetrievalMode in
+            guard let self else { return }
+            self.ragRetrievalMode = ragRetrievalMode
+            ollama.setRAGRetrievalMode(ragRetrievalMode)
+        }.store(in: &uns)
+        
+        settingsObserver.ragRetrievalSettings.sink { [weak self] ragRetrievalSettings in
+            guard let self else { return }
+            self.ragRetrievalSettings = ragRetrievalSettings
+            ollama.setRAGRetrievalSettings(ragRetrievalSettings)
         }.store(in: &uns)
         
         profileObserver.selectedProfile

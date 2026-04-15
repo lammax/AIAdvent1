@@ -13,4 +13,11 @@ protocol RAGRetrievalServiceProtocol {
         strategy: RAGChunkingStrategy,
         limit: Int
     ) async throws -> [RAGRetrievedChunk]
+    
+    func retrieve(
+        originalQuestion: String,
+        searchQuery: String,
+        strategy: RAGChunkingStrategy,
+        settings: RAGRetrievalSettings
+    ) async throws -> RAGRetrievalResult
 }

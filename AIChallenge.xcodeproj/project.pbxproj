@@ -103,6 +103,10 @@
 		14AA020B2F9000000000000B /* RAGIndexRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA010B2F9000000000000B /* RAGIndexRepository.swift */; };
 		14AA020C2F9000000000000C /* RAGRetrievalServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA010C2F9000000000000C /* RAGRetrievalServiceProtocol.swift */; };
 		14AA020D2F9000000000000D /* RAGRetrievalService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA010D2F9000000000000D /* RAGRetrievalService.swift */; };
+		14AA020E2F9000000000000E /* RAGRelevanceFilteringServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA010E2F9000000000000E /* RAGRelevanceFilteringServiceProtocol.swift */; };
+		14AA020F2F9000000000000F /* RAGRelevanceFilteringService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA010F2F9000000000000F /* RAGRelevanceFilteringService.swift */; };
+		14AA02102F90000000000010 /* RAGQueryRewriteServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01102F90000000000010 /* RAGQueryRewriteServiceProtocol.swift */; };
+		14AA02112F90000000000011 /* OllamaRAGQueryRewriteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01112F90000000000011 /* OllamaRAGQueryRewriteService.swift */; };
 		14AA04032F90000000000003 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 14AA04022F90000000000002 /* ZIPFoundation */; };
 /* End PBXBuildFile section */
 
@@ -221,6 +225,10 @@
 		14AA010B2F9000000000000B /* RAGIndexRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGIndexRepository.swift; sourceTree = "<group>"; };
 		14AA010C2F9000000000000C /* RAGRetrievalServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGRetrievalServiceProtocol.swift; sourceTree = "<group>"; };
 		14AA010D2F9000000000000D /* RAGRetrievalService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGRetrievalService.swift; sourceTree = "<group>"; };
+		14AA010E2F9000000000000E /* RAGRelevanceFilteringServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGRelevanceFilteringServiceProtocol.swift; sourceTree = "<group>"; };
+		14AA010F2F9000000000000F /* RAGRelevanceFilteringService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGRelevanceFilteringService.swift; sourceTree = "<group>"; };
+		14AA01102F90000000000010 /* RAGQueryRewriteServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGQueryRewriteServiceProtocol.swift; sourceTree = "<group>"; };
+		14AA01112F90000000000011 /* OllamaRAGQueryRewriteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaRAGQueryRewriteService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -626,6 +634,10 @@
 				14AA01092F90000000000009 /* DocumentIndexingService.swift */,
 				14AA010C2F9000000000000C /* RAGRetrievalServiceProtocol.swift */,
 				14AA010D2F9000000000000D /* RAGRetrievalService.swift */,
+				14AA010E2F9000000000000E /* RAGRelevanceFilteringServiceProtocol.swift */,
+				14AA010F2F9000000000000F /* RAGRelevanceFilteringService.swift */,
+				14AA01102F90000000000010 /* RAGQueryRewriteServiceProtocol.swift */,
+				14AA01112F90000000000011 /* OllamaRAGQueryRewriteService.swift */,
 				14AA01022F90000000000002 /* EmbeddingServiceProtocol.swift */,
 				14AA01032F90000000000003 /* OllamaEmbeddingService.swift */,
 				14AA01042F90000000000004 /* RAGChunker.swift */,
@@ -816,6 +828,7 @@
 				13DD3A772F8977E700CBB182 /* MCPOrchestrator.swift in Sources */,
 				14AA020A2F9000000000000A /* RAGIndexRepositoryProtocol.swift in Sources */,
 				14AA020C2F9000000000000C /* RAGRetrievalServiceProtocol.swift in Sources */,
+				14AA02102F90000000000010 /* RAGQueryRewriteServiceProtocol.swift in Sources */,
 				13DD3A472F86CAC900CBB182 /* MCPToolExecutorProtocol.swift in Sources */,
 				13BD3A4C2F7EE6F40059C0A5 /* WorkingMemoryItem.swift in Sources */,
 				13BD3A3D2F7E47F20059C0A5 /* BranchingStrategy.swift in Sources */,
@@ -845,6 +858,7 @@
 				13BD3A342F7E46E40059C0A5 /* ContextStrategy.swift in Sources */,
 				14AA02092F90000000000009 /* DocumentIndexingService.swift in Sources */,
 				14AA020D2F9000000000000D /* RAGRetrievalService.swift in Sources */,
+				14AA020F2F9000000000000F /* RAGRelevanceFilteringService.swift in Sources */,
 				13BD3A3B2F7E47CA0059C0A5 /* FactsStrategy.swift in Sources */,
 				13DD3A652F89610200CBB182 /* MCPToolRouter.swift in Sources */,
 				13BD3A5A2F7F01110059C0A5 /* UserProfileServiceProtocol.swift in Sources */,
@@ -868,6 +882,7 @@
 				13BD3A7D2F82C1250059C0A5 /* InvariantRepositoryProtocol.swift in Sources */,
 				13DD3A722F89779200CBB182 /* MCPOrchestrationResult.swift in Sources */,
 				14AA02032F90000000000003 /* OllamaEmbeddingService.swift in Sources */,
+				14AA02112F90000000000011 /* OllamaRAGQueryRewriteService.swift in Sources */,
 				13BD3A6E2F82B2E90059C0A5 /* TaskContextRepositoryProtocol.swift in Sources */,
 				133DA71A2F682C6300F8AE82 /* Constants.swift in Sources */,
 				14AA020B2F9000000000000B /* RAGIndexRepository.swift in Sources */,
@@ -881,6 +896,7 @@
 				1305B2032F709919009A2D6C /* OllamaChunk.swift in Sources */,
 				1305B23E2F75B58A009A2D6C /* SQLiteDB.swift in Sources */,
 				1305B21E2F731607009A2D6C /* HiddenModifier.swift in Sources */,
+				14AA020E2F9000000000000E /* RAGRelevanceFilteringServiceProtocol.swift in Sources */,
 				1305B2152F71C775009A2D6C /* OpenRouterAgent.swift in Sources */,
 				13DD3A6C2F8975DA00CBB182 /* MCPToolRouterError.swift in Sources */,
 				13BD3A822F82C2230059C0A5 /* InvariantServiceProtocol.swift in Sources */,

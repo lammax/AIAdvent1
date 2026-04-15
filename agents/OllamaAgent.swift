@@ -26,6 +26,7 @@ final class OllamaAgent: LLMAgentProtocol {
     private let taskContextService: TaskContextServiceProtocol
     private let indexingService: DocumentIndexingServiceProtocol
     private let ragRetrievalService: RAGRetrievalServiceProtocol
+    private let ragQueryRewriteService: RAGQueryRewriteServiceProtocol
     private let promptBuilder = TaskPromptBuilder()
     private let streamer: OllamaStreamer
     
@@ -52,6 +53,8 @@ final class OllamaAgent: LLMAgentProtocol {
     private var isTaskPlanningEnabled: Bool = false
     private var ragAnswerMode: RAGAnswerMode = .disabled
     private var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
+    private var ragRetrievalMode: RAGRetrievalMode = .basic
+    private var ragRetrievalSettings: RAGRetrievalSettings = .default
     private var isPrepared = false
     private var isSending = false
     
@@ -69,6 +72,7 @@ final class OllamaAgent: LLMAgentProtocol {
         taskContextService: TaskContextServiceProtocol = TaskContextService(),
         indexingService: DocumentIndexingServiceProtocol = DocumentIndexingService(),
         ragRetrievalService: RAGRetrievalServiceProtocol = RAGRetrievalService(),
+        ragQueryRewriteService: RAGQueryRewriteServiceProtocol = OllamaRAGQueryRewriteService(),
         invariantService: InvariantServiceProtocol = InvariantService(),
         streamer: OllamaStreamer = OllamaStreamer(),
         maxMessages: Int = 12,
@@ -82,6 +86,7 @@ final class OllamaAgent: LLMAgentProtocol {
         self.taskContextService = taskContextService
         self.indexingService = indexingService
         self.ragRetrievalService = ragRetrievalService
+        self.ragQueryRewriteService = ragQueryRewriteService
         self.invariantService = invariantService
         self.streamer = streamer
         self.mcpOrchestrator = MCPOrchestrator(
@@ -228,12 +233,16 @@ final class OllamaAgent: LLMAgentProtocol {
                     let context = await buildContext()
                     streamAnswer(context: context, userQuery: prompt.text)
                 case .enabled:
-                    let baseContext = await buildContext()
-                    let context = await makeRAGContext(
-                        question: prompt.text,
-                        baseContext: baseContext
-                    )
-                    streamAnswer(context: context.messages, userQuery: prompt.text)
+                    if ragRetrievalMode == .compareEnhanced {
+                        await compareEnhancedRAGAnswers(question: prompt.text)
+                    } else {
+                        let baseContext = await buildContext()
+                        let context = await makeRAGContext(
+                            question: prompt.text,
+                            baseContext: baseContext
+                        )
+                        streamAnswer(context: context.messages, userQuery: prompt.text)
+                    }
                 case .compare:
                     await compareRAGAnswers(question: prompt.text)
                 }
@@ -292,6 +301,14 @@ final class OllamaAgent: LLMAgentProtocol {
     
     func setRAGChunkingStrategy(_ strategy: RAGChunkingStrategy) {
         self.ragChunkingStrategy = strategy
+    }
+    
+    func setRAGRetrievalMode(_ mode: RAGRetrievalMode) {
+        self.ragRetrievalMode = mode
+    }
+    
+    func setRAGRetrievalSettings(_ settings: RAGRetrievalSettings) {
+        self.ragRetrievalSettings = settings
     }
     
     // MARK: - Prepare
@@ -445,21 +462,38 @@ final class OllamaAgent: LLMAgentProtocol {
     private func makeRAGContext(
         question: String,
         baseContext: [Message]
-    ) async -> (messages: [Message], sources: [RAGRetrievedChunk]) {
+    ) async -> (messages: [Message], sources: [RAGRetrievedChunk], retrievalResult: RAGRetrievalResult?) {
         do {
-            let sources = try await ragRetrievalService.retrieve(
-                question: question,
-                strategy: ragChunkingStrategy,
-                limit: 5
-            )
+            let result: RAGRetrievalResult?
+            let sources: [RAGRetrievedChunk]
+            
+            switch ragRetrievalMode {
+            case .basic, .compareEnhanced:
+                sources = try await ragRetrievalService.retrieve(
+                    question: question,
+                    strategy: ragChunkingStrategy,
+                    limit: ragRetrievalSettings.topKAfterFiltering
+                )
+                result = nil
+            case .enhanced:
+                let searchQuery = await makeRAGSearchQuery(from: question)
+                let retrievalResult = try await ragRetrievalService.retrieve(
+                    originalQuestion: question,
+                    searchQuery: searchQuery,
+                    strategy: ragChunkingStrategy,
+                    settings: ragRetrievalSettings
+                )
+                sources = retrievalResult.chunksAfterFiltering
+                result = retrievalResult
+            }
             
             let ragMessage = Message(
                 agentId: agentId,
                 role: .system,
-                content: makeRAGPrompt(from: sources)
+                content: makeRAGPrompt(from: sources, retrievalResult: result)
             )
             
-            return (insert(ragMessage, beforeLastUserMessageIn: baseContext), sources)
+            return (insert(ragMessage, beforeLastUserMessageIn: baseContext), sources, result)
         } catch {
             let ragMessage = Message(
                 agentId: agentId,
@@ -471,7 +505,23 @@ final class OllamaAgent: LLMAgentProtocol {
                 """
             )
             
-            return (insert(ragMessage, beforeLastUserMessageIn: baseContext), [])
+            return (insert(ragMessage, beforeLastUserMessageIn: baseContext), [], nil)
+        }
+    }
+    
+    private func makeRAGSearchQuery(from question: String) async -> String {
+        guard ragRetrievalSettings.isQueryRewriteEnabled else {
+            return question
+        }
+        
+        do {
+            return try await ragQueryRewriteService.rewrite(
+                question: question,
+                options: makeAnyOptions(from: options)
+            )
+        } catch {
+            print("RAG query rewrite failed:", error)
+            return question
         }
     }
     
@@ -501,8 +551,19 @@ final class OllamaAgent: LLMAgentProtocol {
         )
     }
     
-    private func makeRAGPrompt(from sources: [RAGRetrievedChunk]) -> String {
+    private func makeRAGPrompt(
+        from sources: [RAGRetrievedChunk],
+        retrievalResult: RAGRetrievalResult? = nil
+    ) -> String {
         guard !sources.isEmpty else {
+            if let retrievalResult, !retrievalResult.candidatesBeforeFiltering.isEmpty {
+                return """
+                RAG mode is enabled, but relevance filtering removed all retrieved chunks.
+
+                If the user's question depends on indexed documents, say that the local RAG index does not contain enough relevant information.
+                """
+            }
+            
             return """
             RAG mode is enabled, but no indexed chunks were found.
 
@@ -517,17 +578,36 @@ final class OllamaAgent: LLMAgentProtocol {
                 section: \(item.chunk.section)
                 chunk: \(item.chunk.chunkId)
                 score: \(String(format: "%.4f", item.score))
+                relevance: \(String(format: "%.4f", item.relevanceScore))
+                reason: \(item.relevanceReason)
                 content:
                 \(item.chunk.content)
                 """
             }
             .joined(separator: "\n\n")
         
+        let retrievalNotes: String
+        
+        if let retrievalResult {
+            let rewriteText = retrievalResult.rewrittenQuestion ?? "not used"
+            retrievalNotes = """
+            
+            Retrieval:
+            original question: \(retrievalResult.originalQuestion)
+            rewritten query: \(rewriteText)
+            candidates before filtering: \(retrievalResult.candidatesBeforeFiltering.count)
+            chunks after filtering: \(retrievalResult.chunksAfterFiltering.count)
+            """
+        } else {
+            retrievalNotes = ""
+        }
+        
         return """
         Use the local RAG context below to answer the user's question.
         Prefer the context over general knowledge.
         If the context does not contain the answer, say that the indexed documents do not provide enough information.
         Cite the relevant source file names when they support the answer.
+        \(retrievalNotes)
 
         RAG context:
         \(context)
@@ -637,6 +717,83 @@ final class OllamaAgent: LLMAgentProtocol {
         }
     }
     
+    private func compareEnhancedRAGAnswers(question: String) async {
+        let baseContext = await buildContext()
+        let options = makeAnyOptions(from: self.options)
+        
+        do {
+            let basicSources = try await ragRetrievalService.retrieve(
+                question: question,
+                strategy: ragChunkingStrategy,
+                limit: ragRetrievalSettings.topKAfterFiltering
+            )
+            let basicMessage = Message(
+                agentId: agentId,
+                role: .system,
+                content: makeRAGPrompt(from: basicSources)
+            )
+            let basicContext = insert(basicMessage, beforeLastUserMessageIn: baseContext)
+            
+            let searchQuery = await makeRAGSearchQuery(from: question)
+            let enhancedResult = try await ragRetrievalService.retrieve(
+                originalQuestion: question,
+                searchQuery: searchQuery,
+                strategy: ragChunkingStrategy,
+                settings: ragRetrievalSettings
+            )
+            let enhancedMessage = Message(
+                agentId: agentId,
+                role: .system,
+                content: makeRAGPrompt(
+                    from: enhancedResult.chunksAfterFiltering,
+                    retrievalResult: enhancedResult
+                )
+            )
+            let enhancedContext = insert(enhancedMessage, beforeLastUserMessageIn: baseContext)
+            
+            let basicRAG = try await streamer.send(messages: basicContext, options: options)
+            let enhancedRAG = try await streamer.send(messages: enhancedContext, options: options)
+            let comparison = await validatedContent(
+                makeEnhancedComparisonAnswer(
+                    basicRAG: basicRAG,
+                    enhancedRAG: enhancedRAG,
+                    basicSources: basicSources,
+                    enhancedResult: enhancedResult
+                )
+            )
+            
+            let assistantMessage = Message(
+                agentId: agentId,
+                role: .assistant,
+                content: comparison
+            )
+            
+            messages.append(assistantMessage)
+            strategy.onAssistantMessage(assistantMessage)
+            await memoryService.appendMessage(assistantMessage)
+            
+            await advanceTaskStateIfNeeded(
+                userQuery: question,
+                assistantResponse: comparison
+            )
+            
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(comparison)
+                self?.onComplete?(OllamaChunk(
+                    model: "",
+                    createdAt: Date(),
+                    message: .init(role: .assistant, content: comparison),
+                    done: true
+                ))
+            }
+        } catch {
+            let message = "Enhanced RAG comparison failed: \(error.localizedDescription)"
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(message)
+            }
+        }
+    }
+    
     private func makeComparisonAnswer(
         withoutRAG: String,
         withRAG: String,
@@ -667,6 +824,56 @@ final class OllamaAgent: LLMAgentProtocol {
 
         \(sourceText)
         """
+    }
+    
+    private func makeEnhancedComparisonAnswer(
+        basicRAG: String,
+        enhancedRAG: String,
+        basicSources: [RAGRetrievedChunk],
+        enhancedResult: RAGRetrievalResult
+    ) -> String {
+        let rewritten = enhancedResult.rewrittenQuestion ?? "not used"
+        
+        return """
+        Basic RAG
+
+        \(basicRAG.trimmingCharacters(in: .whitespacesAndNewlines))
+
+        Enhanced RAG
+
+        \(enhancedRAG.trimmingCharacters(in: .whitespacesAndNewlines))
+
+        Retrieval comparison
+
+        Original question:
+        \(enhancedResult.originalQuestion)
+
+        Rewritten query:
+        \(rewritten)
+
+        Basic sources
+
+        \(makeSourceList(from: basicSources))
+
+        Enhanced candidates before filtering: \(enhancedResult.candidatesBeforeFiltering.count)
+        Enhanced sources after filtering: \(enhancedResult.chunksAfterFiltering.count)
+
+        Enhanced sources
+
+        \(makeSourceList(from: enhancedResult.chunksAfterFiltering))
+        """
+    }
+    
+    private func makeSourceList(from sources: [RAGRetrievedChunk]) -> String {
+        guard !sources.isEmpty else {
+            return "No RAG sources were retrieved."
+        }
+        
+        return sources.enumerated()
+            .map { index, source in
+                "\(index + 1). \(source.chunk.title), section: \(source.chunk.section), chunk: \(source.chunk.chunkId), score: \(String(format: "%.4f", source.score)), relevance: \(String(format: "%.4f", source.relevanceScore)), reason: \(source.relevanceReason)"
+            }
+            .joined(separator: "\n")
     }
     
     private func validatedContent(_ content: String) async -> String {

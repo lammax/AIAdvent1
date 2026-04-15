@@ -16,6 +16,12 @@ final class SettingsViewModel: ObservableObject {
     @Published var isTaskPlanningEnabled: Bool = false
     @Published var ragAnswerMode: RAGAnswerMode = .disabled
     @Published var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
+    @Published var ragRetrievalMode: RAGRetrievalMode = .basic
+    @Published var ragTopKBeforeFiltering: Double = Double(RAGRetrievalSettings.default.topKBeforeFiltering)
+    @Published var ragTopKAfterFiltering: Double = Double(RAGRetrievalSettings.default.topKAfterFiltering)
+    @Published var ragSimilarityThreshold: Double = RAGRetrievalSettings.default.similarityThreshold
+    @Published var isRAGQueryRewriteEnabled: Bool = RAGRetrievalSettings.default.isQueryRewriteEnabled
+    @Published var ragRelevanceFilterMode: RAGRelevanceFilterMode = RAGRetrievalSettings.default.relevanceFilterMode
         
     @Published var temperature: Double = 0.7
     @Published var maxTokens: Double = 200
@@ -54,6 +60,13 @@ final class SettingsViewModel: ObservableObject {
         case .ollama: buildOllamaSettings()
         case .openRouter: buildOpenRouterSettings()
         }
+        let ragRetrievalSettings = RAGRetrievalSettings(
+            topKBeforeFiltering: Int(ragTopKBeforeFiltering),
+            topKAfterFiltering: Int(ragTopKAfterFiltering),
+            similarityThreshold: ragSimilarityThreshold,
+            isQueryRewriteEnabled: isRAGQueryRewriteEnabled,
+            relevanceFilterMode: ragRelevanceFilterMode
+        )
         
         NotificationCenter.default.post(
             name: .settingsChanged,
@@ -64,7 +77,9 @@ final class SettingsViewModel: ObservableObject {
                 SettingsUserInfoKey.contextStrategy.rawValue: contextStrategy,
                 SettingsUserInfoKey.isTaskPlanningEnabled.rawValue: isTaskPlanningEnabled,
                 SettingsUserInfoKey.ragAnswerMode.rawValue: ragAnswerMode,
-                SettingsUserInfoKey.ragChunkingStrategy.rawValue: ragChunkingStrategy
+                SettingsUserInfoKey.ragChunkingStrategy.rawValue: ragChunkingStrategy,
+                SettingsUserInfoKey.ragRetrievalMode.rawValue: ragRetrievalMode,
+                SettingsUserInfoKey.ragRetrievalSettings.rawValue: ragRetrievalSettings
             ]
         )
     }

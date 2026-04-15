@@ -16,6 +16,8 @@ final class SettingsObserver {
     let isTaskPlanningEnabled: CurrentValueSubject<Bool, Never> = CurrentValueSubject(false)
     let ragAnswerMode: CurrentValueSubject<RAGAnswerMode, Never> = CurrentValueSubject(.disabled)
     let ragChunkingStrategy: CurrentValueSubject<RAGChunkingStrategy, Never> = CurrentValueSubject(.fixedTokens)
+    let ragRetrievalMode: CurrentValueSubject<RAGRetrievalMode, Never> = CurrentValueSubject(.basic)
+    let ragRetrievalSettings: CurrentValueSubject<RAGRetrievalSettings, Never> = CurrentValueSubject(.default)
     
     
     init() {
@@ -53,6 +55,13 @@ final class SettingsObserver {
             self.ragChunkingStrategy.send(ragChunkingStrategy)
         }
         
+        if let ragRetrievalMode = notification.userInfo?[SettingsUserInfoKey.ragRetrievalMode.rawValue] as? RAGRetrievalMode {
+            self.ragRetrievalMode.send(ragRetrievalMode)
+        }
+        
+        if let ragRetrievalSettings = notification.userInfo?[SettingsUserInfoKey.ragRetrievalSettings.rawValue] as? RAGRetrievalSettings {
+            self.ragRetrievalSettings.send(ragRetrievalSettings)
+        }
     }
     
     deinit {

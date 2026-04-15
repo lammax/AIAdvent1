@@ -38,6 +38,56 @@ enum RAGAnswerMode: String, Codable, CaseIterable {
     }
 }
 
+enum RAGRetrievalMode: String, Codable, CaseIterable {
+    case basic
+    case enhanced
+    case compareEnhanced
+    
+    var title: String {
+        switch self {
+        case .basic:
+            return "Basic"
+        case .enhanced:
+            return "Enhanced"
+        case .compareEnhanced:
+            return "Compare"
+        }
+    }
+}
+
+enum RAGRelevanceFilterMode: String, Codable, CaseIterable {
+    case disabled
+    case similarityThreshold
+    case heuristic
+    
+    var title: String {
+        switch self {
+        case .disabled:
+            return "Off"
+        case .similarityThreshold:
+            return "Similarity"
+        case .heuristic:
+            return "Heuristic"
+        }
+    }
+}
+
+struct RAGRetrievalSettings: Codable, Equatable {
+    var topKBeforeFiltering: Int
+    var topKAfterFiltering: Int
+    var similarityThreshold: Double
+    var isQueryRewriteEnabled: Bool
+    var relevanceFilterMode: RAGRelevanceFilterMode
+    
+    static let `default` = RAGRetrievalSettings(
+        topKBeforeFiltering: 12,
+        topKAfterFiltering: 5,
+        similarityThreshold: 0.25,
+        isQueryRewriteEnabled: true,
+        relevanceFilterMode: .similarityThreshold
+    )
+}
+
 struct RAGSourceDocument: Hashable {
     let url: URL
     let title: String
@@ -105,10 +155,31 @@ struct RAGStoredChunk: Identifiable, Hashable {
 struct RAGRetrievedChunk: Identifiable, Hashable {
     let chunk: RAGStoredChunk
     let score: Double
+    let relevanceScore: Double
+    let relevanceReason: String
+    
+    init(
+        chunk: RAGStoredChunk,
+        score: Double,
+        relevanceScore: Double? = nil,
+        relevanceReason: String = "cosine similarity"
+    ) {
+        self.chunk = chunk
+        self.score = score
+        self.relevanceScore = relevanceScore ?? score
+        self.relevanceReason = relevanceReason
+    }
     
     var id: UUID {
         chunk.id
     }
+}
+
+struct RAGRetrievalResult {
+    let originalQuestion: String
+    let rewrittenQuestion: String?
+    let candidatesBeforeFiltering: [RAGRetrievedChunk]
+    let chunksAfterFiltering: [RAGRetrievedChunk]
 }
 
 struct RAGIndexingSummary {

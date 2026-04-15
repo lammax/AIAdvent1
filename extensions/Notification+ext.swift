@@ -19,4 +19,6 @@ enum SettingsUserInfoKey: String {
     case isTaskPlanningEnabled
     case ragAnswerMode
     case ragChunkingStrategy
+    case ragRetrievalMode
+    case ragRetrievalSettings
 }

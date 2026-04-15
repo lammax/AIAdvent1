@@ -10,13 +10,16 @@ import Foundation
 final class RAGRetrievalService: RAGRetrievalServiceProtocol {
     private let embeddingService: EmbeddingServiceProtocol
     private let repository: RAGIndexRepositoryProtocol
+    private let relevanceFilteringService: RAGRelevanceFilteringServiceProtocol
     
     init(
         embeddingService: EmbeddingServiceProtocol = OllamaEmbeddingService(),
-        repository: RAGIndexRepositoryProtocol = RAGIndexRepository()
+        repository: RAGIndexRepositoryProtocol = RAGIndexRepository(),
+        relevanceFilteringService: RAGRelevanceFilteringServiceProtocol = RAGRelevanceFilteringService()
     ) {
         self.embeddingService = embeddingService
         self.repository = repository
+        self.relevanceFilteringService = relevanceFilteringService
     }
     
     func retrieve(
@@ -42,6 +45,44 @@ final class RAGRetrievalService: RAGRetrievalServiceProtocol {
             .sorted { $0.score > $1.score }
             .prefix(limit)
             .map { $0 }
+    }
+    
+    func retrieve(
+        originalQuestion: String,
+        searchQuery: String,
+        strategy: RAGChunkingStrategy,
+        settings: RAGRetrievalSettings
+    ) async throws -> RAGRetrievalResult {
+        let safeBeforeLimit = max(settings.topKBeforeFiltering, 0)
+        guard safeBeforeLimit > 0 else {
+            return RAGRetrievalResult(
+                originalQuestion: originalQuestion,
+                rewrittenQuestion: nil,
+                candidatesBeforeFiltering: [],
+                chunksAfterFiltering: []
+            )
+        }
+        
+        let candidates = try await retrieve(
+            question: searchQuery,
+            strategy: strategy,
+            limit: safeBeforeLimit
+        )
+        
+        let filtered = try await relevanceFilteringService.filter(
+            chunks: candidates,
+            question: searchQuery,
+            settings: settings
+        )
+        
+        let rewrittenQuestion = searchQuery == originalQuestion ? nil : searchQuery
+        
+        return RAGRetrievalResult(
+            originalQuestion: originalQuestion,
+            rewrittenQuestion: rewrittenQuestion,
+            candidatesBeforeFiltering: candidates,
+            chunksAfterFiltering: filtered
+        )
     }
     
     private static func cosineSimilarity(_ lhs: [Float], _ rhs: [Float]) -> Double {
