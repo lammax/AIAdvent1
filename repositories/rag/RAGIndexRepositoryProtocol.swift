@@ -9,5 +9,6 @@ import Foundation
 
 protocol RAGIndexRepositoryProtocol {
     func replace(strategy: RAGChunkingStrategy, chunks: [RAGEmbeddedChunk]) async throws
+    func fetchChunks(strategy: RAGChunkingStrategy) async throws -> [RAGStoredChunk]
     func deleteAll() async throws
 }

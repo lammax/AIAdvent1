@@ -20,6 +20,8 @@ class MainViewModel: ObservableObject {
     var settings: [String : Encodable] = [:]
     var provider: LLMProvider = .ollama
     var userProfile: UserProfile = UserProfile.defaultProfile
+    var isTaskPlanningEnabled: Bool = false
+    var ragAnswerMode: RAGAnswerMode = .disabled
     var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
     
     let ollama: OllamaAgent
@@ -73,9 +75,22 @@ class MainViewModel: ObservableObject {
             }
         }.store(in: &uns)
         
+        settingsObserver.isTaskPlanningEnabled.sink { [weak self] isTaskPlanningEnabled in
+            guard let self else { return }
+            self.isTaskPlanningEnabled = isTaskPlanningEnabled
+            ollama.setTaskPlanningEnabled(isTaskPlanningEnabled)
+        }.store(in: &uns)
+        
         settingsObserver.ragChunkingStrategy.sink { [weak self] ragChunkingStrategy in
             guard let self else { return }
             self.ragChunkingStrategy = ragChunkingStrategy
+            ollama.setRAGChunkingStrategy(ragChunkingStrategy)
+        }.store(in: &uns)
+        
+        settingsObserver.ragAnswerMode.sink { [weak self] ragAnswerMode in
+            guard let self else { return }
+            self.ragAnswerMode = ragAnswerMode
+            ollama.setRAGAnswerMode(ragAnswerMode)
         }.store(in: &uns)
         
         profileObserver.selectedProfile
@@ -110,6 +125,7 @@ class MainViewModel: ObservableObject {
     
     func startOllama(prompt: Prompt? = .recursionExpl) {
         guard let prompt else { return }
+        clearRAGStatusDisplay()
         
         if currentPrompt != .promptWithStopWord {
             currentPrompt = prompt
@@ -150,6 +166,7 @@ class MainViewModel: ObservableObject {
     
     func startOpenRouter(prompt: Prompt? = .recursionExpl) {
         guard let prompt else { return }
+        clearRAGStatusDisplay()
         
         if currentPrompt != .promptWithStopWord {
             currentPrompt = prompt
@@ -281,6 +298,11 @@ class MainViewModel: ObservableObject {
         ragStatusLines.append(line)
         ragStatusLines = Array(ragStatusLines.suffix(50))
         ragStatus = ragStatusLines.joined(separator: "\n")
+    }
+    
+    private func clearRAGStatusDisplay() {
+        ragStatusLines = []
+        ragStatus = ""
     }
     
     @MainActor

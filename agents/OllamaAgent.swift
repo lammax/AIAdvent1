@@ -25,6 +25,7 @@ final class OllamaAgent: LLMAgentProtocol {
     private let userProfileService: UserProfileServiceProtocol
     private let taskContextService: TaskContextServiceProtocol
     private let indexingService: DocumentIndexingServiceProtocol
+    private let ragRetrievalService: RAGRetrievalServiceProtocol
     private let promptBuilder = TaskPromptBuilder()
     private let streamer: OllamaStreamer
     
@@ -48,6 +49,9 @@ final class OllamaAgent: LLMAgentProtocol {
     private let summaryTrigger: Int
     
     private var strategy: ContextStrategyProtocol
+    private var isTaskPlanningEnabled: Bool = false
+    private var ragAnswerMode: RAGAnswerMode = .disabled
+    private var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
     private var isPrepared = false
     private var isSending = false
     
@@ -64,6 +68,7 @@ final class OllamaAgent: LLMAgentProtocol {
         userProfileService: UserProfileServiceProtocol = UserProfileService(),
         taskContextService: TaskContextServiceProtocol = TaskContextService(),
         indexingService: DocumentIndexingServiceProtocol = DocumentIndexingService(),
+        ragRetrievalService: RAGRetrievalServiceProtocol = RAGRetrievalService(),
         invariantService: InvariantServiceProtocol = InvariantService(),
         streamer: OllamaStreamer = OllamaStreamer(),
         maxMessages: Int = 12,
@@ -76,6 +81,7 @@ final class OllamaAgent: LLMAgentProtocol {
         self.userProfileService = userProfileService
         self.taskContextService = taskContextService
         self.indexingService = indexingService
+        self.ragRetrievalService = ragRetrievalService
         self.invariantService = invariantService
         self.streamer = streamer
         self.mcpOrchestrator = MCPOrchestrator(
@@ -98,7 +104,7 @@ final class OllamaAgent: LLMAgentProtocol {
             options: [String: Encodable]
         ) {
             
-        if let task = self.currentTaskContext, task.status == .paused {
+        if isTaskPlanningEnabled, let task = self.currentTaskContext, task.status == .paused {
             let pausedText = """
             The current task is paused.
 
@@ -128,25 +134,7 @@ final class OllamaAgent: LLMAgentProtocol {
             let normalizedOptions = normalizeOptions(options)
             self.options = normalizedOptions
             
-            // 1. Убедимся, что есть TaskContext
-            if self.currentTaskContext == nil {
-                let plan = await generateInitialPlan(for: prompt.text)
-                self.currentTaskContext = await taskContextService.startTask(
-                    agentId: agentId,
-                    task: prompt.text,
-                    plan: plan
-                )
-            }
-            
-            guard let taskContext = self.currentTaskContext else { return }
-            
-            // 2. Формируем task-aware prompt
-            let profilePrompt = await userProfileService.makeProfilePrompt(userId: userId)
-            let finalPromptText = promptBuilder.buildPrompt(
-                query: prompt.text,
-                context: taskContext,
-                profilePrompt: profilePrompt
-            )
+            let finalPromptText = await makeUserPromptText(from: prompt.text)
             
             let userMessage = Message(
                 agentId: agentId,
@@ -162,7 +150,7 @@ final class OllamaAgent: LLMAgentProtocol {
             
             let baseContext = await buildContext()
 
-            if let orchestration = try? await mcpOrchestrator?.run(
+            if ragAnswerMode == .disabled, let orchestration = try? await mcpOrchestrator?.run(
                 agentId: agentId,
                 userText: prompt.text,
                 baseContext: baseContext,
@@ -235,68 +223,20 @@ final class OllamaAgent: LLMAgentProtocol {
                     try? await summarizeHistoryIfNeeded()
                 }
                 
-                let context = await buildContext()
-                
-                var fullResponse = ""
-                
-                streamer.onToken = { [weak self] token in
-                    fullResponse += token
-                    DispatchQueue.main.async { [weak self] in
-                        self?.onToken?(token)
-                    }
+                switch ragAnswerMode {
+                case .disabled:
+                    let context = await buildContext()
+                    streamAnswer(context: context, userQuery: prompt.text)
+                case .enabled:
+                    let baseContext = await buildContext()
+                    let context = await makeRAGContext(
+                        question: prompt.text,
+                        baseContext: baseContext
+                    )
+                    streamAnswer(context: context.messages, userQuery: prompt.text)
+                case .compare:
+                    await compareRAGAnswers(question: prompt.text)
                 }
-                
-                streamer.onComplete = { [weak self] ollamaChunk in
-                    guard let self else { return }
-                    
-                    let finalText = fullResponse.trimmingCharacters(in: .whitespacesAndNewlines)
-                    let content = finalText.isEmpty ? ollamaChunk.message.content : finalText
-                    
-                    Task {
-                        let validation = await self.invariantService.validateResponse(
-                            content,
-                            fileName: self.invariantFileName
-                        )
-                        
-                        let safeContent: String
-                        
-                        if validation.isValid {
-                            safeContent = content
-                        } else {
-                            let violations = validation.violations.joined(separator: "\n")
-                            safeContent = """
-                        I can’t recommend that option because it violates the project invariants.
-                        
-                        Violations:
-                        \(violations)
-                        
-                        Please choose an option that stays within the defined architecture, stack, and business rules.
-                        """
-                        }
-                        
-                        let assistantMessage = Message(
-                            agentId: self.agentId,
-                            role: .assistant,
-                            content: safeContent
-                        )
-                        
-                        self.messages.append(assistantMessage)
-                        self.strategy.onAssistantMessage(assistantMessage)
-                        await self.memoryService.appendMessage(assistantMessage)
-                        
-                        // 3. Авто-обновление TaskContext после ответа модели
-                        await self.advanceTaskStateIfNeeded(
-                            userQuery: prompt.text,
-                            assistantResponse: content
-                        )
-                    }
-                    
-                    DispatchQueue.main.async {
-                        self.onComplete?(ollamaChunk)
-                    }
-                }
-                
-                streamer.start(messages: context, options: self.options)
             }
         }
     }
@@ -340,6 +280,18 @@ final class OllamaAgent: LLMAgentProtocol {
     func set(strategy: ContextStrategyProtocol) {
         self.strategy = strategy.makeCleanCopy()
         self.strategy.rebuild(from: messages)
+    }
+    
+    func setTaskPlanningEnabled(_ isEnabled: Bool) {
+        self.isTaskPlanningEnabled = isEnabled
+    }
+    
+    func setRAGAnswerMode(_ mode: RAGAnswerMode) {
+        self.ragAnswerMode = mode
+    }
+    
+    func setRAGChunkingStrategy(_ strategy: RAGChunkingStrategy) {
+        self.ragChunkingStrategy = strategy
     }
     
     // MARK: - Prepare
@@ -464,7 +416,7 @@ final class OllamaAgent: LLMAgentProtocol {
             )
         }
         
-        if let taskContext = currentTaskContext {
+        if isTaskPlanningEnabled, let taskContext = currentTaskContext {
             context.append(
                 Message(
                     agentId: agentId,
@@ -488,6 +440,254 @@ final class OllamaAgent: LLMAgentProtocol {
         
         context.append(contentsOf: strategyMessages)
         return context
+    }
+    
+    private func makeRAGContext(
+        question: String,
+        baseContext: [Message]
+    ) async -> (messages: [Message], sources: [RAGRetrievedChunk]) {
+        do {
+            let sources = try await ragRetrievalService.retrieve(
+                question: question,
+                strategy: ragChunkingStrategy,
+                limit: 5
+            )
+            
+            let ragMessage = Message(
+                agentId: agentId,
+                role: .system,
+                content: makeRAGPrompt(from: sources)
+            )
+            
+            return (insert(ragMessage, beforeLastUserMessageIn: baseContext), sources)
+        } catch {
+            let ragMessage = Message(
+                agentId: agentId,
+                role: .system,
+                content: """
+                RAG retrieval failed: \(error.localizedDescription)
+
+                Answer the user without local indexed context and say that RAG retrieval was unavailable if local project knowledge is required.
+                """
+            )
+            
+            return (insert(ragMessage, beforeLastUserMessageIn: baseContext), [])
+        }
+    }
+    
+    private func makeUserPromptText(from text: String) async -> String {
+        guard isTaskPlanningEnabled else {
+            return text
+        }
+        
+        if currentTaskContext == nil {
+            let plan = await generateInitialPlan(for: text)
+            currentTaskContext = await taskContextService.startTask(
+                agentId: agentId,
+                task: text,
+                plan: plan
+            )
+        }
+        
+        guard let taskContext = currentTaskContext else {
+            return text
+        }
+        
+        let profilePrompt = await userProfileService.makeProfilePrompt(userId: userId)
+        return promptBuilder.buildPrompt(
+            query: text,
+            context: taskContext,
+            profilePrompt: profilePrompt
+        )
+    }
+    
+    private func makeRAGPrompt(from sources: [RAGRetrievedChunk]) -> String {
+        guard !sources.isEmpty else {
+            return """
+            RAG mode is enabled, but no indexed chunks were found.
+
+            If the user's question depends on indexed documents, say that the local RAG index does not contain enough information.
+            """
+        }
+        
+        let context = sources.enumerated()
+            .map { index, item in
+                """
+                [\(index + 1)] source: \(item.chunk.title)
+                section: \(item.chunk.section)
+                chunk: \(item.chunk.chunkId)
+                score: \(String(format: "%.4f", item.score))
+                content:
+                \(item.chunk.content)
+                """
+            }
+            .joined(separator: "\n\n")
+        
+        return """
+        Use the local RAG context below to answer the user's question.
+        Prefer the context over general knowledge.
+        If the context does not contain the answer, say that the indexed documents do not provide enough information.
+        Cite the relevant source file names when they support the answer.
+
+        RAG context:
+        \(context)
+        """
+    }
+    
+    private func insert(_ message: Message, beforeLastUserMessageIn context: [Message]) -> [Message] {
+        var result = context
+        
+        if let lastUserIndex = result.lastIndex(where: { $0.role == .user }) {
+            result.insert(message, at: lastUserIndex)
+        } else {
+            result.append(message)
+        }
+        
+        return result
+    }
+    
+    private func streamAnswer(context: [Message], userQuery: String) {
+        var fullResponse = ""
+        
+        streamer.onToken = { [weak self] token in
+            fullResponse += token
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(token)
+            }
+        }
+        
+        streamer.onComplete = { [weak self] ollamaChunk in
+            guard let self else { return }
+            
+            let finalText = fullResponse.trimmingCharacters(in: .whitespacesAndNewlines)
+            let content = finalText.isEmpty ? ollamaChunk.message.content : finalText
+            
+            Task {
+                let safeContent = await self.validatedContent(content)
+                
+                let assistantMessage = Message(
+                    agentId: self.agentId,
+                    role: .assistant,
+                    content: safeContent
+                )
+                
+                self.messages.append(assistantMessage)
+                self.strategy.onAssistantMessage(assistantMessage)
+                await self.memoryService.appendMessage(assistantMessage)
+                
+                await self.advanceTaskStateIfNeeded(
+                    userQuery: userQuery,
+                    assistantResponse: safeContent
+                )
+            }
+            
+            DispatchQueue.main.async {
+                self.onComplete?(ollamaChunk)
+            }
+        }
+        
+        streamer.start(messages: context, options: self.options)
+    }
+    
+    private func compareRAGAnswers(question: String) async {
+        let baseContext = await buildContext()
+        let ragContext = await makeRAGContext(question: question, baseContext: baseContext)
+        let options = makeAnyOptions(from: self.options)
+        
+        do {
+            let withoutRAG = try await streamer.send(messages: baseContext, options: options)
+            let withRAG = try await streamer.send(messages: ragContext.messages, options: options)
+            let comparison = await validatedContent(
+                makeComparisonAnswer(
+                    withoutRAG: withoutRAG,
+                    withRAG: withRAG,
+                    sources: ragContext.sources
+                )
+            )
+            
+            let assistantMessage = Message(
+                agentId: agentId,
+                role: .assistant,
+                content: comparison
+            )
+            
+            messages.append(assistantMessage)
+            strategy.onAssistantMessage(assistantMessage)
+            await memoryService.appendMessage(assistantMessage)
+            
+            await advanceTaskStateIfNeeded(
+                userQuery: question,
+                assistantResponse: comparison
+            )
+            
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(comparison)
+                self?.onComplete?(OllamaChunk(
+                    model: "",
+                    createdAt: Date(),
+                    message: .init(role: .assistant, content: comparison),
+                    done: true
+                ))
+            }
+        } catch {
+            let message = "RAG comparison failed: \(error.localizedDescription)"
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(message)
+            }
+        }
+    }
+    
+    private func makeComparisonAnswer(
+        withoutRAG: String,
+        withRAG: String,
+        sources: [RAGRetrievedChunk]
+    ) -> String {
+        let sourceText: String
+        
+        if sources.isEmpty {
+            sourceText = "No RAG sources were retrieved."
+        } else {
+            sourceText = sources.enumerated()
+                .map { index, source in
+                    "\(index + 1). \(source.chunk.title), section: \(source.chunk.section), chunk: \(source.chunk.chunkId), score: \(String(format: "%.4f", source.score))"
+                }
+                .joined(separator: "\n")
+        }
+        
+        return """
+        Without RAG
+
+        \(withoutRAG.trimmingCharacters(in: .whitespacesAndNewlines))
+
+        With RAG
+
+        \(withRAG.trimmingCharacters(in: .whitespacesAndNewlines))
+
+        RAG sources
+
+        \(sourceText)
+        """
+    }
+    
+    private func validatedContent(_ content: String) async -> String {
+        let validation = await invariantService.validateResponse(
+            content,
+            fileName: invariantFileName
+        )
+        
+        if validation.isValid {
+            return content
+        }
+        
+        let violations = validation.violations.joined(separator: "\n")
+        return """
+        I can’t recommend that option because it violates the project invariants.
+
+        Violations:
+        \(violations)
+
+        Please choose an option that stays within the defined architecture, stack, and business rules.
+        """
     }
     
     // MARK: - Summary
@@ -615,6 +815,7 @@ final class OllamaAgent: LLMAgentProtocol {
         userQuery: String,
         assistantResponse: String
     ) async {
+        guard isTaskPlanningEnabled else { return }
         guard let context = currentTaskContext else { return }
         
         let analysisPrompt = buildTaskAnalysisPrompt(

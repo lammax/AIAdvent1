@@ -21,6 +21,23 @@ enum RAGChunkingStrategy: String, Codable, CaseIterable {
     }
 }
 
+enum RAGAnswerMode: String, Codable, CaseIterable {
+    case disabled
+    case enabled
+    case compare
+    
+    var title: String {
+        switch self {
+        case .disabled:
+            return "Off"
+        case .enabled:
+            return "RAG"
+        case .compare:
+            return "Compare"
+        }
+    }
+}
+
 struct RAGSourceDocument: Hashable {
     let url: URL
     let title: String
@@ -68,6 +85,30 @@ struct RAGEmbeddedChunk {
     let chunk: RAGChunk
     let embedding: [Float]
     let model: String
+}
+
+struct RAGStoredChunk: Identifiable, Hashable {
+    let id: UUID
+    let source: String
+    let title: String
+    let section: String
+    let chunkId: Int
+    let strategy: RAGChunkingStrategy
+    let content: String
+    let tokenCount: Int
+    let startOffset: Int
+    let endOffset: Int
+    let embedding: [Float]
+    let embeddingModel: String
+}
+
+struct RAGRetrievedChunk: Identifiable, Hashable {
+    let chunk: RAGStoredChunk
+    let score: Double
+    
+    var id: UUID {
+        chunk.id
+    }
 }
 
 struct RAGIndexingSummary {

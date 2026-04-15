@@ -13,6 +13,8 @@ final class SettingsViewModel: ObservableObject {
     
     @Published var provider: LLMProvider = .ollama
     @Published var contextStrategy: ContextStrategy = .slidingWindow
+    @Published var isTaskPlanningEnabled: Bool = false
+    @Published var ragAnswerMode: RAGAnswerMode = .disabled
     @Published var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
         
     @Published var temperature: Double = 0.7
@@ -57,10 +59,12 @@ final class SettingsViewModel: ObservableObject {
             name: .settingsChanged,
             object: nil,
             userInfo: [
-                "settings": settings,
-                "provider": provider,
-                "contextStrategy": contextStrategy,
-                "ragChunkingStrategy": ragChunkingStrategy
+                SettingsUserInfoKey.settings.rawValue: settings,
+                SettingsUserInfoKey.provider.rawValue: provider,
+                SettingsUserInfoKey.contextStrategy.rawValue: contextStrategy,
+                SettingsUserInfoKey.isTaskPlanningEnabled.rawValue: isTaskPlanningEnabled,
+                SettingsUserInfoKey.ragAnswerMode.rawValue: ragAnswerMode,
+                SettingsUserInfoKey.ragChunkingStrategy.rawValue: ragChunkingStrategy
             ]
         )
     }

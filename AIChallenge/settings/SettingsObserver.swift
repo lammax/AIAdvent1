@@ -13,6 +13,8 @@ final class SettingsObserver {
     let settings: CurrentValueSubject<[String: Encodable], Never> = CurrentValueSubject(Constants.defaultOllamaOptions)
     let provider: CurrentValueSubject<LLMProvider, Never> = CurrentValueSubject(.ollama)
     let contextStrategy: CurrentValueSubject<ContextStrategy, Never> = CurrentValueSubject(.facts)
+    let isTaskPlanningEnabled: CurrentValueSubject<Bool, Never> = CurrentValueSubject(false)
+    let ragAnswerMode: CurrentValueSubject<RAGAnswerMode, Never> = CurrentValueSubject(.disabled)
     let ragChunkingStrategy: CurrentValueSubject<RAGChunkingStrategy, Never> = CurrentValueSubject(.fixedTokens)
     
     
@@ -27,19 +29,27 @@ final class SettingsObserver {
     
     @objc private func handleSettings(_ notification: Notification) {
         
-        if let settings = notification.userInfo?["settings"] as? [String: Encodable] {
+        if let settings = notification.userInfo?[SettingsUserInfoKey.settings.rawValue] as? [String: Encodable] {
             self.settings.send(settings)
         }
 
-        if let provider = notification.userInfo?["provider"] as? LLMProvider {
+        if let provider = notification.userInfo?[SettingsUserInfoKey.provider.rawValue] as? LLMProvider {
             self.provider.send(provider)
         }
         
-        if let contextStrategy = notification.userInfo?["contextStrategy"] as? ContextStrategy {
+        if let contextStrategy = notification.userInfo?[SettingsUserInfoKey.contextStrategy.rawValue] as? ContextStrategy {
             self.contextStrategy.send(contextStrategy)
         }
         
-        if let ragChunkingStrategy = notification.userInfo?["ragChunkingStrategy"] as? RAGChunkingStrategy {
+        if let isTaskPlanningEnabled = notification.userInfo?[SettingsUserInfoKey.isTaskPlanningEnabled.rawValue] as? Bool {
+            self.isTaskPlanningEnabled.send(isTaskPlanningEnabled)
+        }
+        
+        if let ragAnswerMode = notification.userInfo?[SettingsUserInfoKey.ragAnswerMode.rawValue] as? RAGAnswerMode {
+            self.ragAnswerMode.send(ragAnswerMode)
+        }
+        
+        if let ragChunkingStrategy = notification.userInfo?[SettingsUserInfoKey.ragChunkingStrategy.rawValue] as? RAGChunkingStrategy {
             self.ragChunkingStrategy.send(ragChunkingStrategy)
         }
         

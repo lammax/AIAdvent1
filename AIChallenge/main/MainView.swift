@@ -9,6 +9,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct MainView: View {
+    private static let outputBottomID = "main-output-bottom"
     
     @StateObject private var viewModel = MainViewModel()
     @StateObject private var settingsVM = SettingsViewModel()
@@ -44,19 +45,31 @@ struct MainView: View {
     var body: some View {
         ZStack {
             VStack {
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(viewModel.answer)
-                            .multilineTextAlignment(.leading)
-                            .lineLimit(nil)
-                        
-                        if !viewModel.ragStatus.isEmpty {
-                            Text(viewModel.ragStatus)
-                                .font(.footnote)
-                                .foregroundStyle(Color.secondary)
+                ScrollViewReader { proxy in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(viewModel.answer)
                                 .multilineTextAlignment(.leading)
                                 .lineLimit(nil)
+                            
+                            if !viewModel.ragStatus.isEmpty {
+                                Text(viewModel.ragStatus)
+                                    .font(.footnote)
+                                    .foregroundStyle(Color.secondary)
+                                    .multilineTextAlignment(.leading)
+                                    .lineLimit(nil)
+                            }
+                            
+                            Color.clear
+                                .frame(height: 1)
+                                .id(Self.outputBottomID)
                         }
+                    }
+                    .onChange(of: viewModel.answer) { _, _ in
+                        proxy.scrollTo(Self.outputBottomID, anchor: .bottom)
+                    }
+                    .onChange(of: viewModel.ragStatus) { _, _ in
+                        proxy.scrollTo(Self.outputBottomID, anchor: .bottom)
                     }
                 }
                 .padding(.top, 80)

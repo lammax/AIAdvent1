@@ -18,11 +18,18 @@ class OllamaStreamer: NSObject {
     override init() {}
     
     func send(_ message: Message, options: [String : Any]) async throws -> String {
+        try await send(messages: [message], options: options)
+    }
+    
+    func send(messages: [Message], options: [String : Any]) async throws -> String {
         
         let finalOptions = options.isEmpty ? Constants.defaultOllamaOptions : options
             
         var body: [String: Any] = finalOptions
-        body["messages"] = [["role": message.role.text, "content": message.content]]
+        body["stream"] = false
+        body["messages"] = messages.map {
+            ["role": $0.role.text, "content": $0.content]
+        }
         
         let url = URL(string: LLMURL.ollama.text)!
         var request = URLRequest(url: url)

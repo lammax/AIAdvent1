@@ -93,6 +93,21 @@ struct SettingsView: View {
                         .pickerStyle(.segmented)
                     }
                     
+                    Toggle("Planning Mode", isOn: $vm.isTaskPlanningEnabled)
+                        .isHidden(vm.provider == .openRouter, remove: true)
+                    
+                    VStack(alignment: .leading) {
+                        Text("RAG Answer Mode")
+                        
+                        Picker("Mode", selection: $vm.ragAnswerMode) {
+                            ForEach(RAGAnswerMode.allCases, id: \.self) { mode in
+                                Text(mode.title).tag(mode)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    .isHidden(vm.provider == .openRouter, remove: true)
+                    
                     VStack(alignment: .leading) {
                         Text("RAG Chunking Strategy")
                         
@@ -103,6 +118,7 @@ struct SettingsView: View {
                         }
                         .pickerStyle(.segmented)
                     }
+                    .isHidden(vm.provider == .openRouter, remove: true)
                     
                     Group {
                         Text("Temperature: \(vm.temperature, specifier: "%.2f")")

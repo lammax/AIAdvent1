@@ -89,6 +89,7 @@
 		13DD3A722F89779200CBB182 /* MCPOrchestrationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A712F89779200CBB182 /* MCPOrchestrationResult.swift */; };
 		13DD3A752F8977CC00CBB182 /* MCPOrchestratorProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A742F8977CC00CBB182 /* MCPOrchestratorProtocol.swift */; };
 		13DD3A772F8977E700CBB182 /* MCPOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A762F8977E700CBB182 /* MCPOrchestrator.swift */; };
+		13DD3BBE2F8FE20500CBB182 /* rag-evaluation.md in Resources */ = {isa = PBXBuildFile; fileRef = 13DD3BBD2F8FE20500CBB182 /* rag-evaluation.md */; };
 		14AA02012F90000000000001 /* RAGModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01012F90000000000001 /* RAGModels.swift */; };
 		14AA02022F90000000000002 /* EmbeddingServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01022F90000000000002 /* EmbeddingServiceProtocol.swift */; };
 		14AA02032F90000000000003 /* OllamaEmbeddingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01032F90000000000003 /* OllamaEmbeddingService.swift */; };
@@ -100,6 +101,8 @@
 		14AA02092F90000000000009 /* DocumentIndexingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01092F90000000000009 /* DocumentIndexingService.swift */; };
 		14AA020A2F9000000000000A /* RAGIndexRepositoryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA010A2F9000000000000A /* RAGIndexRepositoryProtocol.swift */; };
 		14AA020B2F9000000000000B /* RAGIndexRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA010B2F9000000000000B /* RAGIndexRepository.swift */; };
+		14AA020C2F9000000000000C /* RAGRetrievalServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA010C2F9000000000000C /* RAGRetrievalServiceProtocol.swift */; };
+		14AA020D2F9000000000000D /* RAGRetrievalService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA010D2F9000000000000D /* RAGRetrievalService.swift */; };
 		14AA04032F90000000000003 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 14AA04022F90000000000002 /* ZIPFoundation */; };
 /* End PBXBuildFile section */
 
@@ -204,6 +207,7 @@
 		13DD3A712F89779200CBB182 /* MCPOrchestrationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOrchestrationResult.swift; sourceTree = "<group>"; };
 		13DD3A742F8977CC00CBB182 /* MCPOrchestratorProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOrchestratorProtocol.swift; sourceTree = "<group>"; };
 		13DD3A762F8977E700CBB182 /* MCPOrchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOrchestrator.swift; sourceTree = "<group>"; };
+		13DD3BBD2F8FE20500CBB182 /* rag-evaluation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "rag-evaluation.md"; sourceTree = "<group>"; };
 		14AA01012F90000000000001 /* RAGModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGModels.swift; sourceTree = "<group>"; };
 		14AA01022F90000000000002 /* EmbeddingServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddingServiceProtocol.swift; sourceTree = "<group>"; };
 		14AA01032F90000000000003 /* OllamaEmbeddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaEmbeddingService.swift; sourceTree = "<group>"; };
@@ -215,6 +219,8 @@
 		14AA01092F90000000000009 /* DocumentIndexingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentIndexingService.swift; sourceTree = "<group>"; };
 		14AA010A2F9000000000000A /* RAGIndexRepositoryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGIndexRepositoryProtocol.swift; sourceTree = "<group>"; };
 		14AA010B2F9000000000000B /* RAGIndexRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGIndexRepository.swift; sourceTree = "<group>"; };
+		14AA010C2F9000000000000C /* RAGRetrievalServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGRetrievalServiceProtocol.swift; sourceTree = "<group>"; };
+		14AA010D2F9000000000000D /* RAGRetrievalService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGRetrievalService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -524,6 +530,7 @@
 		13BD3A762F82C0640059C0A5 /* support */ = {
 			isa = PBXGroup;
 			children = (
+				13DD3BBD2F8FE20500CBB182 /* rag-evaluation.md */,
 				13BD3A772F82C0A60059C0A5 /* invariants.md */,
 				13BD3AC12F8574EF0059C0A5 /* Claude.md */,
 			);
@@ -617,6 +624,8 @@
 			children = (
 				14AA01082F90000000000008 /* DocumentIndexingServiceProtocol.swift */,
 				14AA01092F90000000000009 /* DocumentIndexingService.swift */,
+				14AA010C2F9000000000000C /* RAGRetrievalServiceProtocol.swift */,
+				14AA010D2F9000000000000D /* RAGRetrievalService.swift */,
 				14AA01022F90000000000002 /* EmbeddingServiceProtocol.swift */,
 				14AA01032F90000000000003 /* OllamaEmbeddingService.swift */,
 				14AA01042F90000000000004 /* RAGChunker.swift */,
@@ -766,6 +775,7 @@
 				133DA6F62F682BFE00F8AE82 /* Assets.xcassets in Resources */,
 				13BD3AC22F8574EF0059C0A5 /* Claude.md in Resources */,
 				13BD3A782F82C0A60059C0A5 /* invariants.md in Resources */,
+				13DD3BBE2F8FE20500CBB182 /* rag-evaluation.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -805,6 +815,7 @@
 				13BD3A8C2F82D9B40059C0A5 /* TaskTransitionError.swift in Sources */,
 				13DD3A772F8977E700CBB182 /* MCPOrchestrator.swift in Sources */,
 				14AA020A2F9000000000000A /* RAGIndexRepositoryProtocol.swift in Sources */,
+				14AA020C2F9000000000000C /* RAGRetrievalServiceProtocol.swift in Sources */,
 				13DD3A472F86CAC900CBB182 /* MCPToolExecutorProtocol.swift in Sources */,
 				13BD3A4C2F7EE6F40059C0A5 /* WorkingMemoryItem.swift in Sources */,
 				13BD3A3D2F7E47F20059C0A5 /* BranchingStrategy.swift in Sources */,
@@ -833,6 +844,7 @@
 				13DD3A672F89611100CBB182 /* RoutedTool.swift in Sources */,
 				13BD3A342F7E46E40059C0A5 /* ContextStrategy.swift in Sources */,
 				14AA02092F90000000000009 /* DocumentIndexingService.swift in Sources */,
+				14AA020D2F9000000000000D /* RAGRetrievalService.swift in Sources */,
 				13BD3A3B2F7E47CA0059C0A5 /* FactsStrategy.swift in Sources */,
 				13DD3A652F89610200CBB182 /* MCPToolRouter.swift in Sources */,
 				13BD3A5A2F7F01110059C0A5 /* UserProfileServiceProtocol.swift in Sources */,
