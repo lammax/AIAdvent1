@@ -17,6 +17,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var ragAnswerMode: RAGAnswerMode = .disabled
     @Published var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
     @Published var ragRetrievalMode: RAGRetrievalMode = .basic
+    @Published var ragEvaluationMode: RAGEvaluationMode = .disabled
     @Published var ragTopKBeforeFiltering: Double = Double(RAGRetrievalSettings.default.topKBeforeFiltering)
     @Published var ragTopKAfterFiltering: Double = Double(RAGRetrievalSettings.default.topKAfterFiltering)
     @Published var ragSimilarityThreshold: Double = RAGRetrievalSettings.default.similarityThreshold
@@ -79,6 +80,7 @@ final class SettingsViewModel: ObservableObject {
                 SettingsUserInfoKey.ragAnswerMode.rawValue: ragAnswerMode,
                 SettingsUserInfoKey.ragChunkingStrategy.rawValue: ragChunkingStrategy,
                 SettingsUserInfoKey.ragRetrievalMode.rawValue: ragRetrievalMode,
+                SettingsUserInfoKey.ragEvaluationMode.rawValue: ragEvaluationMode,
                 SettingsUserInfoKey.ragRetrievalSettings.rawValue: ragRetrievalSettings
             ]
         )

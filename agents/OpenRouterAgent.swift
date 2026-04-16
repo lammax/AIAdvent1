@@ -9,7 +9,7 @@
 
 import Foundation
 
-class OpenRouterAgent: LLMAgentProtocol {
+final class OpenRouterAgent: LLMAgentProtocol, @unchecked Sendable {
     internal let agentId: String = "open_router_agent"
     
     var onToken: ((String) -> Void)?

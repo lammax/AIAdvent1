@@ -110,7 +110,7 @@ final class RAGIndexRepository: RAGIndexRepositoryProtocol {
             count: data.count / MemoryLayout<Float>.stride
         )
         
-        vector.withUnsafeMutableBytes { buffer in
+        _ = vector.withUnsafeMutableBytes { buffer in
             data.copyBytes(to: buffer)
         }
         

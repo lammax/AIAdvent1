@@ -263,6 +263,17 @@ private struct SettingsRAGTab: View {
                     step: 1
                 )
             }
+            
+            VStack(alignment: .leading) {
+                Text("RAG Evaluation")
+                
+                Picker("Evaluation", selection: $vm.ragEvaluationMode) {
+                    ForEach(RAGEvaluationMode.allCases, id: \.self) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
         }
         .isHidden(vm.provider == .openRouter, remove: true)
     }

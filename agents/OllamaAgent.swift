@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class OllamaAgent: LLMAgentProtocol {
+final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     
     // MARK: - Constants
     
@@ -27,6 +27,9 @@ final class OllamaAgent: LLMAgentProtocol {
     private let indexingService: DocumentIndexingServiceProtocol
     private let ragRetrievalService: RAGRetrievalServiceProtocol
     private let ragQueryRewriteService: RAGQueryRewriteServiceProtocol
+    private let ragAnswerValidationService: RAGAnswerValidationServiceProtocol
+    private let ragEvaluationQuestionRepository: RAGEvaluationQuestionRepositoryProtocol
+    private let ragEvaluationService: RAGEvaluationServiceProtocol
     private let promptBuilder = TaskPromptBuilder()
     private let streamer: OllamaStreamer
     
@@ -54,6 +57,7 @@ final class OllamaAgent: LLMAgentProtocol {
     private var ragAnswerMode: RAGAnswerMode = .disabled
     private var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
     private var ragRetrievalMode: RAGRetrievalMode = .basic
+    private var ragEvaluationMode: RAGEvaluationMode = .disabled
     private var ragRetrievalSettings: RAGRetrievalSettings = .default
     private var isPrepared = false
     private var isSending = false
@@ -73,6 +77,9 @@ final class OllamaAgent: LLMAgentProtocol {
         indexingService: DocumentIndexingServiceProtocol = DocumentIndexingService(),
         ragRetrievalService: RAGRetrievalServiceProtocol = RAGRetrievalService(),
         ragQueryRewriteService: RAGQueryRewriteServiceProtocol = OllamaRAGQueryRewriteService(),
+        ragAnswerValidationService: RAGAnswerValidationServiceProtocol = RAGAnswerValidationService(),
+        ragEvaluationQuestionRepository: RAGEvaluationQuestionRepositoryProtocol = MarkdownRAGEvaluationQuestionRepository(),
+        ragEvaluationService: RAGEvaluationServiceProtocol = RAGEvaluationService(),
         invariantService: InvariantServiceProtocol = InvariantService(),
         streamer: OllamaStreamer = OllamaStreamer(),
         maxMessages: Int = 12,
@@ -87,6 +94,9 @@ final class OllamaAgent: LLMAgentProtocol {
         self.indexingService = indexingService
         self.ragRetrievalService = ragRetrievalService
         self.ragQueryRewriteService = ragQueryRewriteService
+        self.ragAnswerValidationService = ragAnswerValidationService
+        self.ragEvaluationQuestionRepository = ragEvaluationQuestionRepository
+        self.ragEvaluationService = ragEvaluationService
         self.invariantService = invariantService
         self.streamer = streamer
         self.mcpOrchestrator = MCPOrchestrator(
@@ -138,6 +148,11 @@ final class OllamaAgent: LLMAgentProtocol {
             
             let normalizedOptions = normalizeOptions(options)
             self.options = normalizedOptions
+            
+            if ragEvaluationMode == .builtInQuestions {
+                await runRAGEvaluation()
+                return
+            }
             
             let finalPromptText = await makeUserPromptText(from: prompt.text)
             
@@ -236,12 +251,7 @@ final class OllamaAgent: LLMAgentProtocol {
                     if ragRetrievalMode == .compareEnhanced {
                         await compareEnhancedRAGAnswers(question: prompt.text)
                     } else {
-                        let baseContext = await buildContext()
-                        let context = await makeRAGContext(
-                            question: prompt.text,
-                            baseContext: baseContext
-                        )
-                        streamAnswer(context: context.messages, userQuery: prompt.text)
+                        await answerWithRAG(question: prompt.text)
                     }
                 case .compare:
                     await compareRAGAnswers(question: prompt.text)
@@ -305,6 +315,10 @@ final class OllamaAgent: LLMAgentProtocol {
     
     func setRAGRetrievalMode(_ mode: RAGRetrievalMode) {
         self.ragRetrievalMode = mode
+    }
+    
+    func setRAGEvaluationMode(_ mode: RAGEvaluationMode) {
+        self.ragEvaluationMode = mode
     }
     
     func setRAGRetrievalSettings(_ settings: RAGRetrievalSettings) {
@@ -576,7 +590,7 @@ final class OllamaAgent: LLMAgentProtocol {
                 """
                 [\(index + 1)] source: \(item.chunk.title)
                 section: \(item.chunk.section)
-                chunk: \(item.chunk.chunkId)
+                chunk_id: \(item.chunk.chunkId)
                 score: \(String(format: "%.4f", item.score))
                 relevance: \(String(format: "%.4f", item.relevanceScore))
                 reason: \(item.relevanceReason)
@@ -605,8 +619,23 @@ final class OllamaAgent: LLMAgentProtocol {
         return """
         Use the local RAG context below to answer the user's question.
         Prefer the context over general knowledge.
-        If the context does not contain the answer, say that the indexed documents do not provide enough information.
-        Cite the relevant source file names when they support the answer.
+        Answer only from the provided chunks.
+        Every non-unknown answer must include sources and verbatim quotes from the chunks.
+        Use the source, section, and chunk_id values exactly as shown in the context.
+        Quotes must be exact fragments copied from chunk content.
+        If the context does not contain enough information, set is_unknown to true, answer "Не знаю", and ask for clarification.
+        Return only valid JSON with this shape:
+        {
+          "answer": "short answer",
+          "sources": [
+            {"source": "File.swift", "section": "section name", "chunk_id": 1}
+          ],
+          "quotes": [
+            {"source": "File.swift", "section": "section name", "chunk_id": 1, "text": "verbatim quote"}
+          ],
+          "is_unknown": false,
+          "clarification_request": null
+        }
         \(retrievalNotes)
 
         RAG context:
@@ -669,19 +698,400 @@ final class OllamaAgent: LLMAgentProtocol {
         streamer.start(messages: context, options: self.options)
     }
     
+    private func answerWithRAG(question: String) async {
+        do {
+            let run = try await makeRAGAnswerRun(question: question)
+            let safeContent = await validatedContent(run.formattedAnswer)
+            
+            let assistantMessage = Message(
+                agentId: agentId,
+                role: .assistant,
+                content: safeContent
+            )
+            
+            messages.append(assistantMessage)
+            strategy.onAssistantMessage(assistantMessage)
+            await memoryService.appendMessage(assistantMessage)
+            
+            await advanceTaskStateIfNeeded(
+                userQuery: question,
+                assistantResponse: safeContent
+            )
+            
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(safeContent)
+                self?.onComplete?(OllamaChunk(
+                    model: "",
+                    createdAt: Date(),
+                    message: .init(role: .assistant, content: safeContent),
+                    done: true
+                ))
+            }
+        } catch {
+            let message = "RAG answer failed: \(error.localizedDescription)"
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(message)
+            }
+        }
+    }
+    
+    private func makeRAGAnswerRun(
+        question: String,
+        appendingQuestionToContext: Bool = false
+    ) async throws -> RAGEvaluationAnswerRun {
+        let evidence = try await retrieveRAGEvidence(question: question)
+        
+        if isWeakRAGContext(evidence.sources) {
+            let contract = makeUnknownRAGContract()
+            let validation = ragAnswerValidationService.validate(
+                answer: contract,
+                retrievedChunks: evidence.sources
+            )
+            
+            return RAGEvaluationAnswerRun(
+                contract: contract,
+                formattedAnswer: formatRAGAnswer(contract, validation: validation),
+                retrievedChunks: evidence.sources,
+                retrievalResult: evidence.retrievalResult,
+                validation: validation
+            )
+        }
+        
+        let baseContext = await buildContext()
+        let ragMessage = Message(
+            agentId: agentId,
+            role: .system,
+            content: makeRAGPrompt(
+                from: evidence.sources,
+                retrievalResult: evidence.retrievalResult
+            )
+        )
+        var context = insert(ragMessage, beforeLastUserMessageIn: baseContext)
+        
+        if appendingQuestionToContext {
+            context.append(
+                Message(
+                    agentId: agentId,
+                    role: .user,
+                    content: question
+                )
+            )
+        }
+        let rawAnswer = try await streamer.send(
+            messages: context,
+            options: makeAnyOptions(from: options)
+        )
+        let contract = parseRAGAnswerContract(from: rawAnswer)
+            ?? makeFallbackRAGContract(
+                answer: rawAnswer,
+                sources: evidence.sources
+            )
+        let validation = ragAnswerValidationService.validate(
+            answer: contract,
+            retrievedChunks: evidence.sources
+        )
+        let finalContract = validation.isValid
+            ? contract
+            : makeFallbackRAGContract(answer: contract.answer, sources: evidence.sources)
+        let finalValidation = ragAnswerValidationService.validate(
+            answer: finalContract,
+            retrievedChunks: evidence.sources
+        )
+        
+        return RAGEvaluationAnswerRun(
+            contract: finalContract,
+            formattedAnswer: formatRAGAnswer(finalContract, validation: finalValidation),
+            retrievedChunks: evidence.sources,
+            retrievalResult: evidence.retrievalResult,
+            validation: finalValidation
+        )
+    }
+    
+    private func retrieveRAGEvidence(
+        question: String
+    ) async throws -> (sources: [RAGRetrievedChunk], retrievalResult: RAGRetrievalResult?) {
+        switch ragRetrievalMode {
+        case .basic, .compareEnhanced:
+            let sources = try await ragRetrievalService.retrieve(
+                question: question,
+                strategy: ragChunkingStrategy,
+                limit: ragRetrievalSettings.topKAfterFiltering
+            )
+            return (sources, nil)
+        case .enhanced:
+            let searchQuery = await makeRAGSearchQuery(from: question)
+            let retrievalResult = try await ragRetrievalService.retrieve(
+                originalQuestion: question,
+                searchQuery: searchQuery,
+                strategy: ragChunkingStrategy,
+                settings: ragRetrievalSettings
+            )
+            return (retrievalResult.chunksAfterFiltering, retrievalResult)
+        }
+    }
+    
+    private func isWeakRAGContext(_ sources: [RAGRetrievedChunk]) -> Bool {
+        guard let best = sources.map(\.relevanceScore).max() else {
+            return true
+        }
+        
+        return best < ragRetrievalSettings.similarityThreshold
+    }
+    
+    private func makeUnknownRAGContract() -> RAGAnswerContract {
+        RAGAnswerContract(
+            answer: "Не знаю. В найденном контексте недостаточно релевантной информации, чтобы ответить уверенно.",
+            sources: [],
+            quotes: [],
+            isUnknown: true,
+            clarificationRequest: "Уточните вопрос или добавьте больше контекста."
+        )
+    }
+    
+    private func makeFallbackRAGContract(
+        answer: String,
+        sources: [RAGRetrievedChunk]
+    ) -> RAGAnswerContract {
+        let answerText = answer.trimmingCharacters(in: .whitespacesAndNewlines)
+        let sourceItems = sources.map {
+            RAGAnswerSource(
+                source: $0.chunk.title,
+                section: $0.chunk.section,
+                chunkID: $0.chunk.chunkId
+            )
+        }
+        let quoteItems = sources.prefix(3).map {
+            RAGAnswerQuote(
+                source: $0.chunk.title,
+                section: $0.chunk.section,
+                chunkID: $0.chunk.chunkId,
+                text: makeQuoteSnippet(from: $0.chunk.content)
+            )
+        }
+        
+        return RAGAnswerContract(
+            answer: answerText.isEmpty ? "Ответ сформирован по найденному RAG-контексту." : answerText,
+            sources: sourceItems,
+            quotes: quoteItems,
+            isUnknown: false,
+            clarificationRequest: nil
+        )
+    }
+    
+    private func makeQuoteSnippet(from text: String) -> String {
+        let normalized = text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        
+        guard normalized.count > 240 else {
+            return normalized
+        }
+        
+        let endIndex = normalized.index(normalized.startIndex, offsetBy: 240)
+        return String(normalized[..<endIndex])
+    }
+    
+    private func parseRAGAnswerContract(from text: String) -> RAGAnswerContract? {
+        let cleaned = text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard
+            let start = cleaned.firstIndex(of: "{"),
+            let end = cleaned.lastIndex(of: "}")
+        else {
+            return nil
+        }
+        
+        let json = String(cleaned[start...end])
+        guard let data = json.data(using: .utf8) else {
+            return nil
+        }
+        
+        return try? JSONDecoder().decode(RAGAnswerContract.self, from: data)
+    }
+    
+    private func formatRAGAnswer(
+        _ contract: RAGAnswerContract,
+        validation: RAGAnswerValidationResult
+    ) -> String {
+        let sourcesText = contract.sources.isEmpty
+            ? "-"
+            : contract.sources.enumerated()
+                .map { index, source in
+                    "\(index + 1). \(source.source), section: \(source.section ?? "-"), chunk_id: \(source.chunkID)"
+                }
+                .joined(separator: "\n")
+        
+        let quotesText = contract.quotes.isEmpty
+            ? "-"
+            : contract.quotes.enumerated()
+                .map { index, quote in
+                    "\(index + 1). \(quote.source), section: \(quote.section ?? "-"), chunk_id: \(quote.chunkID)\n\"\(quote.text)\""
+                }
+                .joined(separator: "\n\n")
+        
+        let clarification = contract.clarificationRequest
+            .map { "\n\nУточнение:\n\($0)" }
+            ?? ""
+        let validationNotes = validation.notes.isEmpty || contract.isUnknown
+            ? ""
+            : "\n\nValidation notes:\n\(validation.notes.map { "- \($0)" }.joined(separator: "\n"))"
+        
+        return """
+        Ответ:
+        \(contract.answer)\(clarification)
+
+        Источники:
+        \(sourcesText)
+
+        Цитаты:
+        \(quotesText)\(validationNotes)
+        """
+    }
+    
+    private func runRAGEvaluation() async {
+        do {
+            let questions = try ragEvaluationQuestionRepository.loadQuestions()
+            var fullContent = """
+            RAG Evaluation: \(questions.count) Questions
+            
+            """
+            
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(fullContent)
+            }
+            
+            let report = await ragEvaluationService.evaluate(
+                questions: questions,
+                onQuestionStarted: { [weak self] question, index, total in
+                    let progress = """
+                    
+                    Processing question \(index)/\(total): \(question.title)
+                    Question: \(question.question)
+                    
+                    """
+                    fullContent += progress
+                    
+                    DispatchQueue.main.async {
+                        self?.onToken?(progress)
+                    }
+                },
+                onItemCompleted: { [weak self] item, _, _ in
+                    let itemText = "\n\(self?.makeRAGEvaluationItemReport(item) ?? "")\n\n---\n"
+                    fullContent += itemText
+                    
+                    DispatchQueue.main.async {
+                        self?.onToken?(itemText)
+                    }
+                }
+            ) { [weak self] question in
+                guard let self else {
+                    throw CancellationError()
+                }
+                
+                return try await self.makeRAGAnswerRun(
+                    question: question.question,
+                    appendingQuestionToContext: true
+                )
+            }
+            let summary = "\n\(makeRAGEvaluationSummary(report))"
+            fullContent += summary
+            
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(summary)
+                self?.onComplete?(OllamaChunk(
+                    model: "",
+                    createdAt: Date(),
+                    message: .init(role: .assistant, content: fullContent),
+                    done: true
+                ))
+            }
+        } catch {
+            let message = "RAG evaluation failed: \(error.localizedDescription)"
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(message)
+            }
+        }
+    }
+    
+    private func makeRAGEvaluationReport(_ report: RAGEvaluationReport) -> String {
+        let total = report.items.count
+        let itemText = report.items.map(makeRAGEvaluationItemReport)
+        .joined(separator: "\n\n---\n\n")
+        
+        return """
+        RAG Evaluation: \(total) Questions
+        
+        Summary:
+        sources: \(report.sourcePassCount)/\(total)
+        quotes: \(report.quotePassCount)/\(total)
+        quotes from chunks: \(report.quoteGroundingPassCount)/\(total)
+        supported by quotes: \(report.supportedPassCount)/\(total)
+        unknown responses: \(report.unknownCount)
+        
+        \(itemText)
+        """
+    }
+    
+    private func makeRAGEvaluationItemReport(_ item: RAGEvaluationItem) -> String {
+        let validation = item.run.validation
+        let notes = item.notes.isEmpty
+            ? "none"
+            : item.notes.map { "- \($0)" }.joined(separator: "\n")
+        let rewritten = item.run.retrievalResult?.rewrittenQuestion ?? "not used"
+        
+        return """
+        \(item.question.id). \(item.question.title)
+        Question: \(item.question.question)
+        Grade: \(item.grade.rawValue)
+        Sources: \(passFail(validation.hasSources))
+        Quotes: \(passFail(validation.hasQuotes))
+        Quotes from chunks: \(passFail(validation.quotesMatchChunks))
+        Answer supported by quotes: \(passFail(validation.answerSupportedByQuotes))
+        Rewritten query: \(rewritten)
+        
+        \(item.run.formattedAnswer)
+        
+        Eval notes:
+        \(notes)
+        """
+    }
+    
+    private func makeRAGEvaluationSummary(_ report: RAGEvaluationReport) -> String {
+        let total = report.items.count
+        
+        return """
+        Summary:
+        sources: \(report.sourcePassCount)/\(total)
+        quotes: \(report.quotePassCount)/\(total)
+        quotes from chunks: \(report.quoteGroundingPassCount)/\(total)
+        supported by quotes: \(report.supportedPassCount)/\(total)
+        unknown responses: \(report.unknownCount)
+        """
+    }
+    
+    private func passFail(_ value: Bool) -> String {
+        value ? "pass" : "fail"
+    }
+    
     private func compareRAGAnswers(question: String) async {
         let baseContext = await buildContext()
-        let ragContext = await makeRAGContext(question: question, baseContext: baseContext)
         let options = makeAnyOptions(from: self.options)
         
         do {
             let withoutRAG = try await streamer.send(messages: baseContext, options: options)
-            let withRAG = try await streamer.send(messages: ragContext.messages, options: options)
+            let ragRun = try await makeRAGAnswerRun(question: question)
             let comparison = await validatedContent(
                 makeComparisonAnswer(
                     withoutRAG: withoutRAG,
-                    withRAG: withRAG,
-                    sources: ragContext.sources
+                    withRAG: ragRun.formattedAnswer,
+                    sources: ragRun.retrievedChunks
                 )
             )
             
@@ -907,12 +1317,15 @@ final class OllamaAgent: LLMAgentProtocol {
         guard !oldMessages.isEmpty else { return }
         
         let text = oldMessages
-            .map { "\($0.role): \($0.content)" }
+            .compactMap(makeSummarizableLine)
             .joined(separator: "\n")
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         
         let prompt = """
         Summarize the following conversation briefly.
-        Keep important facts, user preferences, and context.
+        Keep only stable conversation facts, user preferences, decisions, and useful context.
+        Do not include citations, raw tool outputs, RAG context, eval reports, source lists, chunk ids, JSON, logs, validation notes, or formatting artifacts.
+        If a message is diagnostic or evaluation output, ignore it.
 
         Conversation:
         \(text)
@@ -940,6 +1353,55 @@ final class OllamaAgent: LLMAgentProtocol {
         await memoryService.appendMessages(messages)
         
         strategy.rebuild(from: messages)
+    }
+    
+    private func makeSummarizableLine(from message: Message) -> String? {
+        guard message.role != .system else {
+            return nil
+        }
+        
+        let content = message.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !content.isEmpty else {
+            return nil
+        }
+        
+        if isDiagnosticHistoryContent(content) {
+            return nil
+        }
+        
+        if message.role == .assistant, let answer = extractAnswerSection(from: content) {
+            return "\(message.role): \(answer)"
+        }
+        
+        return "\(message.role): \(content)"
+    }
+    
+    private func isDiagnosticHistoryContent(_ content: String) -> Bool {
+        content.hasPrefix("RAG Evaluation:") ||
+        content.hasPrefix("RAG comparison failed:") ||
+        content.hasPrefix("Enhanced RAG comparison failed:") ||
+        content.hasPrefix("Basic RAG\n") ||
+        content.contains("Enhanced candidates before filtering:") ||
+        content.contains("Retrieval comparison") ||
+        content.contains("Validation notes:")
+    }
+    
+    private func extractAnswerSection(from content: String) -> String? {
+        guard content.contains("Источники:"), content.contains("Цитаты:") else {
+            return nil
+        }
+        
+        let marker = "Ответ:"
+        guard let start = content.range(of: marker) else {
+            return nil
+        }
+        
+        let tail = String(content[start.upperBound...])
+        if let end = tail.range(of: "Источники:") {
+            return "RAG answer: \(tail[..<end.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines))"
+        }
+        
+        return "RAG answer: \(tail.trimmingCharacters(in: .whitespacesAndNewlines))"
     }
     
     // MARK: - Task Planning

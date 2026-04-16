@@ -72,6 +72,20 @@ enum RAGRelevanceFilterMode: String, Codable, CaseIterable {
     }
 }
 
+enum RAGEvaluationMode: String, Codable, CaseIterable {
+    case disabled
+    case builtInQuestions
+    
+    var title: String {
+        switch self {
+        case .disabled:
+            return "Off"
+        case .builtInQuestions:
+            return "10 Questions"
+        }
+    }
+}
+
 struct RAGRetrievalSettings: Codable, Equatable {
     var topKBeforeFiltering: Int
     var topKAfterFiltering: Int
@@ -180,6 +194,118 @@ struct RAGRetrievalResult {
     let rewrittenQuestion: String?
     let candidatesBeforeFiltering: [RAGRetrievedChunk]
     let chunksAfterFiltering: [RAGRetrievedChunk]
+}
+
+struct RAGAnswerContract: Codable, Equatable {
+    let answer: String
+    let sources: [RAGAnswerSource]
+    let quotes: [RAGAnswerQuote]
+    let isUnknown: Bool
+    let clarificationRequest: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case answer
+        case sources
+        case quotes
+        case isUnknown = "is_unknown"
+        case clarificationRequest = "clarification_request"
+    }
+}
+
+struct RAGAnswerSource: Codable, Equatable, Hashable {
+    let source: String
+    let section: String?
+    let chunkID: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case source
+        case section
+        case chunkID = "chunk_id"
+    }
+}
+
+struct RAGAnswerQuote: Codable, Equatable, Hashable {
+    let source: String
+    let section: String?
+    let chunkID: Int
+    let text: String
+    
+    enum CodingKeys: String, CodingKey {
+        case source
+        case section
+        case chunkID = "chunk_id"
+        case text
+    }
+}
+
+struct RAGAnswerValidationResult: Codable, Equatable {
+    let hasSources: Bool
+    let hasQuotes: Bool
+    let sourcesMatchChunks: Bool
+    let quotesMatchChunks: Bool
+    let answerSupportedByQuotes: Bool
+    let notes: [String]
+    
+    var isValid: Bool {
+        hasSources &&
+        hasQuotes &&
+        sourcesMatchChunks &&
+        quotesMatchChunks &&
+        answerSupportedByQuotes
+    }
+}
+
+struct RAGEvaluationQuestion: Codable, Equatable, Identifiable {
+    let id: Int
+    let title: String
+    let question: String
+    let expected: String
+    let expectedSources: [String]
+}
+
+struct RAGEvaluationAnswerRun {
+    let contract: RAGAnswerContract
+    let formattedAnswer: String
+    let retrievedChunks: [RAGRetrievedChunk]
+    let retrievalResult: RAGRetrievalResult?
+    let validation: RAGAnswerValidationResult
+}
+
+struct RAGEvaluationItem {
+    let question: RAGEvaluationQuestion
+    let run: RAGEvaluationAnswerRun
+    let grade: RAGEvaluationGrade
+    let notes: [String]
+}
+
+enum RAGEvaluationGrade: String, Codable, Equatable {
+    case miss
+    case partial
+    case good
+}
+
+struct RAGEvaluationReport {
+    let items: [RAGEvaluationItem]
+    
+    var sourcePassCount: Int {
+        items.filter { $0.run.validation.hasSources }.count
+    }
+    
+    var quotePassCount: Int {
+        items.filter { $0.run.validation.hasQuotes }.count
+    }
+    
+    var quoteGroundingPassCount: Int {
+        items.filter { $0.run.validation.quotesMatchChunks }.count
+    }
+    
+    var supportedPassCount: Int {
+        items.filter { $0.run.validation.answerSupportedByQuotes }.count
+    }
+    
+    var unknownCount: Int {
+        items.filter { $0.run.contract.isUnknown }.count
+    }
 }
 
 struct RAGIndexingSummary {

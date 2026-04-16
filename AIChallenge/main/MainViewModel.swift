@@ -24,6 +24,7 @@ class MainViewModel: ObservableObject {
     var ragAnswerMode: RAGAnswerMode = .disabled
     var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
     var ragRetrievalMode: RAGRetrievalMode = .basic
+    var ragEvaluationMode: RAGEvaluationMode = .disabled
     var ragRetrievalSettings: RAGRetrievalSettings = .default
     
     let ollama: OllamaAgent
@@ -99,6 +100,12 @@ class MainViewModel: ObservableObject {
             guard let self else { return }
             self.ragRetrievalMode = ragRetrievalMode
             ollama.setRAGRetrievalMode(ragRetrievalMode)
+        }.store(in: &uns)
+        
+        settingsObserver.ragEvaluationMode.sink { [weak self] ragEvaluationMode in
+            guard let self else { return }
+            self.ragEvaluationMode = ragEvaluationMode
+            ollama.setRAGEvaluationMode(ragEvaluationMode)
         }.store(in: &uns)
         
         settingsObserver.ragRetrievalSettings.sink { [weak self] ragRetrievalSettings in

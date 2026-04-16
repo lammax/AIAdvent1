@@ -20,5 +20,6 @@ enum SettingsUserInfoKey: String {
     case ragAnswerMode
     case ragChunkingStrategy
     case ragRetrievalMode
+    case ragEvaluationMode
     case ragRetrievalSettings
 }
