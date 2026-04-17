@@ -311,6 +311,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             guard let self else { return }
             
             try? await self.indexingService.deleteAll()
+            await self.ragRetrievalService.invalidateCache()
         }
     }
     
@@ -341,6 +342,12 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     
     func setRAGRetrievalSettings(_ settings: RAGRetrievalSettings) {
         self.ragRetrievalSettings = settings
+    }
+    
+    func invalidateRAGRetrievalCache() {
+        Task { [weak self] in
+            await self?.ragRetrievalService.invalidateCache()
+        }
     }
     
     // MARK: - Prepare

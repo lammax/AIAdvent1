@@ -7,10 +7,11 @@
 
 import Foundation
 
-final class RAGRetrievalService: RAGRetrievalServiceProtocol {
+actor RAGRetrievalService: RAGRetrievalServiceProtocol {
     private let embeddingService: EmbeddingServiceProtocol
     private let repository: RAGIndexRepositoryProtocol
     private let relevanceFilteringService: RAGRelevanceFilteringServiceProtocol
+    private var cachedChunksByStrategy: [RAGChunkingStrategy: [RAGStoredChunk]] = [:]
     
     init(
         embeddingService: EmbeddingServiceProtocol = OllamaEmbeddingService(),
@@ -20,6 +21,10 @@ final class RAGRetrievalService: RAGRetrievalServiceProtocol {
         self.embeddingService = embeddingService
         self.repository = repository
         self.relevanceFilteringService = relevanceFilteringService
+    }
+    
+    func invalidateCache() {
+        cachedChunksByStrategy.removeAll()
     }
     
     func retrieve(
@@ -32,19 +37,13 @@ final class RAGRetrievalService: RAGRetrievalServiceProtocol {
         let questionEmbedding = try await embeddingService.embed([question]).first ?? []
         guard !questionEmbedding.isEmpty else { return [] }
         
-        let chunks = try await repository.fetchChunks(strategy: strategy)
+        let chunks = try await cachedChunks(strategy: strategy)
         
-        return chunks
-            .map {
-                RAGRetrievedChunk(
-                    chunk: $0,
-                    score: Self.cosineSimilarity(questionEmbedding, $0.embedding)
-                )
-            }
-            .filter { $0.score.isFinite }
-            .sorted { $0.score > $1.score }
-            .prefix(limit)
-            .map { $0 }
+        return Self.topMatches(
+            in: chunks,
+            questionEmbedding: questionEmbedding,
+            limit: limit
+        )
     }
     
     func retrieve(
@@ -83,6 +82,43 @@ final class RAGRetrievalService: RAGRetrievalServiceProtocol {
             candidatesBeforeFiltering: candidates,
             chunksAfterFiltering: filtered
         )
+    }
+    
+    private func cachedChunks(strategy: RAGChunkingStrategy) async throws -> [RAGStoredChunk] {
+        if let chunks = cachedChunksByStrategy[strategy] {
+            return chunks
+        }
+        
+        let chunks = try await repository.fetchChunks(strategy: strategy)
+        cachedChunksByStrategy[strategy] = chunks
+        return chunks
+    }
+    
+    private static func topMatches(
+        in chunks: [RAGStoredChunk],
+        questionEmbedding: [Float],
+        limit: Int
+    ) -> [RAGRetrievedChunk] {
+        var top: [RAGRetrievedChunk] = []
+        
+        for chunk in chunks {
+            let score = cosineSimilarity(questionEmbedding, chunk.embedding)
+            guard score.isFinite else { continue }
+            
+            let match = RAGRetrievedChunk(chunk: chunk, score: score)
+            
+            if let insertionIndex = top.firstIndex(where: { score > $0.score }) {
+                top.insert(match, at: insertionIndex)
+            } else if top.count < limit {
+                top.append(match)
+            }
+            
+            if top.count > limit {
+                top.removeLast()
+            }
+        }
+        
+        return top
     }
     
     private static func cosineSimilarity(_ lhs: [Float], _ rhs: [Float]) -> Double {

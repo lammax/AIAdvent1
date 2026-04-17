@@ -256,6 +256,7 @@ class MainViewModel: ObservableObject {
                     strategy: ragChunkingStrategy,
                     progress: progress
                 )
+                ollama.invalidateRAGRetrievalCache()
                 
                 appendRAGStatus(
                     """

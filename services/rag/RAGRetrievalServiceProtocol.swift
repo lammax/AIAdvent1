@@ -8,6 +8,8 @@
 import Foundation
 
 protocol RAGRetrievalServiceProtocol {
+    func invalidateCache() async
+    
     func retrieve(
         question: String,
         strategy: RAGChunkingStrategy,
