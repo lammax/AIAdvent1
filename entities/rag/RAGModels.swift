@@ -24,6 +24,7 @@ enum RAGChunkingStrategy: String, Codable, CaseIterable {
 enum RAGAnswerMode: String, Codable, CaseIterable {
     case disabled
     case enabled
+    case miniChat
     case compare
     
     var title: String {
@@ -32,6 +33,8 @@ enum RAGAnswerMode: String, Codable, CaseIterable {
             return "Off"
         case .enabled:
             return "RAG"
+        case .miniChat:
+            return "Mini Chat"
         case .compare:
             return "Compare"
         }
@@ -75,6 +78,7 @@ enum RAGRelevanceFilterMode: String, Codable, CaseIterable {
 enum RAGEvaluationMode: String, Codable, CaseIterable {
     case disabled
     case builtInQuestions
+    case miniChatScenarios
     
     var title: String {
         switch self {
@@ -82,6 +86,8 @@ enum RAGEvaluationMode: String, Codable, CaseIterable {
             return "Off"
         case .builtInQuestions:
             return "10 Questions"
+        case .miniChatScenarios:
+            return "Mini Chat Scenarios"
         }
     }
 }
@@ -305,6 +311,72 @@ struct RAGEvaluationReport {
     
     var unknownCount: Int {
         items.filter { $0.run.contract.isUnknown }.count
+    }
+}
+
+struct RAGTaskState: Codable, Equatable {
+    var goal: String?
+    var clarifications: [String]
+    var constraintsAndTerms: [String]
+    
+    static let empty = RAGTaskState(
+        goal: nil,
+        clarifications: [],
+        constraintsAndTerms: []
+    )
+    
+    var isEmpty: Bool {
+        goal == nil && clarifications.isEmpty && constraintsAndTerms.isEmpty
+    }
+}
+
+struct RAGMiniChatScenario: Identifiable, Equatable {
+    let id: Int
+    let title: String
+    let expectedGoalKeywords: [String]
+    let turns: [RAGMiniChatScenarioTurn]
+}
+
+struct RAGMiniChatScenarioTurn: Identifiable, Equatable {
+    let id: Int
+    let userMessage: String
+}
+
+struct RAGMiniChatScenarioTurnResult {
+    let turn: RAGMiniChatScenarioTurn
+    let taskState: RAGTaskState
+    let run: RAGEvaluationAnswerRun
+    let retainedGoal: Bool
+    let hasSources: Bool
+    let notes: [String]
+}
+
+struct RAGMiniChatScenarioResult {
+    let scenario: RAGMiniChatScenario
+    let turns: [RAGMiniChatScenarioTurnResult]
+    
+    var retainedGoalCount: Int {
+        turns.filter(\.retainedGoal).count
+    }
+    
+    var sourceCount: Int {
+        turns.filter(\.hasSources).count
+    }
+}
+
+struct RAGMiniChatScenarioReport {
+    let results: [RAGMiniChatScenarioResult]
+    
+    var turnCount: Int {
+        results.reduce(0) { $0 + $1.turns.count }
+    }
+    
+    var retainedGoalCount: Int {
+        results.reduce(0) { $0 + $1.retainedGoalCount }
+    }
+    
+    var sourceCount: Int {
+        results.reduce(0) { $0 + $1.sourceCount }
     }
 }
 

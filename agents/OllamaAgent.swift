@@ -30,6 +30,9 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     private let ragAnswerValidationService: RAGAnswerValidationServiceProtocol
     private let ragEvaluationQuestionRepository: RAGEvaluationQuestionRepositoryProtocol
     private let ragEvaluationService: RAGEvaluationServiceProtocol
+    private let ragTaskMemoryService: RAGTaskMemoryServiceProtocol
+    private let ragMiniChatScenarioRepository: RAGMiniChatScenarioRepositoryProtocol
+    private let ragMiniChatScenarioEvaluationService: RAGMiniChatScenarioEvaluationServiceProtocol
     private let promptBuilder = TaskPromptBuilder()
     private let streamer: OllamaStreamer
     
@@ -59,6 +62,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     private var ragRetrievalMode: RAGRetrievalMode = .basic
     private var ragEvaluationMode: RAGEvaluationMode = .disabled
     private var ragRetrievalSettings: RAGRetrievalSettings = .default
+    private var ragMiniChatTaskState: RAGTaskState = .empty
     private var isPrepared = false
     private var isSending = false
     
@@ -80,6 +84,9 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         ragAnswerValidationService: RAGAnswerValidationServiceProtocol = RAGAnswerValidationService(),
         ragEvaluationQuestionRepository: RAGEvaluationQuestionRepositoryProtocol = MarkdownRAGEvaluationQuestionRepository(),
         ragEvaluationService: RAGEvaluationServiceProtocol = RAGEvaluationService(),
+        ragTaskMemoryService: RAGTaskMemoryServiceProtocol = RAGTaskMemoryService(),
+        ragMiniChatScenarioRepository: RAGMiniChatScenarioRepositoryProtocol = DefaultRAGMiniChatScenarioRepository(),
+        ragMiniChatScenarioEvaluationService: RAGMiniChatScenarioEvaluationServiceProtocol = RAGMiniChatScenarioEvaluationService(),
         invariantService: InvariantServiceProtocol = InvariantService(),
         streamer: OllamaStreamer = OllamaStreamer(),
         maxMessages: Int = 12,
@@ -97,6 +104,9 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         self.ragAnswerValidationService = ragAnswerValidationService
         self.ragEvaluationQuestionRepository = ragEvaluationQuestionRepository
         self.ragEvaluationService = ragEvaluationService
+        self.ragTaskMemoryService = ragTaskMemoryService
+        self.ragMiniChatScenarioRepository = ragMiniChatScenarioRepository
+        self.ragMiniChatScenarioEvaluationService = ragMiniChatScenarioEvaluationService
         self.invariantService = invariantService
         self.streamer = streamer
         self.mcpOrchestrator = MCPOrchestrator(
@@ -151,6 +161,11 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             
             if ragEvaluationMode == .builtInQuestions {
                 await runRAGEvaluation()
+                return
+            }
+            
+            if ragEvaluationMode == .miniChatScenarios {
+                await runRAGMiniChatScenarioEvaluation()
                 return
             }
             
@@ -253,6 +268,8 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
                     } else {
                         await answerWithRAG(question: prompt.text)
                     }
+                case .miniChat:
+                    await answerWithRAGMiniChat(question: prompt.text)
                 case .compare:
                     await compareRAGAnswers(question: prompt.text)
                 }
@@ -279,6 +296,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             self.summary = ""
             self.messages = [system]
             self.currentTaskContext = nil
+            self.ragMiniChatTaskState = .empty
             self.strategy = self.strategy.makeCleanCopy()
             
             await self.memoryService.deleteMessages(agentId: self.agentId)
@@ -567,14 +585,20 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     
     private func makeRAGPrompt(
         from sources: [RAGRetrievedChunk],
-        retrievalResult: RAGRetrievalResult? = nil
+        retrievalResult: RAGRetrievalResult? = nil,
+        taskState: RAGTaskState? = nil
     ) -> String {
+        let taskMemoryPrompt = taskState
+            .map { "\n\n\(ragTaskMemoryService.makePrompt(from: $0))" }
+            ?? ""
+        
         guard !sources.isEmpty else {
             if let retrievalResult, !retrievalResult.candidatesBeforeFiltering.isEmpty {
                 return """
                 RAG mode is enabled, but relevance filtering removed all retrieved chunks.
 
                 If the user's question depends on indexed documents, say that the local RAG index does not contain enough relevant information.
+                \(taskMemoryPrompt)
                 """
             }
             
@@ -582,6 +606,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             RAG mode is enabled, but no indexed chunks were found.
 
             If the user's question depends on indexed documents, say that the local RAG index does not contain enough information.
+            \(taskMemoryPrompt)
             """
         }
         
@@ -620,6 +645,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         Use the local RAG context below to answer the user's question.
         Prefer the context over general knowledge.
         Answer only from the provided chunks.
+        If task memory is present, preserve the user's goal, clarifications, constraints, and fixed terms across turns.
         Every non-unknown answer must include sources and verbatim quotes from the chunks.
         Use the source, section, and chunk_id values exactly as shown in the context.
         Quotes must be exact fragments copied from chunk content.
@@ -637,6 +663,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
           "clarification_request": null
         }
         \(retrievalNotes)
+        \(taskMemoryPrompt)
 
         RAG context:
         \(context)
@@ -735,14 +762,81 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         }
     }
     
+    private func answerWithRAGMiniChat(question: String) async {
+        do {
+            ragMiniChatTaskState = ragTaskMemoryService.update(
+                state: ragMiniChatTaskState,
+                userMessage: question,
+                assistantAnswer: nil
+            )
+            
+            let searchQuestion = makeRAGMiniChatSearchQuestion(
+                question: question,
+                taskState: ragMiniChatTaskState
+            )
+            let run = try await makeRAGAnswerRun(
+                question: question,
+                taskState: ragMiniChatTaskState,
+                searchQuestion: searchQuestion,
+                keepSourcesForUnknown: true
+            )
+            ragMiniChatTaskState = ragTaskMemoryService.update(
+                state: ragMiniChatTaskState,
+                userMessage: question,
+                assistantAnswer: run.contract.answer
+            )
+            
+            let formatted = formatRAGMiniChatAnswer(
+                run: run,
+                taskState: ragMiniChatTaskState
+            )
+            let safeContent = await validatedContent(formatted)
+            
+            let assistantMessage = Message(
+                agentId: agentId,
+                role: .assistant,
+                content: safeContent
+            )
+            
+            messages.append(assistantMessage)
+            strategy.onAssistantMessage(assistantMessage)
+            await memoryService.appendMessage(assistantMessage)
+            
+            await advanceTaskStateIfNeeded(
+                userQuery: question,
+                assistantResponse: safeContent
+            )
+            
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(safeContent)
+                self?.onComplete?(OllamaChunk(
+                    model: "",
+                    createdAt: Date(),
+                    message: .init(role: .assistant, content: safeContent),
+                    done: true
+                ))
+            }
+        } catch {
+            let message = "RAG mini-chat answer failed: \(error.localizedDescription)"
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(message)
+            }
+        }
+    }
+    
     private func makeRAGAnswerRun(
         question: String,
-        appendingQuestionToContext: Bool = false
+        appendingQuestionToContext: Bool = false,
+        taskState: RAGTaskState? = nil,
+        searchQuestion: String? = nil,
+        keepSourcesForUnknown: Bool = false
     ) async throws -> RAGEvaluationAnswerRun {
-        let evidence = try await retrieveRAGEvidence(question: question)
+        let evidence = try await retrieveRAGEvidence(question: searchQuestion ?? question)
         
         if isWeakRAGContext(evidence.sources) {
-            let contract = makeUnknownRAGContract()
+            let contract = keepSourcesForUnknown
+                ? makeUnknownRAGContract(sources: evidence.sources)
+                : makeUnknownRAGContract()
             let validation = ragAnswerValidationService.validate(
                 answer: contract,
                 retrievedChunks: evidence.sources
@@ -763,7 +857,8 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             role: .system,
             content: makeRAGPrompt(
                 from: evidence.sources,
-                retrievalResult: evidence.retrievalResult
+                retrievalResult: evidence.retrievalResult,
+                taskState: taskState
             )
         )
         var context = insert(ragMessage, beforeLastUserMessageIn: baseContext)
@@ -845,6 +940,33 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             quotes: [],
             isUnknown: true,
             clarificationRequest: "Уточните вопрос или добавьте больше контекста."
+        )
+    }
+    
+    private func makeUnknownRAGContract(sources: [RAGRetrievedChunk]) -> RAGAnswerContract {
+        guard !sources.isEmpty else {
+            return makeUnknownRAGContract()
+        }
+        
+        return RAGAnswerContract(
+            answer: "Не знаю. В найденном контексте недостаточно релевантной информации, чтобы ответить уверенно.",
+            sources: sources.map {
+                RAGAnswerSource(
+                    source: $0.chunk.title,
+                    section: $0.chunk.section,
+                    chunkID: $0.chunk.chunkId
+                )
+            },
+            quotes: sources.prefix(3).map {
+                RAGAnswerQuote(
+                    source: $0.chunk.title,
+                    section: $0.chunk.section,
+                    chunkID: $0.chunk.chunkId,
+                    text: makeQuoteSnippet(from: $0.chunk.content)
+                )
+            },
+            isUnknown: true,
+            clarificationRequest: "Уточните вопрос или добавьте более релевантные документы в RAG индекс."
         )
     }
     
@@ -955,6 +1077,50 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         """
     }
     
+    private func formatRAGMiniChatAnswer(
+        run: RAGEvaluationAnswerRun,
+        taskState: RAGTaskState
+    ) -> String {
+        """
+        \(run.formattedAnswer)
+        
+        Память задачи:
+        \(formatRAGTaskState(taskState))
+        """
+    }
+    
+    private func formatRAGTaskState(_ state: RAGTaskState) -> String {
+        let goal = state.goal ?? "-"
+        let clarifications = state.clarifications.isEmpty
+            ? "-"
+            : state.clarifications.map { "- \($0)" }.joined(separator: "\n")
+        let constraints = state.constraintsAndTerms.isEmpty
+            ? "-"
+            : state.constraintsAndTerms.map { "- \($0)" }.joined(separator: "\n")
+        
+        return """
+        Цель: \(goal)
+        Уточнения:
+        \(clarifications)
+        Ограничения и термины:
+        \(constraints)
+        """
+    }
+    
+    private func makeRAGMiniChatSearchQuestion(
+        question: String,
+        taskState: RAGTaskState
+    ) -> String {
+        let goal = taskState.goal ?? ""
+        let clarifications = taskState.clarifications.joined(separator: " ")
+        let constraints = taskState.constraintsAndTerms.joined(separator: " ")
+        
+        return [goal, clarifications, constraints, question]
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n")
+    }
+    
     private func runRAGEvaluation() async {
         do {
             let questions = try ragEvaluationQuestionRepository.loadQuestions()
@@ -1018,6 +1184,211 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
                 self?.onToken?(message)
             }
         }
+    }
+    
+    private func runRAGMiniChatScenarioEvaluation() async {
+        let scenarios = ragMiniChatScenarioRepository.loadScenarios()
+        let savedMessages = messages
+        let savedSummary = summary
+        let savedTaskState = ragMiniChatTaskState
+        let system = messages.first(where: { $0.role == .system }) ?? makeSystemMessage()
+        
+        messages = [system]
+        summary = ""
+        ragMiniChatTaskState = .empty
+        strategy.rebuild(from: messages)
+        
+        var fullContent = """
+        RAG Mini-Chat Evaluation: \(scenarios.count) Scenarios
+        
+        """
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.onToken?(fullContent)
+        }
+        
+        let report = await ragMiniChatScenarioEvaluationService.evaluate(
+            scenarios: scenarios,
+            onScenarioStarted: { [weak self] scenario, index, total in
+                let text = """
+                
+                Scenario \(index)/\(total): \(scenario.title)
+                
+                """
+                fullContent += text
+                
+                DispatchQueue.main.async {
+                    self?.onToken?(text)
+                }
+            },
+            onTurnStarted: { [weak self] turn, index, total in
+                let text = """
+                Processing message \(index)/\(total): \(turn.userMessage)
+                
+                """
+                fullContent += text
+                
+                DispatchQueue.main.async {
+                    self?.onToken?(text)
+                }
+            },
+            onTurnCompleted: { [weak self] result, _, _ in
+                guard let self else { return }
+                let text = "\(self.makeRAGMiniChatScenarioTurnReport(result))\n\n---\n"
+                fullContent += text
+                
+                DispatchQueue.main.async {
+                    self.onToken?(text)
+                }
+            }
+        ) { [weak self] scenario, turn, state in
+            guard let self else {
+                throw CancellationError()
+            }
+            
+            return try await self.makeRAGMiniChatScenarioTurnResult(
+                scenario: scenario,
+                turn: turn,
+                state: state
+            )
+        }
+        
+        let summary = "\n\(makeRAGMiniChatScenarioSummary(report))"
+        fullContent += summary
+        messages = savedMessages
+        self.summary = savedSummary
+        ragMiniChatTaskState = savedTaskState
+        strategy.rebuild(from: messages)
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.onToken?(summary)
+            self?.onComplete?(OllamaChunk(
+                model: "",
+                createdAt: Date(),
+                message: .init(role: .assistant, content: fullContent),
+                done: true
+            ))
+        }
+    }
+    
+    private func makeRAGMiniChatScenarioTurnResult(
+        scenario: RAGMiniChatScenario,
+        turn: RAGMiniChatScenarioTurn,
+        state: RAGTaskState
+    ) async throws -> RAGMiniChatScenarioTurnResult {
+        let nextState = ragTaskMemoryService.update(
+            state: state,
+            userMessage: turn.userMessage,
+            assistantAnswer: nil
+        )
+        let userMessage = Message(
+            agentId: agentId,
+            role: .user,
+            content: turn.userMessage
+        )
+        messages.append(userMessage)
+        strategy.onUserMessage(userMessage)
+        
+        let searchQuestion = makeRAGMiniChatSearchQuestion(
+            question: turn.userMessage,
+            taskState: nextState
+        )
+        let run = try await makeRAGAnswerRun(
+            question: turn.userMessage,
+            taskState: nextState,
+            searchQuestion: searchQuestion,
+            keepSourcesForUnknown: true
+        )
+        let finalState = ragTaskMemoryService.update(
+            state: nextState,
+            userMessage: turn.userMessage,
+            assistantAnswer: run.contract.answer
+        )
+        let retainedGoal = retainedScenarioGoal(
+            state: finalState,
+            scenario: scenario
+        )
+        let hasSources = !run.contract.sources.isEmpty
+        var notes = run.validation.notes
+        
+        if !retainedGoal {
+            notes.append("Task goal was not retained in mini-chat state.")
+        }
+        
+        if !hasSources {
+            notes.append("Mini-chat answer did not include sources.")
+        }
+        
+        let assistantMessage = Message(
+            agentId: agentId,
+            role: .assistant,
+            content: formatRAGMiniChatAnswer(
+                run: run,
+                taskState: finalState
+            )
+        )
+        messages.append(assistantMessage)
+        strategy.onAssistantMessage(assistantMessage)
+        
+        return RAGMiniChatScenarioTurnResult(
+            turn: turn,
+            taskState: finalState,
+            run: run,
+            retainedGoal: retainedGoal,
+            hasSources: hasSources,
+            notes: notes
+        )
+    }
+    
+    private func retainedScenarioGoal(
+        state: RAGTaskState,
+        scenario: RAGMiniChatScenario
+    ) -> Bool {
+        guard let goal = state.goal?.lowercased(), !goal.isEmpty else {
+            return false
+        }
+        
+        return scenario.expectedGoalKeywords.allSatisfy {
+            goal.contains($0.lowercased())
+        }
+    }
+    
+    private func makeRAGMiniChatScenarioTurnReport(
+        _ result: RAGMiniChatScenarioTurnResult
+    ) -> String {
+        let notes = result.notes.isEmpty
+            ? "none"
+            : result.notes.map { "- \($0)" }.joined(separator: "\n")
+        
+        return """
+        Message \(result.turn.id)
+        Goal retained: \(passFail(result.retainedGoal))
+        Sources present: \(passFail(result.hasSources))
+        Quotes present: \(passFail(result.run.validation.hasQuotes))
+        Quotes from chunks: \(passFail(result.run.validation.quotesMatchChunks))
+        
+        Task memory:
+        \(formatRAGTaskState(result.taskState))
+        
+        \(result.run.formattedAnswer)
+        
+        Scenario notes:
+        \(notes)
+        """
+    }
+    
+    private func makeRAGMiniChatScenarioSummary(
+        _ report: RAGMiniChatScenarioReport
+    ) -> String {
+        let total = report.turnCount
+        
+        return """
+        Summary:
+        scenarios: \(report.results.count)
+        messages: \(total)
+        goal retained: \(report.retainedGoalCount)/\(total)
+        sources present: \(report.sourceCount)/\(total)
+        """
     }
     
     private func makeRAGEvaluationReport(_ report: RAGEvaluationReport) -> String {

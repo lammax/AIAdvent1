@@ -273,6 +273,10 @@ private struct SettingsRAGTab: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                
+                Text("Mini Chat Scenarios runs 2 long RAG chats and checks that the assistant keeps the task goal and continues returning sources.")
+                    .font(.footnote)
+                    .foregroundStyle(Color.secondary)
             }
         }
         .isHidden(vm.provider == .openRouter, remove: true)
