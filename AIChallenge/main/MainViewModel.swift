@@ -35,6 +35,9 @@ class MainViewModel: ObservableObject {
     let profileObserver: UserProfileObserver = UserProfileObserver()
     private let indexingService: DocumentIndexingServiceProtocol = DocumentIndexingService()
     private var ragStatusLines: [String] = []
+    private var pendingAnswerTokens: String = ""
+    private var answerFlushWorkItem: DispatchWorkItem?
+    private let answerFlushInterval: TimeInterval = 0.08
     
     var uns: Set<AnyCancellable> = []
     
@@ -45,6 +48,7 @@ class MainViewModel: ObservableObject {
     }
 
     deinit {
+        answerFlushWorkItem?.cancel()
         uns.forEach { $0.cancel() }
     }
     
@@ -133,6 +137,7 @@ class MainViewModel: ObservableObject {
     }
     
     func deleteAll() {
+        resetAnswerBuffer()
         answer = ""
         ragStatus = ""
         
@@ -146,6 +151,7 @@ class MainViewModel: ObservableObject {
     
     func startOllama(prompt: Prompt? = .recursionExpl) {
         guard let prompt else { return }
+        resetAnswerBuffer()
         clearRAGStatusDisplay()
         
         if currentPrompt != .promptWithStopWord {
@@ -166,15 +172,17 @@ class MainViewModel: ObservableObject {
         }
         
         ollama.onToken = { token in
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                answer += token
+            Task { @MainActor [weak self] in
+                self?.enqueueAnswerToken(token)
             }
         }
         
         ollama.onComplete = { [weak self] ollamaChunk in
-            guard let self else { return }
-            self.ollamaChunk = ollamaChunk
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                flushPendingAnswerTokens()
+                self.ollamaChunk = ollamaChunk
+            }
         }
 
         answer += "\n\nYou: \(prompt.text)\n\n"
@@ -187,6 +195,7 @@ class MainViewModel: ObservableObject {
     
     func startOpenRouter(prompt: Prompt? = .recursionExpl) {
         guard let prompt else { return }
+        resetAnswerBuffer()
         clearRAGStatusDisplay()
         
         if currentPrompt != .promptWithStopWord {
@@ -207,13 +216,15 @@ class MainViewModel: ObservableObject {
         }
         
         openRouter.onToken = { [weak self] token in
-            guard let self else { return }
-            answer += token
+            Task { @MainActor [weak self] in
+                self?.enqueueAnswerToken(token)
+            }
         }
         
         openRouter.onComplete = { [weak self] token in
-            guard let self else { return }
-            answer = answer
+            Task { @MainActor [weak self] in
+                self?.flushPendingAnswerTokens()
+            }
         }
 
         answer += "\n\nYou: \(prompt.text)\n\n"
@@ -223,6 +234,44 @@ class MainViewModel: ObservableObject {
             options: settings
         )
    }
+    
+    private func enqueueAnswerToken(_ token: String) {
+        pendingAnswerTokens += token
+        
+        guard answerFlushWorkItem == nil else {
+            return
+        }
+        
+        let workItem = DispatchWorkItem { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.flushPendingAnswerTokens()
+            }
+        }
+        
+        answerFlushWorkItem = workItem
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + answerFlushInterval,
+            execute: workItem
+        )
+    }
+    
+    private func flushPendingAnswerTokens() {
+        answerFlushWorkItem?.cancel()
+        answerFlushWorkItem = nil
+        
+        guard !pendingAnswerTokens.isEmpty else {
+            return
+        }
+        
+        answer += pendingAnswerTokens
+        pendingAnswerTokens = ""
+    }
+    
+    private func resetAnswerBuffer() {
+        answerFlushWorkItem?.cancel()
+        answerFlushWorkItem = nil
+        pendingAnswerTokens = ""
+    }
     
     func setTaskRunState(isPause: Bool) {
         if isPause {

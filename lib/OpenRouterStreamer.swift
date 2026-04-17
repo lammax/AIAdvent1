@@ -78,15 +78,21 @@ extension OpenRouterStreamer: URLSessionDataDelegate {
         
         guard let text = String(data: buffer, encoding: .utf8) else { return }
         
-        let lines = text.split(separator: "\n")
+        var lines = text
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .map(String.init)
+        
+        if text.hasSuffix("\n") {
+            buffer.removeAll(keepingCapacity: true)
+        } else {
+            let remainder = lines.popLast() ?? ""
+            buffer = Data(remainder.utf8)
+        }
         
         for line in lines {
-            
             let jsonString = line //.dropFirst(5)
             
             guard let jsonData = jsonString.data(using: .utf8) else { continue }
-            
-            print(String(data: jsonData, encoding: .utf8)!)
             
             if let token = parseToken(from: jsonData) {
                 if token.done {
@@ -97,8 +103,6 @@ extension OpenRouterStreamer: URLSessionDataDelegate {
                 
             }
         }
-        
-        buffer.removeAll()
     }
     
     private func parseToken(from data: Data) -> OllamaChunk? {

@@ -69,6 +69,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     // MARK: - Task context
     private var currentTaskContext: TaskContext?
     private var cachedMCPTools: [MCPToolDescriptor] = []
+    private var hasLoadedMCPTools = false
     
     // MARK: - Init
     
@@ -2133,10 +2134,11 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     
     private func refreshMCPToolsIfNeeded() async {
         guard let mcpOrchestrator else { return }
+        guard !hasLoadedMCPTools else { return }
 
         await mcpOrchestrator.refreshTools()
         cachedMCPTools = await mcpOrchestrator.availableTools()
-        print("MCP tools loaded: \(cachedMCPTools.map(\.name))")
+        hasLoadedMCPTools = true
     }
     
     func setUser(_ profile: UserProfile) {
