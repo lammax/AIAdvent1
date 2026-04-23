@@ -85,6 +85,7 @@ struct StatisticsView: View {
             .offset(x: isOpen ? 0 : 370)
             .animation(.easeInOut, value: isOpen)
         }
+        .allowsHitTesting(isOpen)
     }
     
     // MARK: - Helpers

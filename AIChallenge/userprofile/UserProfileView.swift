@@ -208,5 +208,6 @@ struct UserProfileView: View {
             .offset(x: isOpen ? 0 : 390)
             .animation(.easeInOut, value: isOpen)
         }
+        .allowsHitTesting(isOpen)
     }
 }

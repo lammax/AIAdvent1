@@ -13,6 +13,7 @@ final class SettingsViewModel: ObservableObject {
     private enum StorageKey {
         static let localModelPath = "settings.localModelPath"
         static let localModelBookmarkData = "settings.localModelBookmarkData"
+        static let backendMode = "settings.backendMode"
     }
     
     private let localModelFileService: LocalModelFileServiceProtocol
@@ -61,6 +62,7 @@ final class SettingsViewModel: ObservableObject {
     ) {
         self.localModelFileService = localModelFileService
         self.userDefaults = userDefaults
+        self.backendMode = userDefaults.string(forKey: StorageKey.backendMode) ?? "local_gguf"
         self.localModelPath = userDefaults.string(forKey: StorageKey.localModelPath) ?? ""
         self.localModelBookmarkData = userDefaults.data(forKey: StorageKey.localModelBookmarkData)
         
@@ -142,6 +144,8 @@ final class SettingsViewModel: ObservableObject {
                 SettingsUserInfoKey.ragRetrievalSettings.rawValue: ragRetrievalSettings
             ]
         )
+        
+        userDefaults.set(backendMode, forKey: StorageKey.backendMode)
     }
     
     func applyPreset(_ preset: OllamaPreset) {

@@ -11,6 +11,11 @@ import UniformTypeIdentifiers
 struct MainView: View {
     private static let outputBottomID = "main-output-bottom"
     
+    private enum ImportTarget {
+        case documents
+        case localModel
+    }
+    
     @StateObject private var viewModel = MainViewModel()
     @StateObject private var settingsVM = SettingsViewModel()
     
@@ -20,8 +25,8 @@ struct MainView: View {
     @State private var showSettings: Bool = false
     @State private var showStatistics: Bool = false
     @State private var showUserProfile: Bool = false
-    @State private var showDocumentImporter: Bool = false
-    @State private var showLocalModelImporter: Bool = false
+    @State private var isImporterPresented: Bool = false
+    @State private var activeImporter: ImportTarget?
     @State private var isTaskPaused: Bool = false
 //    @State private var isMCPtest: Bool = false
 //    @State private var scheduledJob: ScheduledJob?
@@ -38,6 +43,26 @@ struct MainView: View {
     
     private var localModelImportTypes: [UTType] {
         [UTType(filenameExtension: "gguf") ?? .data]
+    }
+    
+    private var allowedImportTypes: [UTType] {
+        switch activeImporter {
+        case .documents:
+            return ragImportTypes
+        case .localModel:
+            return localModelImportTypes
+        case nil:
+            return [.data]
+        }
+    }
+    
+    private var allowsMultipleImportSelection: Bool {
+        switch activeImporter {
+        case .documents:
+            return true
+        case .localModel, .none:
+            return false
+        }
     }
     
     let formatterInt: NumberFormatter = {
@@ -129,7 +154,8 @@ struct MainView: View {
                     }
                     
                     Button {
-                        showDocumentImporter.toggle()
+                        activeImporter = .documents
+                        isImporterPresented = true
                     } label: {
                         Image(systemName: "doc.text.magnifyingglass")
                             .foregroundStyle(Color.black)
@@ -192,7 +218,8 @@ struct MainView: View {
                 vm: settingsVM,
                 isOpen: $showSettings,
                 onSelectLocalModel: {
-                    showLocalModelImporter = true
+                    activeImporter = .localModel
+                    isImporterPresented = true
                 }
             )
             
@@ -211,30 +238,28 @@ struct MainView: View {
 //            SummaryScreen(jobId: job.id, executor: viewModel.mcpToolExecutor)
 //        }
         .fileImporter(
-            isPresented: $showDocumentImporter,
-            allowedContentTypes: ragImportTypes,
-            allowsMultipleSelection: true
+            isPresented: $isImporterPresented,
+            allowedContentTypes: allowedImportTypes,
+            allowsMultipleSelection: allowsMultipleImportSelection
         ) { result in
-            switch result {
-            case .success(let urls):
+            let target = activeImporter
+            isImporterPresented = false
+            activeImporter = nil
+            
+            switch (target, result) {
+            case (.documents, .success(let urls)):
                 viewModel.indexDocuments(urls: urls)
-            case .failure(let error):
-                viewModel.ragStatus = "Document selection failed: \(error.localizedDescription)"
-            }
-        }
-        .fileImporter(
-            isPresented: $showLocalModelImporter,
-            allowedContentTypes: localModelImportTypes,
-            allowsMultipleSelection: false
-        ) { result in
-            switch result {
-            case .success(let urls):
+            case (.localModel, .success(let urls)):
                 guard let url = urls.first else { return }
                 Task {
                     await settingsVM.importLocalModel(from: url)
                 }
-            case .failure(let error):
+            case (.documents, .failure(let error)):
+                viewModel.ragStatus = "Document selection failed: \(error.localizedDescription)"
+            case (.localModel, .failure(let error)):
                 settingsVM.localModelStatus = "Local model selection failed: \(error.localizedDescription)"
+            case (.none, _):
+                break
             }
         }
         .padding()

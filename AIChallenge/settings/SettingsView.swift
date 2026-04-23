@@ -81,6 +81,7 @@ struct SettingsView: View {
                 .offset(x: isOpen ? 0 : hiddenDrawerOffset(for: proxy.size.width))
                 .animation(.easeInOut, value: isOpen)
             }
+            .allowsHitTesting(isOpen)
         }
     }
     

@@ -13,7 +13,7 @@ final class DocumentIndexingService: DocumentIndexingServiceProtocol {
     private let zipExtractor: ZipDocumentExtractorProtocol
     
     init(
-        embeddingService: EmbeddingServiceProtocol = OllamaEmbeddingService(),
+        embeddingService: EmbeddingServiceProtocol = AdaptiveEmbeddingService(),
         repository: RAGIndexRepositoryProtocol = RAGIndexRepository(),
         zipExtractor: ZipDocumentExtractorProtocol = ZipDocumentExtractor()
     ) {

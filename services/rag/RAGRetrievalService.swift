@@ -12,9 +12,10 @@ actor RAGRetrievalService: RAGRetrievalServiceProtocol {
     private let repository: RAGIndexRepositoryProtocol
     private let relevanceFilteringService: RAGRelevanceFilteringServiceProtocol
     private var cachedChunksByStrategy: [RAGChunkingStrategy: [RAGStoredChunk]] = [:]
+    private var adaptedChunksByStrategyAndModel: [String: [RAGStoredChunk]] = [:]
     
     init(
-        embeddingService: EmbeddingServiceProtocol = OllamaEmbeddingService(),
+        embeddingService: EmbeddingServiceProtocol = AdaptiveEmbeddingService(),
         repository: RAGIndexRepositoryProtocol = RAGIndexRepository(),
         relevanceFilteringService: RAGRelevanceFilteringServiceProtocol = RAGRelevanceFilteringService()
     ) {
@@ -25,6 +26,7 @@ actor RAGRetrievalService: RAGRetrievalServiceProtocol {
     
     func invalidateCache() {
         cachedChunksByStrategy.removeAll()
+        adaptedChunksByStrategyAndModel.removeAll()
     }
     
     func retrieve(
@@ -37,7 +39,10 @@ actor RAGRetrievalService: RAGRetrievalServiceProtocol {
         let questionEmbedding = try await embeddingService.embed([question]).first ?? []
         guard !questionEmbedding.isEmpty else { return [] }
         
-        let chunks = try await cachedChunks(strategy: strategy)
+        let chunks = try await cachedChunks(
+            strategy: strategy,
+            embeddingModel: embeddingService.model
+        )
         
         return Self.topMatches(
             in: chunks,
@@ -84,14 +89,50 @@ actor RAGRetrievalService: RAGRetrievalServiceProtocol {
         )
     }
     
-    private func cachedChunks(strategy: RAGChunkingStrategy) async throws -> [RAGStoredChunk] {
+    private func cachedChunks(
+        strategy: RAGChunkingStrategy,
+        embeddingModel: String
+    ) async throws -> [RAGStoredChunk] {
+        let sourceChunks: [RAGStoredChunk]
+        
         if let chunks = cachedChunksByStrategy[strategy] {
-            return chunks
+            sourceChunks = chunks
+        } else {
+            let fetched = try await repository.fetchChunks(strategy: strategy)
+            cachedChunksByStrategy[strategy] = fetched
+            sourceChunks = fetched
         }
         
-        let chunks = try await repository.fetchChunks(strategy: strategy)
-        cachedChunksByStrategy[strategy] = chunks
-        return chunks
+        guard !sourceChunks.isEmpty else { return [] }
+        guard sourceChunks.contains(where: { $0.embeddingModel != embeddingModel }) else {
+            return sourceChunks
+        }
+        
+        let cacheKey = strategy.rawValue + "|" + embeddingModel
+        if let cached = adaptedChunksByStrategyAndModel[cacheKey] {
+            return cached
+        }
+        
+        let embeddings = try await embeddingService.embed(sourceChunks.map(\.content))
+        let adapted = zip(sourceChunks, embeddings).map { chunk, embedding in
+            RAGStoredChunk(
+                id: chunk.id,
+                source: chunk.source,
+                title: chunk.title,
+                section: chunk.section,
+                chunkId: chunk.chunkId,
+                strategy: chunk.strategy,
+                content: chunk.content,
+                tokenCount: chunk.tokenCount,
+                startOffset: chunk.startOffset,
+                endOffset: chunk.endOffset,
+                embedding: embedding,
+                embeddingModel: embeddingModel
+            )
+        }
+        
+        adaptedChunksByStrategyAndModel[cacheKey] = adapted
+        return adapted
     }
     
     private static func topMatches(
