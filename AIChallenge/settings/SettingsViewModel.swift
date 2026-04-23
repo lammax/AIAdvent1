@@ -35,6 +35,7 @@ final class SettingsViewModel: ObservableObject {
         
     @Published var temperature: Double = 0.7
     @Published var maxTokens: Double = 200
+    @Published var contextWindow: Double = 1024
     @Published var topP: Double = 0.9
     
     // Ollama-only
@@ -46,6 +47,16 @@ final class SettingsViewModel: ObservableObject {
     @Published var localModelPath: String = ""
     @Published var localModelFileName: String = "qwen2.5-0.5b-instruct-q4_k_m.gguf"
     @Published var localModelStatus: String = ""
+    @Published var includeUserProfileInPrompt: Bool = PromptContextInclusionSettings.default.includeUserProfile
+    @Published var includeConversationSummaryInPrompt: Bool = PromptContextInclusionSettings.default.includeConversationSummary
+    @Published var includeWorkingMemoryInPrompt: Bool = PromptContextInclusionSettings.default.includeWorkingMemory
+    @Published var includeLongTermMemoryInPrompt: Bool = PromptContextInclusionSettings.default.includeLongTermMemory
+    @Published var includeTaskStateInPrompt: Bool = PromptContextInclusionSettings.default.includeTaskState
+    @Published var includeMCPToolsInPrompt: Bool = PromptContextInclusionSettings.default.includeMCPTools
+    @Published var includeInvariantsInPrompt: Bool = PromptContextInclusionSettings.default.includeInvariants
+    @Published var includeRAGTaskMemoryInPrompt: Bool = PromptContextInclusionSettings.default.includeRAGTaskMemory
+    @Published var isLocalRuntimeStatsEnabled: Bool = LocalRuntimeReportingSettings.default.isEnabled
+    @Published var appendLocalRuntimeStatsToAnswer: Bool = LocalRuntimeReportingSettings.default.appendCompactStatsToAnswer
     
     var localModelDisplayName: String {
         let trimmedPath = localModelPath.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -88,15 +99,32 @@ final class SettingsViewModel: ObservableObject {
             "num_predict": Int(maxTokens),
             "top_p": topP,
             "top_k": Int(topK),
-            "num_ctx": 1024
+            "num_ctx": Int(contextWindow)
         ]
+
+        let promptContextSettings = PromptContextInclusionSettings(
+            includeUserProfile: includeUserProfileInPrompt,
+            includeConversationSummary: includeConversationSummaryInPrompt,
+            includeWorkingMemory: includeWorkingMemoryInPrompt,
+            includeLongTermMemory: includeLongTermMemoryInPrompt,
+            includeTaskState: includeTaskStateInPrompt,
+            includeMCPTools: includeMCPToolsInPrompt,
+            includeInvariants: includeInvariantsInPrompt,
+            includeRAGTaskMemory: includeRAGTaskMemoryInPrompt
+        )
+        let localRuntimeSettings = LocalRuntimeReportingSettings(
+            isEnabled: isLocalRuntimeStatsEnabled,
+            appendCompactStatsToAnswer: appendLocalRuntimeStatsToAnswer
+        )
         
         var settings: [String: Any] = [
             "backend_mode": backendMode,
             "local_model_path": localModelPath,
             "local_model_filename": localModelFileName,
             "model": ollamaModel.rawValue,
-            "stream": stream
+            "stream": stream,
+            "prompt_context": promptContextSettings.asDictionary(),
+            "local_runtime": localRuntimeSettings.asDictionary()
         ]
         settings["options"] = optionSettings
         
@@ -160,6 +188,7 @@ final class SettingsViewModel: ObservableObject {
             maxTokens = Double(options["num_predict"] as? Int ?? Int(maxTokens))
             topP = options["top_p"] as? Double ?? topP
             topK = Double(options["top_k"] as? Int ?? 40)
+            contextWindow = Double(options["num_ctx"] as? Int ?? Int(contextWindow))
         }
         
         apply()

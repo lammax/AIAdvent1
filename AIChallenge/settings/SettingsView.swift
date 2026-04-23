@@ -190,7 +190,7 @@ private struct SettingsModelTab: View {
                         .contentShape(Rectangle())
                     }
                     
-                    Text("The import copies the selected file into the app sandbox at Documents/Models.")
+                    Text("The app reopens the selected GGUF file by bookmark and uses the original path.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                     
@@ -216,6 +216,9 @@ private struct SettingsModelTab: View {
             
             Text("Max Tokens: \(Int(vm.maxTokens))")
             Slider(value: $vm.maxTokens, in: 10...1000, step: 10)
+
+            Text("Context Window: \(Int(vm.contextWindow))")
+            Slider(value: $vm.contextWindow, in: 256...8192, step: 256)
             
             Text("Top P: \(vm.topP, specifier: "%.2f")")
             Slider(value: $vm.topP, in: 0...1)
@@ -228,6 +231,16 @@ private struct SettingsModelTab: View {
             
             Toggle("Streaming", isOn: $vm.stream)
                 .isHidden(vm.provider == .openRouter, remove: true)
+
+            if vm.backendMode == "local_gguf" {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Performance")
+                        .font(.headline)
+
+                    Toggle("Collect Local Runtime Stats", isOn: $vm.isLocalRuntimeStatsEnabled)
+                    Toggle("Append Compact Stats To Answer", isOn: $vm.appendLocalRuntimeStatsToAnswer)
+                }
+            }
         }
     }
 }
@@ -250,6 +263,20 @@ private struct SettingsContextTab: View {
             
             Toggle("Planning Mode", isOn: $vm.isTaskPlanningEnabled)
                 .isHidden(vm.provider == .openRouter, remove: true)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Prompt Context")
+                    .font(.headline)
+
+                Toggle("User Profile", isOn: $vm.includeUserProfileInPrompt)
+                Toggle("Conversation Summary", isOn: $vm.includeConversationSummaryInPrompt)
+                Toggle("Working Memory", isOn: $vm.includeWorkingMemoryInPrompt)
+                Toggle("Long-Term Memory", isOn: $vm.includeLongTermMemoryInPrompt)
+                Toggle("Task State", isOn: $vm.includeTaskStateInPrompt)
+                Toggle("MCP Tools", isOn: $vm.includeMCPToolsInPrompt)
+                Toggle("Invariants", isOn: $vm.includeInvariantsInPrompt)
+                Toggle("RAG Task Memory", isOn: $vm.includeRAGTaskMemoryInPrompt)
+            }
         }
     }
 }

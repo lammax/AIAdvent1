@@ -181,6 +181,7 @@ class MainViewModel: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 flushPendingAnswerTokens()
+                appendCompactLocalStatsIfNeeded(from: ollamaChunk)
                 self.ollamaChunk = ollamaChunk
             }
         }
@@ -271,6 +272,20 @@ class MainViewModel: ObservableObject {
         answerFlushWorkItem?.cancel()
         answerFlushWorkItem = nil
         pendingAnswerTokens = ""
+    }
+
+    private func appendCompactLocalStatsIfNeeded(from chunk: OllamaChunk) {
+        guard localRuntimeReportingSettings().appendCompactStatsToAnswer,
+              let localStats = chunk.localStats else {
+            return
+        }
+
+        answer += "\n\n" + localStats.compactSummary
+    }
+
+    private func localRuntimeReportingSettings() -> LocalRuntimeReportingSettings {
+        let rawSettings = settings["local_runtime"] as? [String: Any] ?? [:]
+        return LocalRuntimeReportingSettings(dictionary: rawSettings)
     }
     
     func setTaskRunState(isPause: Bool) {

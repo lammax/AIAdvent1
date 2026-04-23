@@ -84,7 +84,8 @@ final class RAGMiniChatScenarioEvaluationService: RAGMiniChatScenarioEvaluationS
             formattedAnswer: contract.answer,
             retrievedChunks: [],
             retrievalResult: nil,
-            validation: validation
+            validation: validation,
+            responseChunk: nil
         )
         
         return RAGMiniChatScenarioTurnResult(

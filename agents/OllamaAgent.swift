@@ -392,11 +392,13 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     
     private func buildContext() async -> [Message] {
         var context: [Message] = []
+        let promptContextSettings = currentPromptContextSettings()
         
         let system = messages.first(where: { $0.role == .system }) ?? makeSystemMessage()
         context.append(system)
         
-        if let profileText = await userProfileService.makeProfilePrompt(userId: userId),
+        if promptContextSettings.includeUserProfile,
+           let profileText = await userProfileService.makeProfilePrompt(userId: userId),
            !profileText.isEmpty {
             context.append(
                 Message(
@@ -407,7 +409,8 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             )
         }
         
-        if let invariantPrompt = await invariantService.makePrompt(fileName: invariantFileName),
+        if promptContextSettings.includeInvariants,
+           let invariantPrompt = await invariantService.makePrompt(fileName: invariantFileName),
            !invariantPrompt.isEmpty {
             context.append(
                 Message(
@@ -418,7 +421,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             )
         }
         
-        if !cachedMCPTools.isEmpty {
+        if promptContextSettings.includeMCPTools, !cachedMCPTools.isEmpty {
             let text = cachedMCPTools
                 .map { tool in
                     if let description = tool.description, !description.isEmpty {
@@ -444,7 +447,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         }
         
         let working = await memoryService.fetchWorking(agentId: agentId)
-        if !working.isEmpty {
+        if promptContextSettings.includeWorkingMemory, !working.isEmpty {
             let text = working
                 .map { "\($0.key): \($0.value)" }
                 .joined(separator: "\n")
@@ -459,7 +462,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         }
         
         let longTerm = await memoryService.fetchLongTerm(userId: userId)
-        if !longTerm.isEmpty {
+        if promptContextSettings.includeLongTermMemory, !longTerm.isEmpty {
             let text = longTerm
                 .map(\.content)
                 .joined(separator: "\n")
@@ -473,7 +476,9 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             )
         }
         
-        if isTaskPlanningEnabled, let taskContext = currentTaskContext {
+        if promptContextSettings.includeTaskState,
+           isTaskPlanningEnabled,
+           let taskContext = currentTaskContext {
             context.append(
                 Message(
                     agentId: agentId,
@@ -490,7 +495,10 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         }
         
         let strategyMessages = strategy
-            .buildContext(messages: messages, summary: summary)
+            .buildContext(
+                messages: messages,
+                summary: promptContextSettings.includeConversationSummary ? summary : ""
+            )
             .filter { candidate in
                 !(candidate.role == .system && candidate.content == system.content)
             }
@@ -583,7 +591,9 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             return text
         }
         
-        let profilePrompt = await userProfileService.makeProfilePrompt(userId: userId)
+        let profilePrompt = currentPromptContextSettings().includeUserProfile
+            ? await userProfileService.makeProfilePrompt(userId: userId)
+            : nil
         return promptBuilder.buildPrompt(
             query: text,
             context: taskContext,
@@ -596,9 +606,14 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         retrievalResult: RAGRetrievalResult? = nil,
         taskState: RAGTaskState? = nil
     ) -> String {
-        let taskMemoryPrompt = taskState
-            .map { "\n\n\(ragTaskMemoryService.makePrompt(from: $0))" }
-            ?? ""
+        let taskMemoryPrompt: String
+        if currentPromptContextSettings().includeRAGTaskMemory {
+            taskMemoryPrompt = taskState
+                .map { "\n\n\(ragTaskMemoryService.makePrompt(from: $0))" }
+                ?? ""
+        } else {
+            taskMemoryPrompt = ""
+        }
         
         guard !sources.isEmpty else {
             if let retrievalResult, !retrievalResult.candidatesBeforeFiltering.isEmpty {
@@ -755,7 +770,10 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             
             DispatchQueue.main.async { [weak self] in
                 self?.onToken?(safeContent)
-                self?.onComplete?(OllamaChunk(
+                self?.onComplete?(self?.makeCompletionChunk(
+                    content: safeContent,
+                    sourceChunk: run.responseChunk
+                ) ?? OllamaChunk(
                     model: "",
                     createdAt: Date(),
                     message: .init(role: .assistant, content: safeContent),
@@ -817,7 +835,10 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             
             DispatchQueue.main.async { [weak self] in
                 self?.onToken?(safeContent)
-                self?.onComplete?(OllamaChunk(
+                self?.onComplete?(self?.makeCompletionChunk(
+                    content: safeContent,
+                    sourceChunk: run.responseChunk
+                ) ?? OllamaChunk(
                     model: "",
                     createdAt: Date(),
                     message: .init(role: .assistant, content: safeContent),
@@ -855,7 +876,8 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
                 formattedAnswer: formatRAGAnswer(contract, validation: validation),
                 retrievedChunks: evidence.sources,
                 retrievalResult: evidence.retrievalResult,
-                validation: validation
+                validation: validation,
+                responseChunk: nil
             )
         }
         
@@ -884,6 +906,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             messages: context,
             options: makeAnyOptions(from: options)
         )
+        let responseChunk = streamer.latestChunk
         let contract = parseRAGAnswerContract(from: rawAnswer)
             ?? makeFallbackRAGContract(
                 answer: rawAnswer,
@@ -906,7 +929,8 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             formattedAnswer: formatRAGAnswer(finalContract, validation: finalValidation),
             retrievedChunks: evidence.sources,
             retrievalResult: evidence.retrievalResult,
-            validation: finalValidation
+            validation: finalValidation,
+            responseChunk: responseChunk
         )
     }
     
@@ -1786,7 +1810,9 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     // MARK: - Task Planning
     
     private func generateInitialPlan(for task: String) async -> [String] {
-        let profilePrompt = await userProfileService.makeProfilePrompt(userId: userId) ?? ""
+        let profilePrompt = currentPromptContextSettings().includeUserProfile
+            ? await userProfileService.makeProfilePrompt(userId: userId) ?? ""
+            : ""
         
         let planningPrompt = """
         Break down the following task into a short sequential implementation plan.
@@ -2079,6 +2105,31 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         }
         
         return result
+    }
+
+    private func currentPromptContextSettings() -> PromptContextInclusionSettings {
+        let rawSettings = options["prompt_context"] as? [String: Any] ?? [:]
+        return PromptContextInclusionSettings(dictionary: rawSettings)
+    }
+
+    private func makeCompletionChunk(
+        content: String,
+        sourceChunk: OllamaChunk?
+    ) -> OllamaChunk {
+        OllamaChunk(
+            model: sourceChunk?.model ?? "",
+            createdAt: Date(),
+            message: .init(role: .assistant, content: content),
+            done: true,
+            doneReason: sourceChunk?.doneReason,
+            totalDuration: sourceChunk?.totalDuration,
+            loadDuration: sourceChunk?.loadDuration,
+            promptEvalCount: sourceChunk?.promptEvalCount,
+            promptEvalDuration: sourceChunk?.promptEvalDuration,
+            evalCount: sourceChunk?.evalCount,
+            evalDuration: sourceChunk?.evalDuration,
+            localStats: sourceChunk?.localStats
+        )
     }
     
     private func taskTransitionRefusal(for error: TaskTransitionError) -> String {

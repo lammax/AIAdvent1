@@ -22,6 +22,8 @@ struct Constants {
         "local_model_filename": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
         "model": OllamaModel.llama3,
         "stream": true,
+        "prompt_context": PromptContextInclusionSettings.default.asDictionary(),
+        "local_runtime": LocalRuntimeReportingSettings.default.asDictionary(),
         "options": [
             "temperature": 0.7,
             "top_k": 40,

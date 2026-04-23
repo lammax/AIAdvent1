@@ -7,6 +7,71 @@
 
 import Foundation
 
+protocol LocalLLMRunStatsProtocol {
+    var backendMode: String { get }
+    var modelName: String { get }
+    var promptCharacterCount: Int { get }
+    var estimatedPromptTokenCount: Int { get }
+    var generatedTokenCount: Int { get }
+    var outputCharacterCount: Int { get }
+    var modelLoadDuration: TimeInterval { get }
+    var promptPreparationDuration: TimeInterval { get }
+    var timeToFirstToken: TimeInterval? { get }
+    var generationDuration: TimeInterval { get }
+    var totalDuration: TimeInterval { get }
+    var tokensPerSecond: Double { get }
+    var memoryUsageMB: Double? { get }
+    var peakMemoryUsageMB: Double? { get }
+    var contextWindow: Int { get }
+    var maxTokens: Int { get }
+    var temperature: Double { get }
+    var topP: Double { get }
+    var topK: Int { get }
+    var compactSummary: String { get }
+}
+
+struct LocalLLMRunStats: LocalLLMRunStatsProtocol, Codable, Equatable {
+    let backendMode: String
+    let modelName: String
+    let promptCharacterCount: Int
+    let estimatedPromptTokenCount: Int
+    let generatedTokenCount: Int
+    let outputCharacterCount: Int
+    let modelLoadDuration: TimeInterval
+    let promptPreparationDuration: TimeInterval
+    let timeToFirstToken: TimeInterval?
+    let generationDuration: TimeInterval
+    let totalDuration: TimeInterval
+    let memoryUsageMB: Double?
+    let peakMemoryUsageMB: Double?
+    let contextWindow: Int
+    let maxTokens: Int
+    let temperature: Double
+    let topP: Double
+    let topK: Int
+
+    var tokensPerSecond: Double {
+        guard generationDuration > 0 else { return 0 }
+        return Double(generatedTokenCount) / generationDuration
+    }
+
+    var compactSummary: String {
+        let base = String(
+            format: "Local stats: %.2f tok/s, %.2fs total, ctx %d, out %d tok",
+            tokensPerSecond,
+            totalDuration,
+            contextWindow,
+            generatedTokenCount
+        )
+
+        guard let peakMemoryUsageMB else {
+            return base
+        }
+
+        return base + String(format: ", peak %.0f MB", peakMemoryUsageMB)
+    }
+}
+
 struct OllamaChunkMessage: Decodable {
     enum CodingKeys: String, CodingKey {
         case role, content
@@ -28,7 +93,8 @@ struct OllamaChunk: Decodable {
         promptEvalCount: Int? = nil,
         promptEvalDuration: TimeInterval? = nil,
         evalCount: Int? = nil,
-        evalDuration: TimeInterval? = nil
+        evalDuration: TimeInterval? = nil,
+        localStats: LocalLLMRunStats? = nil
     ) {
         self.model = model
         self.createdAt = createdAt
@@ -41,6 +107,7 @@ struct OllamaChunk: Decodable {
         self.promptEvalDuration = promptEvalDuration
         self.evalCount = evalCount
         self.evalDuration = evalDuration
+        self.localStats = localStats
     }
     
     
@@ -57,6 +124,7 @@ struct OllamaChunk: Decodable {
     let promptEvalDuration: TimeInterval?
     let evalCount: Int?
     let evalDuration: TimeInterval?
+    let localStats: LocalLLMRunStats?
     
     enum CodingKeys: String, CodingKey {
         case model
@@ -100,6 +168,7 @@ extension OllamaChunk {
         self.promptEvalDuration = nsToSec(try? c.decode(Double.self, forKey: .promptEvalDuration))
         self.evalCount = try? c.decode(Int.self, forKey: .evalCount)
         self.evalDuration = nsToSec(try? c.decode(Double.self, forKey: .evalDuration))
+        self.localStats = nil
     }
 }
 

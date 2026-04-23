@@ -275,6 +275,7 @@ struct RAGEvaluationAnswerRun {
     let retrievedChunks: [RAGRetrievedChunk]
     let retrievalResult: RAGRetrievalResult?
     let validation: RAGAnswerValidationResult
+    let responseChunk: OllamaChunk?
 }
 
 struct RAGEvaluationItem {

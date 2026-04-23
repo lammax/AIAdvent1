@@ -53,7 +53,8 @@ final class RAGEvaluationService: RAGEvaluationServiceProtocol {
                     formattedAnswer: contract.answer,
                     retrievedChunks: [],
                     retrievalResult: nil,
-                    validation: validation
+                    validation: validation,
+                    responseChunk: nil
                 )
                 let item = RAGEvaluationItem(
                     question: question,

@@ -9,6 +9,7 @@ import Foundation
 import class LlamaCppBridge.LlamaCppSession
 import struct LlamaCppBridge.LlamaCppPrompt
 import struct LlamaCppBridge.LlamaCppConfiguration
+import Darwin
 
 private typealias LocalLlamaEngine = LlamaCppSession
 private typealias LocalLlamaPrompt = LlamaCppPrompt
@@ -66,7 +67,7 @@ class OllamaStreamer: NSObject, @unchecked Sendable {
                 }
                 
                 let finalText = fullResponse.trimmingCharacters(in: .whitespacesAndNewlines)
-                let chunk = OllamaChunk(
+                let chunk = backend.latestChunk ?? OllamaChunk(
                     model: finalModelName(from: anyOptions),
                     createdAt: Date(),
                     message: .init(role: .assistant, content: finalText),
@@ -116,6 +117,10 @@ class OllamaStreamer: NSObject, @unchecked Sendable {
         
         return "local_gguf"
     }
+
+    var latestChunk: OllamaChunk? {
+        activeBackend?.latestChunk
+    }
     
 }
 
@@ -123,6 +128,7 @@ protocol LLMBackendProtocol: AnyObject {
     func send(messages: [Message], options: [String: Any]) async throws -> String
     func stream(messages: [Message], options: [String: Any]) -> AsyncThrowingStream<String, Error>
     func cancel()
+    var latestChunk: OllamaChunk? { get }
 }
 
 private final class OllamaHTTPBackend: LLMBackendProtocol {
@@ -130,6 +136,7 @@ private final class OllamaHTTPBackend: LLMBackendProtocol {
     
     private let decoder = JSONDecoder()
     private var streamTask: Task<Void, Never>?
+    private(set) var latestChunk: OllamaChunk?
     
     func send(messages: [Message], options: [String: Any]) async throws -> String {
         var body = options
@@ -151,6 +158,13 @@ private final class OllamaHTTPBackend: LLMBackendProtocol {
         guard let message else {
             throw LocalLlamaBackendError.invalidResponse("Missing Ollama message content.")
         }
+
+        latestChunk = OllamaChunk(
+            model: (options["model"] as? String) ?? "ollama_http",
+            createdAt: Date(),
+            message: .init(role: .assistant, content: message),
+            done: true
+        )
         
         return message
     }
@@ -190,6 +204,7 @@ private final class OllamaHTTPBackend: LLMBackendProtocol {
                         }
                         
                         if chunk.done {
+                            self.latestChunk = chunk
                             break
                         }
                         
@@ -225,73 +240,154 @@ private final class LocalLlamaBackend: LLMBackendProtocol {
         let modelURL: URL
         let isSecurityScoped: Bool
     }
-    
+
+    private struct LocalRunConfiguration {
+        let topK: Int
+        let topP: Double
+        let contextWindow: Int
+        let temperature: Double
+        let maxTokens: Int
+    }
+
     private let modelFileService: LocalModelFileServiceProtocol
     private var streamTask: Task<Void, Never>?
     private let stateLock = NSLock()
     private var isInferenceRunning = false
-    
+    private(set) var latestChunk: OllamaChunk?
+
     init(modelFileService: LocalModelFileServiceProtocol = LocalModelFileService()) {
         self.modelFileService = modelFileService
     }
-    
-    func send(messages: [Message], options: [String: Any]) async throws -> String {
-        try beginInference()
-        defer { endInference() }
 
-        let components = try makePromptComponents(from: messages)
-        let prompt = makeLocalLlamaPrompt(from: components)
-        let resolvedModel = try makeModel(using: options)
-        defer { releaseModelAccessIfNeeded(for: resolvedModel) }
-        let response = try await resolvedModel.engine.generate(prompt: prompt)
-        
-        return clean(response)
+    func send(messages: [Message], options: [String: Any]) async throws -> String {
+        let chunk = try await runLocalInference(
+            messages: messages,
+            options: options,
+            onToken: nil
+        )
+        return chunk.message.content
     }
-    
+
     func stream(messages: [Message], options: [String: Any]) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
             self.streamTask?.cancel()
-            
+
             self.streamTask = Task {
                 do {
-                    try self.beginInference()
-                    defer { self.endInference() }
-
-                    let components = try self.makePromptComponents(from: messages)
-                    let prompt = makeLocalLlamaPrompt(from: components)
-                    let resolvedModel = try self.makeModel(using: options)
-                    defer { self.releaseModelAccessIfNeeded(for: resolvedModel) }
-                    let stream = resolvedModel.engine.stream(prompt: prompt)
-                    
-                    for try await token in stream {
+                    _ = try await self.runLocalInference(
+                        messages: messages,
+                        options: options
+                    ) { token in
                         if Task.isCancelled {
-                            continuation.finish(throwing: CancellationError())
                             return
                         }
-                        
-                        let cleanedToken = self.clean(token)
-                        if !cleanedToken.isEmpty {
-                            continuation.yield(cleanedToken)
-                        }
+
+                        continuation.yield(token)
                     }
-                    
+
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
                 }
             }
-            
+
             continuation.onTermination = { _ in
                 self.streamTask?.cancel()
             }
         }
     }
-    
+
     func cancel() {
         streamTask?.cancel()
     }
-    
-    private func makeModel(using options: [String: Any]) throws -> ResolvedLocalModel {
+
+    private func runLocalInference(
+        messages: [Message],
+        options: [String: Any],
+        onToken: ((String) -> Void)?
+    ) async throws -> OllamaChunk {
+        try beginInference()
+        defer { endInference() }
+
+        let reportingSettings = runtimeReportingSettings(from: options)
+        let runStart = Date()
+        var peakMemoryUsageMB = currentResidentMemoryMB()
+
+        let promptPreparationStart = Date()
+        let components = try makePromptComponents(from: messages)
+        let prompt = makeLocalLlamaPrompt(from: components)
+        let promptPreparationDuration = Date().timeIntervalSince(promptPreparationStart)
+        peakMemoryUsageMB = maxValue(peakMemoryUsageMB, currentResidentMemoryMB())
+
+        let modelLoadStart = Date()
+        let (resolvedModel, runConfiguration) = try makeModel(using: options)
+        let modelLoadDuration = Date().timeIntervalSince(modelLoadStart)
+        peakMemoryUsageMB = maxValue(peakMemoryUsageMB, currentResidentMemoryMB())
+        defer { releaseModelAccessIfNeeded(for: resolvedModel) }
+
+        let generationStart = Date()
+        let stream = resolvedModel.engine.stream(prompt: prompt)
+        var firstTokenAt: Date?
+        var generatedTokenCount = 0
+        var output = ""
+
+        for try await token in stream {
+            if Task.isCancelled {
+                throw CancellationError()
+            }
+
+            let cleanedToken = clean(token)
+            guard !cleanedToken.isEmpty else {
+                continue
+            }
+
+            if firstTokenAt == nil {
+                firstTokenAt = Date()
+            }
+
+            generatedTokenCount += 1
+            output += cleanedToken
+            onToken?(cleanedToken)
+            peakMemoryUsageMB = maxValue(peakMemoryUsageMB, currentResidentMemoryMB())
+        }
+
+        let finishedAt = Date()
+        let finalText = clean(output).trimmingCharacters(in: .whitespacesAndNewlines)
+        let stats = reportingSettings.isEnabled
+            ? LocalLLMRunStats(
+                backendMode: "local_gguf",
+                modelName: resolvedModel.modelURL.lastPathComponent,
+                promptCharacterCount: prompt.text.count,
+                estimatedPromptTokenCount: estimateTokenCount(in: prompt.text),
+                generatedTokenCount: generatedTokenCount,
+                outputCharacterCount: finalText.count,
+                modelLoadDuration: modelLoadDuration,
+                promptPreparationDuration: promptPreparationDuration,
+                timeToFirstToken: firstTokenAt?.timeIntervalSince(generationStart),
+                generationDuration: firstTokenAt.map { finishedAt.timeIntervalSince($0) } ?? 0,
+                totalDuration: finishedAt.timeIntervalSince(runStart),
+                memoryUsageMB: currentResidentMemoryMB(),
+                peakMemoryUsageMB: peakMemoryUsageMB,
+                contextWindow: runConfiguration.contextWindow,
+                maxTokens: runConfiguration.maxTokens,
+                temperature: runConfiguration.temperature,
+                topP: runConfiguration.topP,
+                topK: runConfiguration.topK
+            )
+            : nil
+
+        let chunk = OllamaChunk(
+            model: resolvedModel.modelURL.lastPathComponent,
+            createdAt: finishedAt,
+            message: .init(role: .assistant, content: finalText),
+            done: true,
+            localStats: stats
+        )
+        latestChunk = chunk
+        return chunk
+    }
+
+    private func makeModel(using options: [String: Any]) throws -> (ResolvedLocalModel, LocalRunConfiguration) {
         let explicitPath = options["local_model_path"] as? String
         let preferredFileName = options["local_model_filename"] as? String
         let bookmarkData: Data?
@@ -302,7 +398,7 @@ private final class LocalLlamaBackend: LLMBackendProtocol {
         } else {
             bookmarkData = nil
         }
-        
+
         guard let modelURL = try modelFileService.resolveModelURL(
             explicitPath: explicitPath,
             bookmarkData: bookmarkData,
@@ -312,14 +408,14 @@ private final class LocalLlamaBackend: LLMBackendProtocol {
                 explicitPath ?? preferredFileName ?? modelFileService.defaultModelFileName
             )
         }
-        
+
         let modelOptions = options["options"] as? [String: Any] ?? [:]
         let topK = modelOptions["top_k"] as? Int ?? 40
         let topP = Float(modelOptions["top_p"] as? Double ?? 0.9)
         let numCtx = modelOptions["num_ctx"] as? Int ?? 1024
         let temperature = Float(modelOptions["temperature"] as? Double ?? 0.7)
         let maxTokenCount = modelOptions["num_predict"] as? Int ?? 300
-        
+
         let configuration = makeLocalLlamaConfiguration(
             topK: topK,
             topP: topP,
@@ -336,10 +432,19 @@ private final class LocalLlamaBackend: LLMBackendProtocol {
                 configuration: configuration
             )
 
-            return ResolvedLocalModel(
-                engine: engine,
-                modelURL: modelURL,
-                isSecurityScoped: didStartAccessing
+            return (
+                ResolvedLocalModel(
+                    engine: engine,
+                    modelURL: modelURL,
+                    isSecurityScoped: didStartAccessing
+                ),
+                LocalRunConfiguration(
+                    topK: topK,
+                    topP: Double(topP),
+                    contextWindow: numCtx,
+                    temperature: Double(temperature),
+                    maxTokens: maxTokenCount
+                )
             )
         } catch {
             if didStartAccessing {
@@ -348,7 +453,7 @@ private final class LocalLlamaBackend: LLMBackendProtocol {
             throw error
         }
     }
-    
+
     private func makePromptComponents(from messages: [Message]) throws -> (
         systemPrompt: String,
         lastUserMessage: String,
@@ -358,16 +463,16 @@ private final class LocalLlamaBackend: LLMBackendProtocol {
             messages.first(where: { $0.role == .system })?.content ?? "",
             maxCharacters: 1200
         )
-        
+
         let conversationMessages = messages.filter { $0.role != .system }
         guard !conversationMessages.isEmpty else {
             throw LocalLlamaBackendError.invalidResponse("No messages were provided to the local backend.")
         }
-        
+
         guard let rawLastUserMessage = conversationMessages.last(where: { $0.role == .user })?.content else {
             throw LocalLlamaBackendError.invalidResponse("The local backend requires a user message.")
         }
-        
+
         let lastUserMessage = sanitizePromptText(rawLastUserMessage, maxCharacters: 1400)
         let trimmedConversation = Array(conversationMessages.dropLast().suffix(4))
         let historyPairs = QwenPromptFormatter.makeHistoryPairs(from: trimmedConversation)
@@ -378,7 +483,7 @@ private final class LocalLlamaBackend: LLMBackendProtocol {
                     bot: sanitizePromptText(pair.bot, maxCharacters: 800)
                 )
             }
-        
+
         return (systemPrompt, lastUserMessage, historyPairs)
     }
 
@@ -408,6 +513,11 @@ private final class LocalLlamaBackend: LLMBackendProtocol {
     private func releaseModelAccessIfNeeded(for model: ResolvedLocalModel) {
         guard model.isSecurityScoped else { return }
         modelFileService.stopAccessing(url: model.modelURL)
+    }
+
+    private func runtimeReportingSettings(from options: [String: Any]) -> LocalRuntimeReportingSettings {
+        let rawSettings = options["local_runtime"] as? [String: Any] ?? [:]
+        return LocalRuntimeReportingSettings(dictionary: rawSettings)
     }
 }
 
@@ -540,4 +650,51 @@ private func sanitizePromptText(_ text: String, maxCharacters: Int) -> String {
     }
 
     return String(cleaned.prefix(maxCharacters))
+}
+
+private func estimateTokenCount(in text: String) -> Int {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return 0 }
+
+    let wordCount = trimmed
+        .split(whereSeparator: \.isWhitespace)
+        .count
+    let characterCount = trimmed.count
+
+    return max(wordCount, Int(ceil(Double(characterCount) / 4.0)))
+}
+
+private func currentResidentMemoryMB() -> Double? {
+    var info = mach_task_basic_info()
+    var size = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
+
+    let result = withUnsafeMutablePointer(to: &info) { pointer in
+        pointer.withMemoryRebound(to: integer_t.self, capacity: Int(size)) { integerPointer in
+            task_info(
+                mach_task_self_,
+                task_flavor_t(MACH_TASK_BASIC_INFO),
+                integerPointer,
+                &size
+            )
+        }
+    }
+
+    guard result == KERN_SUCCESS else {
+        return nil
+    }
+
+    return Double(info.resident_size) / 1_048_576.0
+}
+
+private func maxValue(_ lhs: Double?, _ rhs: Double?) -> Double? {
+    switch (lhs, rhs) {
+    case let (left?, right?):
+        return max(left, right)
+    case let (left?, nil):
+        return left
+    case let (nil, right?):
+        return right
+    case (nil, nil):
+        return nil
+    }
 }
