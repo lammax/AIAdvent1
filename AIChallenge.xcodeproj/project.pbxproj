@@ -120,6 +120,7 @@
 		14AA021C2F9000000000001C /* RAGMiniChatScenarioEvaluationServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA011C2F9000000000001C /* RAGMiniChatScenarioEvaluationServiceProtocol.swift */; };
 		14AA021D2F9000000000001D /* RAGMiniChatScenarioEvaluationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA011D2F9000000000001D /* RAGMiniChatScenarioEvaluationService.swift */; };
 		14AA04032F90000000000003 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 14AA04022F90000000000002 /* ZIPFoundation */; };
+		15CC10012FA0000000000001 /* LlamaCppBridge in Frameworks */ = {isa = PBXBuildFile; productRef = 15CC10032FA0000000000003 /* LlamaCppBridge */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -292,6 +293,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1305B23A2F75B405009A2D6C /* GRDB in Frameworks */,
+				15CC10012FA0000000000001 /* LlamaCppBridge in Frameworks */,
 				13BD3AA92F84469F0059C0A5 /* MCP in Frameworks */,
 				14AA04032F90000000000003 /* ZIPFoundation in Frameworks */,
 			);
@@ -713,6 +715,7 @@
 			name = AIChallenge;
 			packageProductDependencies = (
 				1305B2392F75B405009A2D6C /* GRDB */,
+				15CC10032FA0000000000003 /* LlamaCppBridge */,
 				13BD3AA82F84469F0059C0A5 /* MCP */,
 				14AA04022F90000000000002 /* ZIPFoundation */,
 			);
@@ -800,6 +803,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				1305B2382F75B405009A2D6C /* XCRemoteSwiftPackageReference "GRDB" */,
+				15CC10022FA0000000000002 /* XCLocalSwiftPackageReference "Packages/LlamaCppBridge" */,
 				13BD3AA72F84469F0059C0A5 /* XCRemoteSwiftPackageReference "swift-sdk" */,
 				14AA04012F90000000000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 			);
@@ -1301,6 +1305,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		15CC10022FA0000000000002 /* XCLocalSwiftPackageReference "Packages/LlamaCppBridge" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/LlamaCppBridge;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		1305B2382F75B405009A2D6C /* XCRemoteSwiftPackageReference "GRDB" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -1343,6 +1354,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 14AA04012F90000000000001 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
 			productName = ZIPFoundation;
+		};
+		15CC10032FA0000000000003 /* LlamaCppBridge */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 15CC10022FA0000000000002 /* XCLocalSwiftPackageReference "Packages/LlamaCppBridge" */;
+			productName = LlamaCppBridge;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

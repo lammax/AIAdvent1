@@ -6,75 +6,86 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     private static let drawerWidth: CGFloat = 360
-    private static let hiddenDrawerOffset: CGFloat = drawerWidth + 40
     
     @ObservedObject var vm: SettingsViewModel
     @Binding var isOpen: Bool
     @State private var selectedTab: SettingsTab = .general
+    let onSelectLocalModel: () -> Void
     
     var body: some View {
-        ZStack(alignment: .trailing) {
-            
-            if isOpen {
-                Color.black.opacity(0.3)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation {
-                            isOpen = false
-                        }
-                    }
-            }
-            
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
-                    
-                    HStack {
-                        Text("Settings")
-                            .font(.headline)
-                        Spacer()
-                        Button("Close") {
+        GeometryReader { proxy in
+            ZStack(alignment: .trailing) {
+                
+                if isOpen {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .onTapGesture {
                             withAnimation {
                                 isOpen = false
                             }
                         }
-                    }
-                    
-                    Picker("Settings", selection: $selectedTab) {
-                        ForEach(SettingsTab.allCases, id: \.self) { tab in
-                            Text(tab.title).tag(tab)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    
-                    switch selectedTab {
-                    case .general:
-                        SettingsGeneralTab(vm: vm)
-                    case .model:
-                        SettingsModelTab(vm: vm)
-                    case .context:
-                        SettingsContextTab(vm: vm)
-                    case .rag:
-                        SettingsRAGTab(vm: vm)
-                    }
-                    
-                    Button("Apply") {
-                        vm.apply()
-                        withAnimation {
-                            isOpen = false
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
                 }
+                
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        
+                        HStack {
+                            Text("Settings")
+                                .font(.headline)
+                            Spacer()
+                            Button("Close") {
+                                withAnimation {
+                                    isOpen = false
+                                }
+                            }
+                        }
+                        
+                        Picker("Settings", selection: $selectedTab) {
+                            ForEach(SettingsTab.allCases, id: \.self) { tab in
+                                Text(tab.title).tag(tab)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        
+                        switch selectedTab {
+                        case .general:
+                            SettingsGeneralTab(vm: vm)
+                        case .model:
+                            SettingsModelTab(
+                                vm: vm,
+                                onSelectLocalModel: onSelectLocalModel
+                            )
+                        case .context:
+                            SettingsContextTab(vm: vm)
+                        case .rag:
+                            SettingsRAGTab(vm: vm)
+                        }
+                        
+                        Button("Apply") {
+                            vm.apply()
+                            withAnimation {
+                                isOpen = false
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                }
+                .padding()
+                .frame(width: Self.drawerWidth)
+                .background(Color(.systemBackground))
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .offset(x: isOpen ? 0 : hiddenDrawerOffset(for: proxy.size.width))
+                .animation(.easeInOut, value: isOpen)
             }
-            .padding()
-            .frame(width: Self.drawerWidth)
-            .background(Color(.systemBackground))
-            .offset(x: isOpen ? 0 : Self.hiddenDrawerOffset)
-            .animation(.easeInOut, value: isOpen)
         }
+    }
+    
+    private func hiddenDrawerOffset(for availableWidth: CGFloat) -> CGFloat {
+        max(availableWidth, Self.drawerWidth) + 32
     }
 }
 
@@ -139,9 +150,55 @@ private struct SettingsGeneralTab: View {
 
 private struct SettingsModelTab: View {
     @ObservedObject var vm: SettingsViewModel
+    let onSelectLocalModel: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Backend")
+                Picker("Backend", selection: $vm.backendMode) {
+                    Text("Local GGUF").tag("local_gguf")
+                    Text("Ollama HTTP").tag("ollama_http")
+                }
+                .pickerStyle(.segmented)
+                
+                if vm.backendMode == "local_gguf" {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("GGUF Model")
+                        
+                        Button {
+                            onSelectLocalModel()
+                        } label: {
+                            HStack {
+                                Text(vm.localModelDisplayName)
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "folder")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.secondarySystemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        .buttonStyle(.plain)
+                        .contentShape(Rectangle())
+                    }
+                    
+                    Text("The import copies the selected file into the app sandbox at Documents/Models.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    
+                    Text(vm.localModelStatus)
+                        .font(.footnote)
+                        .textSelection(.enabled)
+                }
+            }
+            
             VStack(alignment: .leading) {
                 Text("OllamaModel")
                 Picker("Model", selection: $vm.ollamaModel) {
@@ -151,7 +208,7 @@ private struct SettingsModelTab: View {
                 }
                 .pickerStyle(.segmented)
             }
-            .isHidden(vm.provider == .openRouter, remove: true)
+            .isHidden(vm.provider == .openRouter || vm.backendMode == "local_gguf", remove: true)
             
             Text("Temperature: \(vm.temperature, specifier: "%.2f")")
             Slider(value: $vm.temperature, in: 0...1)

@@ -7,8 +7,8 @@
 
 import Foundation
 
-enum Prompt: CaseIterable, Hashable {
-    static var allCases: [Prompt] {
+enum PromptTemplate: CaseIterable, Hashable {
+    static var allCases: [PromptTemplate] {
         [
             .recursionExpl,
             .recursionExplAsJSON,

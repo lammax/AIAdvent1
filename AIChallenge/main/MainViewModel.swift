@@ -16,8 +16,8 @@ class MainViewModel: ObservableObject {
     @Published var ollamaChunk: OllamaChunk?
     @Published var ragStatus: String = ""
     
-    var currentPrompt: Prompt? = nil
-    var settings: [String : Encodable] = [:]
+    var currentPrompt: PromptTemplate? = nil
+    var settings: [String : Any] = [:]
     var provider: LLMProvider = .ollama
     var userProfile: UserProfile = UserProfile.defaultProfile
     var isTaskPlanningEnabled: Bool = false
@@ -127,7 +127,7 @@ class MainViewModel: ObservableObject {
             .store(in: &uns)
     }
     
-    func start(prompt: Prompt? = .recursionExpl) {
+    func start(prompt: PromptTemplate? = .recursionExpl) {
         switch provider {
         case .ollama:
             startOllama(prompt: prompt)
@@ -149,7 +149,7 @@ class MainViewModel: ObservableObject {
         }
     }
     
-    func startOllama(prompt: Prompt? = .recursionExpl) {
+    func startOllama(prompt: PromptTemplate? = .recursionExpl) {
         guard let prompt else { return }
         resetAnswerBuffer()
         clearRAGStatusDisplay()
@@ -193,7 +193,7 @@ class MainViewModel: ObservableObject {
         )
    }
     
-    func startOpenRouter(prompt: Prompt? = .recursionExpl) {
+    func startOpenRouter(prompt: PromptTemplate? = .recursionExpl) {
         guard let prompt else { return }
         resetAnswerBuffer()
         clearRAGStatusDisplay()

@@ -15,12 +15,13 @@ struct MainView: View {
     @StateObject private var settingsVM = SettingsViewModel()
     
     @State var promptAIText: String = ""
-    @State var currentOption: Prompt?
+    @State var currentOption: PromptTemplate?
     
     @State private var showSettings: Bool = false
     @State private var showStatistics: Bool = false
     @State private var showUserProfile: Bool = false
     @State private var showDocumentImporter: Bool = false
+    @State private var showLocalModelImporter: Bool = false
     @State private var isTaskPaused: Bool = false
 //    @State private var isMCPtest: Bool = false
 //    @State private var scheduledJob: ScheduledJob?
@@ -33,6 +34,10 @@ struct MainView: View {
             .json,
             UTType(filenameExtension: "zip") ?? .data
         ]
+    }
+    
+    private var localModelImportTypes: [UTType] {
+        [UTType(filenameExtension: "gguf") ?? .data]
     }
     
     let formatterInt: NumberFormatter = {
@@ -161,7 +166,7 @@ struct MainView: View {
                     .disabled(viewModel.isStatisticsBtnDisabled)
                     
                     AnimatedDropdownMenu(
-                        options: Prompt.allCases,
+                        options: PromptTemplate.allCases,
                         selectedOption: $currentOption
                     )
                     .onChange(of: currentOption) { _, newValue in
@@ -183,7 +188,13 @@ struct MainView: View {
                 Spacer()
             }
             
-            SettingsView(vm: settingsVM, isOpen: $showSettings)
+            SettingsView(
+                vm: settingsVM,
+                isOpen: $showSettings,
+                onSelectLocalModel: {
+                    showLocalModelImporter = true
+                }
+            )
             
             StatisticsView(vm: StatisticsViewModel(chunk: viewModel.ollamaChunk), isOpen: $showStatistics)
             
@@ -209,6 +220,21 @@ struct MainView: View {
                 viewModel.indexDocuments(urls: urls)
             case .failure(let error):
                 viewModel.ragStatus = "Document selection failed: \(error.localizedDescription)"
+            }
+        }
+        .fileImporter(
+            isPresented: $showLocalModelImporter,
+            allowedContentTypes: localModelImportTypes,
+            allowsMultipleSelection: false
+        ) { result in
+            switch result {
+            case .success(let urls):
+                guard let url = urls.first else { return }
+                Task {
+                    await settingsVM.importLocalModel(from: url)
+                }
+            case .failure(let error):
+                settingsVM.localModelStatus = "Local model selection failed: \(error.localizedDescription)"
             }
         }
         .padding()

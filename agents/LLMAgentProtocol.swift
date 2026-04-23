@@ -10,8 +10,8 @@ import Foundation
 protocol LLMAgentProtocol {
     
     func send(
-        _ prompt: Prompt,
-        options: [String : Encodable]
+        _ prompt: PromptTemplate,
+        options: [String : Any]
     )
     
     var agentId: String { get }

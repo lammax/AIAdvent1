@@ -36,8 +36,8 @@ final class OpenRouterAgent: LLMAgentProtocol, @unchecked Sendable {
     }
     
     func send(
-        _ prompt: Prompt,
-        options: [String : Encodable]
+        _ prompt: PromptTemplate,
+        options: [String : Any]
     ) {
         self.options = options
         messages.append(

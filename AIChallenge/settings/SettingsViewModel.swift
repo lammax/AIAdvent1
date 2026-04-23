@@ -10,6 +10,14 @@ import Combine
 
 @MainActor
 final class SettingsViewModel: ObservableObject {
+    private enum StorageKey {
+        static let localModelPath = "settings.localModelPath"
+        static let localModelBookmarkData = "settings.localModelBookmarkData"
+    }
+    
+    private let localModelFileService: LocalModelFileServiceProtocol
+    private let userDefaults: UserDefaults
+    private var localModelBookmarkData: Data?
     
     @Published var provider: LLMProvider = .ollama
     @Published var contextStrategy: ContextStrategy = .slidingWindow
@@ -33,18 +41,68 @@ final class SettingsViewModel: ObservableObject {
     @Published var stream: Bool = true
     @Published var ollamaModel: OllamaModel = .llama3
     @Published var selectedPreset: String = "Smart"
+    @Published var backendMode: String = "local_gguf"
+    @Published var localModelPath: String = ""
+    @Published var localModelFileName: String = "qwen2.5-0.5b-instruct-q4_k_m.gguf"
+    @Published var localModelStatus: String = ""
+    
+    var localModelDisplayName: String {
+        let trimmedPath = localModelPath.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedPath.isEmpty {
+            return URL(fileURLWithPath: trimmedPath).lastPathComponent
+        }
+        
+        return localModelFileName
+    }
+    
+    init(
+        localModelFileService: LocalModelFileServiceProtocol = LocalModelFileService(),
+        userDefaults: UserDefaults = .standard
+    ) {
+        self.localModelFileService = localModelFileService
+        self.userDefaults = userDefaults
+        self.localModelPath = userDefaults.string(forKey: StorageKey.localModelPath) ?? ""
+        self.localModelBookmarkData = userDefaults.data(forKey: StorageKey.localModelBookmarkData)
+        
+        if let existingURL = try? localModelFileService.resolveModelURL(
+            explicitPath: localModelPath,
+            bookmarkData: localModelBookmarkData,
+            preferredFileName: localModelFileName
+        ) {
+            localModelPath = existingURL.path
+            localModelStatus = """
+            Using local model by original path.
+            Path: \(existingURL.path)
+            """
+        } else {
+            localModelPath = ""
+            localModelStatus = "No local model selected yet."
+        }
+    }
     
     func buildOllamaSettings() -> [String: Any] {
-        return [
-            "model": ollamaModel.rawValue,
-            "stream": stream,
-            "options": [
-                "temperature": temperature,
-                "num_predict": Int(maxTokens),
-                "top_p": topP,
-                "top_k": Int(topK)
-            ]
+        let optionSettings: [String: Any] = [
+            "temperature": temperature,
+            "num_predict": Int(maxTokens),
+            "top_p": topP,
+            "top_k": Int(topK),
+            "num_ctx": 1024
         ]
+        
+        var settings: [String: Any] = [
+            "backend_mode": backendMode,
+            "local_model_path": localModelPath,
+            "local_model_filename": localModelFileName,
+            "model": ollamaModel.rawValue,
+            "stream": stream
+        ]
+        settings["options"] = optionSettings
+        
+        if let localModelBookmarkData {
+            settings["local_model_bookmark_data"] = localModelBookmarkData.base64EncodedString()
+        }
+        
+        return settings
     }
     
     func buildOpenRouterSettings() -> [String: Any] {
@@ -101,6 +159,37 @@ final class SettingsViewModel: ObservableObject {
         }
         
         apply()
+    }
+    
+    func importLocalModel(from url: URL) async {
+        let hasAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if hasAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        
+        do {
+            let bookmarkData = try localModelFileService.bookmarkData(
+                from: url,
+                preferredFileName: localModelFileName
+            )
+            localModelBookmarkData = bookmarkData
+            localModelPath = url.path
+            backendMode = "local_gguf"
+            provider = .ollama
+            userDefaults.set(localModelPath, forKey: StorageKey.localModelPath)
+            userDefaults.set(bookmarkData, forKey: StorageKey.localModelBookmarkData)
+            localModelStatus = """
+            Using local model by original path.
+            File: \(url.lastPathComponent)
+            Path: \(url.path)
+            The app stores a bookmark to reopen this file later. The GGUF file is not copied into the sandbox.
+            """
+            apply()
+        } catch {
+            localModelStatus = "Local model import failed: \(error.localizedDescription)"
+        }
     }
     
 }

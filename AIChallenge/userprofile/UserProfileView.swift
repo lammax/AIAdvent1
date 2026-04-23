@@ -205,7 +205,7 @@ struct UserProfileView: View {
             .padding()
             .frame(width: 340)
             .background(Color(.systemBackground))
-            .offset(x: isOpen ? 0 : 380)
+            .offset(x: isOpen ? 0 : 390)
             .animation(.easeInOut, value: isOpen)
         }
     }

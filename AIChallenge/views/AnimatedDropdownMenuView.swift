@@ -11,8 +11,8 @@ import SwiftUI
 struct AnimatedDropdownMenu: View {
     @Namespace private var animationNamespace
 
-    let options: [Prompt]
-    @Binding var selectedOption: Prompt?
+    let options: [PromptTemplate]
+    @Binding var selectedOption: PromptTemplate?
 
     @State private var isExpanded = false
 

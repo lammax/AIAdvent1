@@ -82,7 +82,7 @@ struct StatisticsView: View {
             }
             .frame(width: 320)
             .background(Color(.systemBackground))
-            .offset(x: isOpen ? 0 : 350)
+            .offset(x: isOpen ? 0 : 370)
             .animation(.easeInOut, value: isOpen)
         }
     }

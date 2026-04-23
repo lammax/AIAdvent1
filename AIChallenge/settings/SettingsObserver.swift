@@ -10,7 +10,7 @@ import Combine
 
 final class SettingsObserver {
     
-    let settings: CurrentValueSubject<[String: Encodable], Never> = CurrentValueSubject(Constants.defaultOllamaOptions)
+    let settings: CurrentValueSubject<[String: Any], Never> = CurrentValueSubject(Constants.defaultOllamaOptions)
     let provider: CurrentValueSubject<LLMProvider, Never> = CurrentValueSubject(.ollama)
     let contextStrategy: CurrentValueSubject<ContextStrategy, Never> = CurrentValueSubject(.facts)
     let isTaskPlanningEnabled: CurrentValueSubject<Bool, Never> = CurrentValueSubject(false)
@@ -32,7 +32,7 @@ final class SettingsObserver {
     
     @objc private func handleSettings(_ notification: Notification) {
         
-        if let settings = notification.userInfo?[SettingsUserInfoKey.settings.rawValue] as? [String: Encodable] {
+        if let settings = notification.userInfo?[SettingsUserInfoKey.settings.rawValue] as? [String: Any] {
             self.settings.send(settings)
         }
 

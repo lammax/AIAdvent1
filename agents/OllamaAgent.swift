@@ -50,7 +50,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     
     private var messages: [Message] = []
     private var summary: String = ""
-    private var options: [String: Encodable] = Constants.defaultOllamaOptions
+    private var options: [String: Any] = Constants.defaultOllamaOptions
     
     private let maxMessages: Int
     private let summaryTrigger: Int
@@ -126,8 +126,8 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     // MARK: - Public
     
     func send(
-            _ prompt: Prompt,
-            options: [String: Encodable]
+            _ prompt: PromptTemplate,
+            options: [String: Any]
         ) {
             
         if isTaskPlanningEnabled, let task = self.currentTaskContext, task.status == .paused {
@@ -190,7 +190,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
                 agentId: agentId,
                 userText: prompt.text,
                 baseContext: baseContext,
-                options: makeAnyOptions(from: normalizedOptions)
+                options: normalizedOptions
             ) {
                 for toolMessage in orchestration.toolMessages {
                     messages.append(toolMessage)
@@ -2054,7 +2054,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         )
     }
     
-    private func normalizeOptions(_ options: [String: Encodable]) -> [String: Encodable] {
+    private func normalizeOptions(_ options: [String: Any]) -> [String: Any] {
         var result = options
         
         if let model = result["model"] as? OllamaModel {
@@ -2063,28 +2063,18 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         
         return result
     }
-    
-    private func makeAnyOptions(from options: [String: Encodable]) -> [String: Any] {
+
+    private func makeAnyOptions(from options: [String: Any]) -> [String: Any] {
         var result: [String: Any] = [:]
         
         for (key, value) in options {
             switch value {
-            case let value as String:
-                result[key] = value
-            case let value as Int:
-                result[key] = value
-            case let value as Double:
-                result[key] = value
-            case let value as Bool:
-                result[key] = value
             case let value as OllamaModel:
                 result[key] = value.rawValue
             case let value as [String: Any]:
-                result[key] = value
-            case let value as [String: Encodable]:
                 result[key] = makeAnyOptions(from: value)
             default:
-                break
+                result[key] = value
             }
         }
         
