@@ -18,6 +18,7 @@ private typealias LocalLlamaConfiguration = LlamaCppConfiguration
 class OllamaStreamer: NSObject, @unchecked Sendable {
     private let remoteBackend: LLMBackendProtocol
     private let localBackend: LLMBackendProtocol
+    private let privateLlamaServerBackend: LLMBackendProtocol
     private var runningTask: Task<Void, Never>?
     private var activeBackend: LLMBackendProtocol?
     
@@ -26,10 +27,12 @@ class OllamaStreamer: NSObject, @unchecked Sendable {
     
     init(
         remoteBackend: LLMBackendProtocol = OllamaHTTPBackend.shared,
-        localBackend: LLMBackendProtocol = LocalLlamaBackend.shared
+        localBackend: LLMBackendProtocol = LocalLlamaBackend.shared,
+        privateLlamaServerBackend: LLMBackendProtocol = PrivateLlamaServerService.shared
     ) {
         self.remoteBackend = remoteBackend
         self.localBackend = localBackend
+        self.privateLlamaServerBackend = privateLlamaServerBackend
     }
     
     func send(_ message: Message, options: [String: Any]) async throws -> String {
@@ -102,10 +105,24 @@ class OllamaStreamer: NSObject, @unchecked Sendable {
     
     private func backend(for options: [String: Any]) -> LLMBackendProtocol {
         let mode = (options["backend_mode"] as? String)?.lowercased() ?? "local_gguf"
-        return mode == "ollama_http" ? remoteBackend : localBackend
+        switch mode {
+        case "ollama_http":
+            return remoteBackend
+        case "private_llama_server":
+            return privateLlamaServerBackend
+        default:
+            return localBackend
+        }
     }
     
     private func finalModelName(from options: [String: Any]) -> String {
+        if (options["backend_mode"] as? String)?.lowercased() == "private_llama_server" {
+            let privateSettings = PrivateLocalLLMSettings(
+                dictionary: options["private_llm"] as? [String: Any] ?? [:]
+            )
+            return privateSettings.modelName
+        }
+
         if let localFileName = options["local_model_filename"] as? String,
            (options["backend_mode"] as? String)?.lowercased() != "ollama_http" {
             return localFileName
@@ -129,6 +146,296 @@ protocol LLMBackendProtocol: AnyObject {
     func stream(messages: [Message], options: [String: Any]) -> AsyncThrowingStream<String, Error>
     func cancel()
     var latestChunk: OllamaChunk? { get }
+}
+
+protocol PrivateLlamaServerServiceProtocol: LLMBackendProtocol {}
+
+private final class PrivateLlamaServerService: PrivateLlamaServerServiceProtocol {
+    static let shared = PrivateLlamaServerService()
+
+    private var streamTask: Task<Void, Never>?
+    private(set) var latestChunk: OllamaChunk?
+
+    func send(messages: [Message], options: [String: Any]) async throws -> String {
+        let startedAt = Date()
+        let requestSettings = PrivateLocalLLMSettings(
+            dictionary: options["private_llm"] as? [String: Any] ?? [:]
+        )
+        let body = requestBody(
+            messages: messages,
+            options: options,
+            settings: requestSettings,
+            stream: false
+        )
+        let request = try makeRequest(settings: requestSettings, body: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validate(response: response, data: data)
+
+        let content = try parseCompletionContent(from: data)
+        let finishedAt = Date()
+        let stats = makeStats(
+            messages: messages,
+            output: content,
+            generatedTokenCount: estimateTokenCount(in: content),
+            startedAt: startedAt,
+            firstTokenAt: nil,
+            finishedAt: finishedAt,
+            options: options,
+            settings: requestSettings
+        )
+
+        latestChunk = OllamaChunk(
+            model: requestSettings.modelName,
+            createdAt: finishedAt,
+            message: .init(role: .assistant, content: content),
+            done: true,
+            localStats: stats
+        )
+
+        return content
+    }
+
+    func stream(messages: [Message], options: [String: Any]) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            self.streamTask?.cancel()
+
+            self.streamTask = Task {
+                let startedAt = Date()
+                let requestSettings = PrivateLocalLLMSettings(
+                    dictionary: options["private_llm"] as? [String: Any] ?? [:]
+                )
+                var firstTokenAt: Date?
+                var output = ""
+                var generatedTokenCount = 0
+
+                do {
+                    let body = self.requestBody(
+                        messages: messages,
+                        options: options,
+                        settings: requestSettings,
+                        stream: true
+                    )
+                    let request = try self.makeRequest(settings: requestSettings, body: body)
+                    let (bytes, response) = try await URLSession.shared.bytes(for: request)
+                    try self.validate(response: response, data: nil)
+
+                    for try await line in bytes.lines {
+                        if Task.isCancelled {
+                            continuation.finish(throwing: CancellationError())
+                            return
+                        }
+
+                        guard let token = self.parseStreamToken(from: line) else {
+                            continue
+                        }
+
+                        if firstTokenAt == nil {
+                            firstTokenAt = Date()
+                        }
+
+                        generatedTokenCount += 1
+                        output += token
+                        continuation.yield(token)
+                    }
+
+                    let finishedAt = Date()
+                    let finalText = output.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let stats = self.makeStats(
+                        messages: messages,
+                        output: finalText,
+                        generatedTokenCount: generatedTokenCount,
+                        startedAt: startedAt,
+                        firstTokenAt: firstTokenAt,
+                        finishedAt: finishedAt,
+                        options: options,
+                        settings: requestSettings
+                    )
+
+                    self.latestChunk = OllamaChunk(
+                        model: requestSettings.modelName,
+                        createdAt: finishedAt,
+                        message: .init(role: .assistant, content: finalText),
+                        done: true,
+                        localStats: stats
+                    )
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+
+            continuation.onTermination = { _ in
+                self.streamTask?.cancel()
+            }
+        }
+    }
+
+    func cancel() {
+        streamTask?.cancel()
+    }
+
+    private func makeRequest(
+        settings: PrivateLocalLLMSettings,
+        body: [String: Any]
+    ) throws -> URLRequest {
+        guard let url = completionURL(from: settings.baseURL) else {
+            throw PrivateLlamaServerServiceError.invalidBaseURL(settings.baseURL)
+        }
+
+        var request = URLRequest(url: url, timeoutInterval: settings.requestTimeoutSeconds)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        if !settings.apiKey.isEmpty {
+            request.addValue("Bearer \(settings.apiKey)", forHTTPHeaderField: "Authorization")
+        }
+        request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [.withoutEscapingSlashes])
+        return request
+    }
+
+    private func requestBody(
+        messages: [Message],
+        options: [String: Any],
+        settings: PrivateLocalLLMSettings,
+        stream: Bool
+    ) -> [String: Any] {
+        let modelOptions = options["options"] as? [String: Any] ?? [:]
+        var body: [String: Any] = [
+            "model": settings.modelName,
+            "stream": stream,
+            "messages": messages.map {
+                ["role": $0.role.text, "content": $0.content]
+            }
+        ]
+
+        if let temperature = modelOptions["temperature"] as? Double {
+            body["temperature"] = temperature
+        }
+        if let topP = modelOptions["top_p"] as? Double {
+            body["top_p"] = topP
+        }
+        if let maxTokens = modelOptions["num_predict"] as? Int {
+            body["max_tokens"] = maxTokens
+        }
+        if let topK = modelOptions["top_k"] as? Int {
+            body["top_k"] = topK
+        }
+
+        return body
+    }
+
+    private func completionURL(from baseURL: String) -> URL? {
+        let trimmed = baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if trimmed.hasSuffix("/chat/completions") {
+            return URL(string: trimmed)
+        }
+        let withoutTrailingSlash = trimmed.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        return URL(string: "\(withoutTrailingSlash)/chat/completions")
+    }
+
+    private func parseCompletionContent(from data: Data) throws -> String {
+        guard
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let choices = json["choices"] as? [[String: Any]],
+            let firstChoice = choices.first,
+            let message = firstChoice["message"] as? [String: Any],
+            let content = message["content"] as? String
+        else {
+            throw PrivateLlamaServerServiceError.invalidResponse(responseBody(from: data))
+        }
+
+        return content
+    }
+
+    private func parseStreamToken(from line: String) -> String? {
+        guard line.hasPrefix("data:") else { return nil }
+        let payload = line.dropFirst(5).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard payload != "[DONE]", let data = payload.data(using: .utf8) else { return nil }
+        guard
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let choices = json["choices"] as? [[String: Any]],
+            let firstChoice = choices.first,
+            let delta = firstChoice["delta"] as? [String: Any],
+            let content = delta["content"] as? String
+        else {
+            return nil
+        }
+
+        return content
+    }
+
+    private func validate(response: URLResponse, data: Data?) throws {
+        guard let httpResponse = response as? HTTPURLResponse else { return }
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            throw PrivateLlamaServerServiceError.server(
+                statusCode: httpResponse.statusCode,
+                body: data.map(responseBody(from:)) ?? ""
+            )
+        }
+    }
+
+    private func makeStats(
+        messages: [Message],
+        output: String,
+        generatedTokenCount: Int,
+        startedAt: Date,
+        firstTokenAt: Date?,
+        finishedAt: Date,
+        options: [String: Any],
+        settings: PrivateLocalLLMSettings
+    ) -> LocalLLMRunStats? {
+        let reportingSettings = LocalRuntimeReportingSettings(
+            dictionary: options["local_runtime"] as? [String: Any] ?? [:]
+        )
+        guard reportingSettings.isEnabled else { return nil }
+
+        let modelOptions = options["options"] as? [String: Any] ?? [:]
+        let promptText = messages.map { "\($0.role.text): \($0.content)" }.joined(separator: "\n\n")
+        let generationDuration = firstTokenAt.map { finishedAt.timeIntervalSince($0) }
+            ?? finishedAt.timeIntervalSince(startedAt)
+
+        return LocalLLMRunStats(
+            backendMode: "private_llama_server",
+            modelName: settings.modelName,
+            promptCharacterCount: promptText.count,
+            estimatedPromptTokenCount: estimateTokenCount(in: promptText),
+            generatedTokenCount: generatedTokenCount,
+            outputCharacterCount: output.count,
+            modelLoadDuration: 0,
+            promptPreparationDuration: 0,
+            timeToFirstToken: firstTokenAt?.timeIntervalSince(startedAt),
+            generationDuration: generationDuration,
+            totalDuration: finishedAt.timeIntervalSince(startedAt),
+            memoryUsageMB: nil,
+            peakMemoryUsageMB: nil,
+            contextWindow: settings.maxContextTokens,
+            maxTokens: modelOptions["num_predict"] as? Int ?? 0,
+            temperature: modelOptions["temperature"] as? Double ?? 0,
+            topP: modelOptions["top_p"] as? Double ?? 0,
+            topK: modelOptions["top_k"] as? Int ?? 0
+        )
+    }
+
+    private func responseBody(from data: Data) -> String {
+        String(data: data, encoding: .utf8) ?? "<non-utf8 response>"
+    }
+}
+
+private enum PrivateLlamaServerServiceError: LocalizedError {
+    case invalidBaseURL(String)
+    case invalidResponse(String)
+    case server(statusCode: Int, body: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidBaseURL(let baseURL):
+            return "Invalid private llama-server base URL: \(baseURL)"
+        case .invalidResponse(let body):
+            return "Unexpected private llama-server response: \(body)"
+        case .server(let statusCode, let body):
+            return "Private llama-server request failed with HTTP \(statusCode): \(body)"
+        }
+    }
 }
 
 private final class OllamaHTTPBackend: LLMBackendProtocol {

@@ -14,6 +14,11 @@ final class SettingsViewModel: ObservableObject {
         static let localModelPath = "settings.localModelPath"
         static let localModelBookmarkData = "settings.localModelBookmarkData"
         static let backendMode = "settings.backendMode"
+        static let privateLLMBaseURL = "settings.privateLLMBaseURL"
+        static let privateLLMAPIKey = "settings.privateLLMAPIKey"
+        static let privateLLMModelName = "settings.privateLLMModelName"
+        static let privateLLMMaxContextTokens = "settings.privateLLMMaxContextTokens"
+        static let privateLLMRequestTimeoutSeconds = "settings.privateLLMRequestTimeoutSeconds"
     }
     
     private let localModelFileService: LocalModelFileServiceProtocol
@@ -57,6 +62,11 @@ final class SettingsViewModel: ObservableObject {
     @Published var includeRAGTaskMemoryInPrompt: Bool = PromptContextInclusionSettings.default.includeRAGTaskMemory
     @Published var isLocalRuntimeStatsEnabled: Bool = LocalRuntimeReportingSettings.default.isEnabled
     @Published var appendLocalRuntimeStatsToAnswer: Bool = LocalRuntimeReportingSettings.default.appendCompactStatsToAnswer
+    @Published var privateLLMBaseURL: String = PrivateLocalLLMSettings.default.baseURL
+    @Published var privateLLMAPIKey: String = PrivateLocalLLMSettings.default.apiKey
+    @Published var privateLLMModelName: String = PrivateLocalLLMSettings.default.modelName
+    @Published var privateLLMMaxContextTokens: Double = Double(PrivateLocalLLMSettings.default.maxContextTokens)
+    @Published var privateLLMRequestTimeoutSeconds: Double = PrivateLocalLLMSettings.default.requestTimeoutSeconds
     
     var localModelDisplayName: String {
         let trimmedPath = localModelPath.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -76,6 +86,17 @@ final class SettingsViewModel: ObservableObject {
         self.backendMode = userDefaults.string(forKey: StorageKey.backendMode) ?? "local_gguf"
         self.localModelPath = userDefaults.string(forKey: StorageKey.localModelPath) ?? ""
         self.localModelBookmarkData = userDefaults.data(forKey: StorageKey.localModelBookmarkData)
+        self.privateLLMBaseURL = userDefaults.string(forKey: StorageKey.privateLLMBaseURL) ?? PrivateLocalLLMSettings.default.baseURL
+        self.privateLLMAPIKey = userDefaults.string(forKey: StorageKey.privateLLMAPIKey) ?? PrivateLocalLLMSettings.default.apiKey
+        self.privateLLMModelName = userDefaults.string(forKey: StorageKey.privateLLMModelName) ?? PrivateLocalLLMSettings.default.modelName
+        let storedMaxContextTokens = userDefaults.integer(forKey: StorageKey.privateLLMMaxContextTokens)
+        if storedMaxContextTokens > 0 {
+            self.privateLLMMaxContextTokens = Double(storedMaxContextTokens)
+        }
+        let storedRequestTimeoutSeconds = userDefaults.double(forKey: StorageKey.privateLLMRequestTimeoutSeconds)
+        if storedRequestTimeoutSeconds > 0 {
+            self.privateLLMRequestTimeoutSeconds = storedRequestTimeoutSeconds
+        }
         
         if let existingURL = try? localModelFileService.resolveModelURL(
             explicitPath: localModelPath,
@@ -143,11 +164,52 @@ final class SettingsViewModel: ObservableObject {
             "max_tokens": Int(maxTokens)
         ]
     }
+
+    func buildPrivateLocalLLMSettings() -> [String: Any] {
+        let promptContextSettings = PromptContextInclusionSettings(
+            includeUserProfile: includeUserProfileInPrompt,
+            includeConversationSummary: includeConversationSummaryInPrompt,
+            includeWorkingMemory: includeWorkingMemoryInPrompt,
+            includeLongTermMemory: includeLongTermMemoryInPrompt,
+            includeTaskState: includeTaskStateInPrompt,
+            includeMCPTools: includeMCPToolsInPrompt,
+            includeInvariants: includeInvariantsInPrompt,
+            includeRAGTaskMemory: includeRAGTaskMemoryInPrompt
+        )
+        let localRuntimeSettings = LocalRuntimeReportingSettings(
+            isEnabled: isLocalRuntimeStatsEnabled,
+            appendCompactStatsToAnswer: appendLocalRuntimeStatsToAnswer
+        )
+        let privateSettings = PrivateLocalLLMSettings(
+            baseURL: privateLLMBaseURL.trimmingCharacters(in: .whitespacesAndNewlines),
+            apiKey: privateLLMAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
+            modelName: privateLLMModelName.trimmingCharacters(in: .whitespacesAndNewlines),
+            maxContextTokens: Int(privateLLMMaxContextTokens),
+            requestTimeoutSeconds: privateLLMRequestTimeoutSeconds
+        )
+
+        return [
+            "backend_mode": "private_llama_server",
+            "private_llm": privateSettings.asDictionary(),
+            "model": privateSettings.modelName,
+            "stream": stream,
+            "prompt_context": promptContextSettings.asDictionary(),
+            "local_runtime": localRuntimeSettings.asDictionary(),
+            "options": [
+                "temperature": temperature,
+                "num_predict": Int(maxTokens),
+                "top_p": topP,
+                "top_k": Int(topK),
+                "num_ctx": Int(privateLLMMaxContextTokens)
+            ]
+        ]
+    }
     
     func apply() {
         let settings = switch provider {
         case .ollama: buildOllamaSettings()
         case .openRouter: buildOpenRouterSettings()
+        case .privateLocalLLM: buildPrivateLocalLLMSettings()
         }
         let ragRetrievalSettings = RAGRetrievalSettings(
             topKBeforeFiltering: Int(ragTopKBeforeFiltering),
@@ -174,6 +236,11 @@ final class SettingsViewModel: ObservableObject {
         )
         
         userDefaults.set(backendMode, forKey: StorageKey.backendMode)
+        userDefaults.set(privateLLMBaseURL, forKey: StorageKey.privateLLMBaseURL)
+        userDefaults.set(privateLLMAPIKey, forKey: StorageKey.privateLLMAPIKey)
+        userDefaults.set(privateLLMModelName, forKey: StorageKey.privateLLMModelName)
+        userDefaults.set(Int(privateLLMMaxContextTokens), forKey: StorageKey.privateLLMMaxContextTokens)
+        userDefaults.set(privateLLMRequestTimeoutSeconds, forKey: StorageKey.privateLLMRequestTimeoutSeconds)
     }
     
     func applyPreset(_ preset: OllamaPreset) {

@@ -133,6 +133,8 @@ class MainViewModel: ObservableObject {
             startOllama(prompt: prompt)
         case .openRouter:
             startOpenRouter(prompt: prompt)
+        case .privateLocalLLM:
+            startOllama(prompt: prompt)
         }
     }
     
@@ -146,6 +148,8 @@ class MainViewModel: ObservableObject {
             ollama.deleteAllAgentData()
         case .openRouter:
             openRouter.deleteAllMessages()
+        case .privateLocalLLM:
+            ollama.deleteAllAgentData()
         }
     }
     

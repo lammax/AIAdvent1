@@ -59,6 +59,8 @@ struct SettingsView: View {
                                 vm: vm,
                                 onSelectLocalModel: onSelectLocalModel
                             )
+                        case .privateLLM:
+                            SettingsPrivateLocalLLMTab(vm: vm)
                         case .context:
                             SettingsContextTab(vm: vm)
                         case .rag:
@@ -93,6 +95,7 @@ struct SettingsView: View {
 private enum SettingsTab: String, CaseIterable {
     case general
     case model
+    case privateLLM
     case context
     case rag
     
@@ -102,6 +105,8 @@ private enum SettingsTab: String, CaseIterable {
             return "General"
         case .model:
             return "Model"
+        case .privateLLM:
+            return "Private"
         case .context:
             return "Context"
         case .rag:
@@ -232,7 +237,7 @@ private struct SettingsModelTab: View {
             Toggle("Streaming", isOn: $vm.stream)
                 .isHidden(vm.provider == .openRouter, remove: true)
 
-            if vm.backendMode == "local_gguf" {
+            if vm.provider == .privateLocalLLM || vm.backendMode == "local_gguf" {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Performance")
                         .font(.headline)
@@ -241,6 +246,78 @@ private struct SettingsModelTab: View {
                     Toggle("Append Compact Stats To Answer", isOn: $vm.appendLocalRuntimeStatsToAnswer)
                 }
             }
+        }
+    }
+}
+
+private struct SettingsPrivateLocalLLMTab: View {
+    @ObservedObject var vm: SettingsViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("llama-server API")
+                    .font(.headline)
+
+                TextField("Base URL", text: $vm.privateLLMBaseURL)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textFieldStyle(.roundedBorder)
+
+                SecureField("API Key", text: $vm.privateLLMAPIKey)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textFieldStyle(.roundedBorder)
+
+                TextField("Model", text: $vm.privateLLMModelName)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Server Limits")
+                    .font(.headline)
+
+                Stepper(
+                    "Max Context: \(Int(vm.privateLLMMaxContextTokens))",
+                    value: $vm.privateLLMMaxContextTokens,
+                    in: 1024...65536,
+                    step: 1024
+                )
+
+                Stepper(
+                    "Timeout: \(Int(vm.privateLLMRequestTimeoutSeconds))s",
+                    value: $vm.privateLLMRequestTimeoutSeconds,
+                    in: 30...1800,
+                    step: 30
+                )
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Generation")
+                    .font(.headline)
+
+                Text("Max Tokens: \(Int(vm.maxTokens))")
+                Slider(value: $vm.maxTokens, in: 10...4000, step: 10)
+
+                Text("Temperature: \(vm.temperature, specifier: "%.2f")")
+                Slider(value: $vm.temperature, in: 0...1)
+
+                Text("Top P: \(vm.topP, specifier: "%.2f")")
+                Slider(value: $vm.topP, in: 0...1)
+
+                Text("Top K: \(Int(vm.topK))")
+                Slider(value: $vm.topK, in: 0...100, step: 1)
+
+                Toggle("Streaming", isOn: $vm.stream)
+                Toggle("Collect Runtime Stats", isOn: $vm.isLocalRuntimeStatsEnabled)
+                Toggle("Append Compact Stats To Answer", isOn: $vm.appendLocalRuntimeStatsToAnswer)
+            }
+
+            Text("Use a local llama.cpp llama-server endpoint. Context and concurrency are enforced by the daemon; these limits keep the client aligned with the server configuration.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
     }
 }

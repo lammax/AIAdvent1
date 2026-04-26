@@ -139,3 +139,62 @@ struct LocalRuntimeReportingSettings: LocalRuntimeReportingSettingsProtocol, Cod
         ]
     }
 }
+
+protocol PrivateLocalLLMSettingsProtocol {
+    var baseURL: String { get }
+    var apiKey: String { get }
+    var modelName: String { get }
+    var maxContextTokens: Int { get }
+    var requestTimeoutSeconds: TimeInterval { get }
+    func asDictionary() -> [String: Any]
+}
+
+struct PrivateLocalLLMSettings: PrivateLocalLLMSettingsProtocol, Codable, Equatable {
+    let baseURL: String
+    let apiKey: String
+    let modelName: String
+    let maxContextTokens: Int
+    let requestTimeoutSeconds: TimeInterval
+
+    static let `default` = PrivateLocalLLMSettings(
+        baseURL: "http://127.0.0.1:8080/v1",
+        apiKey: "",
+        modelName: "local-private",
+        maxContextTokens: 8192,
+        requestTimeoutSeconds: 600
+    )
+
+    init(
+        baseURL: String = "http://127.0.0.1:8080/v1",
+        apiKey: String = "",
+        modelName: String = "local-private",
+        maxContextTokens: Int = 8192,
+        requestTimeoutSeconds: TimeInterval = 600
+    ) {
+        self.baseURL = baseURL
+        self.apiKey = apiKey
+        self.modelName = modelName
+        self.maxContextTokens = maxContextTokens
+        self.requestTimeoutSeconds = requestTimeoutSeconds
+    }
+
+    init(dictionary: [String: Any]) {
+        self.init(
+            baseURL: dictionary["base_url"] as? String ?? Self.default.baseURL,
+            apiKey: dictionary["api_key"] as? String ?? Self.default.apiKey,
+            modelName: dictionary["model_name"] as? String ?? Self.default.modelName,
+            maxContextTokens: dictionary["max_context_tokens"] as? Int ?? Self.default.maxContextTokens,
+            requestTimeoutSeconds: dictionary["request_timeout_seconds"] as? TimeInterval ?? Self.default.requestTimeoutSeconds
+        )
+    }
+
+    func asDictionary() -> [String: Any] {
+        [
+            "base_url": baseURL,
+            "api_key": apiKey,
+            "model_name": modelName,
+            "max_context_tokens": maxContextTokens,
+            "request_timeout_seconds": requestTimeoutSeconds
+        ]
+    }
+}
