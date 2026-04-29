@@ -43,6 +43,16 @@ final class MCPOrchestrator: MCPOrchestratorProtocol {
                     )
                 )
             )
+
+            await self.registry.register(
+                MCPServerDescriptor(
+                    name: "support",
+                    endpoint: URL(string: Constants.supportMCPServerURI)!,
+                    executor: MCPToolExecutor(
+                        endpoint: URL(string: Constants.supportMCPServerURI)!
+                    )
+                )
+            )
         }
     }
 

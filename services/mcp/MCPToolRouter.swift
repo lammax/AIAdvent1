@@ -12,23 +12,32 @@ actor MCPToolRouter {
     private var tools: [String: RoutedTool] = [:]
 
     func reload(from servers: [MCPServerDescriptor]) async throws {
-        tools.removeAll()
+        var reloadedTools: [String: RoutedTool] = [:]
 
         for server in servers {
-            let listedTools = try await server.executor.listTools()
+            let listedTools: [MCPToolDescriptor]
+
+            do {
+                listedTools = try await server.executor.listTools()
+            } catch {
+                print("MCPToolRouter.reload skipped \(server.name): \(LocalPathPrivacy.redact(error.localizedDescription))")
+                continue
+            }
 
             for tool in listedTools {
-                if tools[tool.name] != nil {
+                if reloadedTools[tool.name] != nil {
                     throw MCPToolRouterError.duplicateToolName(tool.name)
                 }
 
-                tools[tool.name] = RoutedTool(
+                reloadedTools[tool.name] = RoutedTool(
                     tool: tool,
                     serverName: server.name,
                     executor: server.executor
                 )
             }
         }
+
+        tools = reloadedTools
     }
 
     func availableTools() -> [MCPToolDescriptor] {

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MCP
 
 final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     
@@ -164,6 +165,26 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             
             let normalizedOptions = normalizeOptions(options)
             self.options = normalizedOptions
+
+            if let developerSupportRequest = developerSupportRequest(from: prompt.text) {
+                let userMessage = Message(
+                    agentId: agentId,
+                    role: .user,
+                    content: prompt.text
+                )
+
+                messages.append(userMessage)
+                strategy.onUserMessage(userMessage)
+                await memoryService.appendMessage(userMessage)
+
+                updateMemoryLayers(with: userMessage)
+
+                await answerDeveloperSupport(
+                    request: developerSupportRequest,
+                    userQuery: prompt.text
+                )
+                return
+            }
 
             if let developerCodeReviewFocus = developerCodeReviewFocus(from: prompt.text) {
                 let userMessage = Message(
@@ -405,7 +426,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             return "Git context: unavailable."
         }
 
-        await refreshMCPToolsIfNeeded()
+        await refreshMCPTools(force: true)
 
         do {
             let result = try await mcpOrchestrator.callTool(name: "git_current_branch")
@@ -444,6 +465,322 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         \(gitContext)
 
         \(ragAnswer)
+        """)
+    }
+
+    private func developerSupportRequest(from text: String) -> DeveloperSupportRequest? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.hasPrefix("/support") else {
+            return nil
+        }
+
+        let remainder = trimmed.dropFirst("/support".count)
+        guard remainder.isEmpty || remainder.first?.isWhitespace == true else {
+            return nil
+        }
+
+        let requestText = remainder.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !requestText.isEmpty else {
+            return DeveloperSupportRequest(ticketId: nil, question: "")
+        }
+
+        let parts = requestText.split(maxSplits: 1, whereSeparator: { $0.isWhitespace })
+        guard let ticketId = parts.first.map(String.init) else {
+            return DeveloperSupportRequest(ticketId: nil, question: "")
+        }
+
+        guard isDeveloperSupportTicketId(ticketId) else {
+            return DeveloperSupportRequest(ticketId: nil, question: requestText)
+        }
+
+        let question = parts.count > 1
+            ? String(parts[1]).trimmingCharacters(in: .whitespacesAndNewlines)
+            : ""
+
+        return DeveloperSupportRequest(
+            ticketId: ticketId,
+            question: question.isEmpty ? "Сформируй ответ поддержки по этому тикету." : question
+        )
+    }
+
+    private func isDeveloperSupportTicketId(_ value: String) -> Bool {
+        let pattern = #"^[A-Za-z]+-\d+$"#
+        return value.range(of: pattern, options: .regularExpression) != nil
+    }
+
+    private func answerDeveloperSupport(request: DeveloperSupportRequest, userQuery: String) async {
+        do {
+            let ticketId = try await resolveDeveloperSupportTicketId(for: request)
+            let supportContext = try await developerSupportContext(ticketId: ticketId)
+            async let ragContext = developerSupportRAGContext(
+                question: request.question,
+                ticket: supportContext.ticket,
+                user: supportContext.user
+            )
+
+            let prompt = makeDeveloperSupportPrompt(
+                request: request,
+                context: supportContext,
+                ragContext: await ragContext
+            )
+            let rawAnswer = try await streamer.send(
+                messages: [
+                    Message(
+                        agentId: agentId,
+                        role: .system,
+                        content: """
+                        You are a careful customer support assistant. Use product documentation context and ticket/user context to draft a helpful support response. Do not expose unnecessary personal data, internal identifiers, secrets, or absolute local paths. If context is insufficient, say what should be checked next.
+                        """
+                    ),
+                    Message(
+                        agentId: agentId,
+                        role: .user,
+                        content: prompt
+                    )
+                ],
+                options: options
+            )
+
+            let formatted = formatDeveloperSupportAnswer(
+                ticket: supportContext.ticket,
+                answer: rawAnswer
+            )
+            let safeContent = await validatedContent(formatted)
+            await completeDeveloperAssistantResponse(
+                content: safeContent,
+                userQuery: userQuery,
+                sourceChunk: streamer.latestChunk
+            )
+        } catch {
+            let message = LocalPathPrivacy.redact("Support assistant failed: \(error.localizedDescription)")
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(message)
+            }
+        }
+    }
+
+    private func resolveDeveloperSupportTicketId(for request: DeveloperSupportRequest) async throws -> String {
+        if let ticketId = request.ticketId?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !ticketId.isEmpty {
+            return ticketId
+        }
+
+        let searchQuery = request.question.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !searchQuery.isEmpty else {
+            throw NSError(
+                domain: "DeveloperSupport",
+                code: 4,
+                userInfo: [
+                    NSLocalizedDescriptionKey: "Укажите вопрос или ticketId: /support T-1001 Почему не работает авторизация?"
+                ]
+            )
+        }
+
+        let matches = try await developerSupportSearchTickets(query: searchQuery)
+        if matches.count == 1, let ticketId = matches.first?.ticketId {
+            return ticketId
+        }
+
+        if matches.isEmpty {
+            throw NSError(
+                domain: "DeveloperSupport",
+                code: 5,
+                userInfo: [
+                    NSLocalizedDescriptionKey: "Не нашел подходящий тикет по вопросу. Укажите ticketId явно: /support T-1001 \(searchQuery)"
+                ]
+            )
+        }
+
+        let options = matches
+            .prefix(5)
+            .map { "- \($0.ticketId): \($0.subject) (\($0.status))" }
+            .joined(separator: "\n")
+        throw NSError(
+            domain: "DeveloperSupport",
+            code: 6,
+            userInfo: [
+                NSLocalizedDescriptionKey: """
+                Нашел несколько подходящих тикетов. Уточните ticketId:
+                \(options)
+                """
+            ]
+        )
+    }
+
+    private func developerSupportSearchTickets(query: String) async throws -> [DeveloperSupportTicket] {
+        guard let mcpOrchestrator else {
+            throw NSError(
+                domain: "DeveloperSupport",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "MCP orchestrator is unavailable."]
+            )
+        }
+
+        await refreshMCPTools(force: true)
+
+        let result = try await mcpOrchestrator.callTool(
+            name: "support_search_tickets",
+            arguments: ["query": .string(query)]
+        )
+        let text = LocalPathPrivacy.redact(result.content)
+        guard let data = text.data(using: .utf8) else {
+            return []
+        }
+
+        return (try? JSONDecoder().decode([DeveloperSupportTicket].self, from: data)) ?? []
+    }
+
+    private func developerSupportContext(ticketId: String) async throws -> DeveloperSupportContext {
+        guard let mcpOrchestrator else {
+            throw NSError(
+                domain: "DeveloperSupport",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "MCP orchestrator is unavailable."]
+            )
+        }
+
+        await refreshMCPTools(force: true)
+
+        let ticketResult = try await mcpOrchestrator.callTool(
+            name: "support_get_ticket",
+            arguments: ["ticketId": .string(ticketId)]
+        )
+        let ticketText = LocalPathPrivacy.redact(ticketResult.content)
+        guard let ticket = decodeDeveloperSupportTicket(from: ticketText) else {
+            throw NSError(
+                domain: "DeveloperSupport",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "Unable to decode support ticket context."]
+            )
+        }
+
+        let userResult = try await mcpOrchestrator.callTool(
+            name: "support_get_user",
+            arguments: ["userId": .string(ticket.userId)]
+        )
+        let userText = LocalPathPrivacy.redact(userResult.content)
+        guard let user = decodeDeveloperSupportUser(from: userText) else {
+            throw NSError(
+                domain: "DeveloperSupport",
+                code: 3,
+                userInfo: [NSLocalizedDescriptionKey: "Unable to decode support user context."]
+            )
+        }
+
+        return DeveloperSupportContext(ticket: ticket, user: user)
+    }
+
+    private func developerSupportRAGContext(
+        question: String,
+        ticket: DeveloperSupportTicket,
+        user: DeveloperSupportUser
+    ) async -> String {
+        let metadata = ticket.metadata
+            .map { "\($0.key): \($0.value)" }
+            .sorted()
+            .joined(separator: "\n")
+        let ragQuestion = LocalPathPrivacy.redact("""
+        Нужно ответить на вопрос поддержки пользователя по продукту.
+
+        Вопрос:
+        \(question)
+
+        Тема тикета:
+        \(ticket.subject)
+
+        Сигналы из тикета:
+        \(metadata.isEmpty ? "Нет metadata." : metadata)
+
+        Тариф: \(user.plan)
+        Email подтвержден: \(user.emailVerified ? "yes" : "no")
+
+        Найди в FAQ, документации и troubleshooting знания по этой проблеме. Не включай персональные данные, только продуктовые причины, проверки и рекомендации.
+        """)
+
+        do {
+            let run = try await makeRAGAnswerRun(
+                question: ragQuestion,
+                keepSourcesForUnknown: true
+            )
+            return run.formattedAnswer
+        } catch {
+            return LocalPathPrivacy.redact("RAG context unavailable: \(error.localizedDescription)")
+        }
+    }
+
+    private func makeDeveloperSupportPrompt(
+        request: DeveloperSupportRequest,
+        context: DeveloperSupportContext,
+        ragContext: String
+    ) -> String {
+        let ticket = context.ticket
+        let user = context.user
+        let messages = ticket.messages.isEmpty
+            ? "No ticket messages."
+            : ticket.messages.map { "- \($0)" }.joined(separator: "\n")
+        let metadata = ticket.metadata.isEmpty
+            ? "No ticket metadata."
+            : ticket.metadata.map { "- \($0.key): \($0.value)" }.sorted().joined(separator: "\n")
+
+        return LocalPathPrivacy.redact("""
+        Сформируй ответ ассистента поддержки.
+
+        Ticket:
+        id: \(ticket.ticketId)
+        subject: \(ticket.subject)
+        status: \(ticket.status)
+
+        User context:
+        plan: \(user.plan)
+        emailVerified: \(user.emailVerified)
+        lastLoginAt: \(user.lastLoginAt)
+
+        Ticket messages:
+        \(messages)
+
+        Ticket metadata:
+        \(metadata)
+
+        Support question:
+        \(request.question)
+
+        Product knowledge from RAG:
+        \(ragContext)
+
+        Верни ответ строго в структуре:
+        Проблема:
+        ...
+
+        Контекст пользователя:
+        ...
+
+        Вероятная причина:
+        ...
+
+        Ответ пользователю:
+        ...
+
+        Что проверить внутри:
+        - ...
+
+        Следующий шаг:
+        ...
+
+        Не раскрывай лишние персональные данные. Если данных недостаточно, явно укажи, что нужно проверить.
+        """)
+    }
+
+    private func formatDeveloperSupportAnswer(
+        ticket: DeveloperSupportTicket,
+        answer: String
+    ) -> String {
+        LocalPathPrivacy.redact("""
+        Ассистент поддержки
+
+        Ticket: \(ticket.ticketId)
+        Status: \(ticket.status)
+
+        \(answer.trimmingCharacters(in: .whitespacesAndNewlines))
         """)
     }
 
@@ -2752,6 +3089,49 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         let repository: String?
     }
 
+    private struct DeveloperSupportRequest {
+        let ticketId: String?
+        let question: String
+    }
+
+    private struct DeveloperSupportTicket: Decodable {
+        let ticketId: String
+        let userId: String
+        let subject: String
+        let status: String
+        let messages: [String]
+        let metadata: [String: String]
+    }
+
+    private struct DeveloperSupportUser: Decodable {
+        let userId: String
+        let name: String
+        let plan: String
+        let emailVerified: Bool
+        let lastLoginAt: String
+    }
+
+    private struct DeveloperSupportContext {
+        let ticket: DeveloperSupportTicket
+        let user: DeveloperSupportUser
+    }
+
+    private func decodeDeveloperSupportTicket(from text: String) -> DeveloperSupportTicket? {
+        guard let data = text.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(DeveloperSupportTicket.self, from: data)
+    }
+
+    private func decodeDeveloperSupportUser(from text: String) -> DeveloperSupportUser? {
+        guard let data = text.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(DeveloperSupportUser.self, from: data)
+    }
+
     private struct DeveloperChangedFilesInfo: Decodable {
         let branch: String
         let repository: String?
@@ -2793,8 +3173,12 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     }
     
     private func refreshMCPToolsIfNeeded() async {
+        await refreshMCPTools(force: false)
+    }
+
+    private func refreshMCPTools(force: Bool) async {
         guard let mcpOrchestrator else { return }
-        guard !hasLoadedMCPTools else { return }
+        guard force || !hasLoadedMCPTools else { return }
 
         await mcpOrchestrator.refreshTools()
         cachedMCPTools = await mcpOrchestrator.availableTools()
