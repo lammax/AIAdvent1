@@ -19,6 +19,8 @@ final class SettingsViewModel: ObservableObject {
         static let privateLLMModelName = "settings.privateLLMModelName"
         static let privateLLMMaxContextTokens = "settings.privateLLMMaxContextTokens"
         static let privateLLMRequestTimeoutSeconds = "settings.privateLLMRequestTimeoutSeconds"
+        static let ragSourceType = "settings.ragSourceType"
+        static let isRAGVerboseIndexingEnabled = "settings.isRAGVerboseIndexingEnabled"
     }
     
     private let localModelFileService: LocalModelFileServiceProtocol
@@ -28,6 +30,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var provider: LLMProvider = .ollama
     @Published var contextStrategy: ContextStrategy = .slidingWindow
     @Published var isTaskPlanningEnabled: Bool = false
+    @Published var ragSourceType: RAGSourceType = .mcpServer
     @Published var ragAnswerMode: RAGAnswerMode = .disabled
     @Published var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
     @Published var ragRetrievalMode: RAGRetrievalMode = .basic
@@ -36,6 +39,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var ragTopKAfterFiltering: Double = Double(RAGRetrievalSettings.default.topKAfterFiltering)
     @Published var ragSimilarityThreshold: Double = RAGRetrievalSettings.default.similarityThreshold
     @Published var isRAGQueryRewriteEnabled: Bool = RAGRetrievalSettings.default.isQueryRewriteEnabled
+    @Published var isRAGVerboseIndexingEnabled: Bool = false
     @Published var ragRelevanceFilterMode: RAGRelevanceFilterMode = RAGRetrievalSettings.default.relevanceFilterMode
         
     @Published var temperature: Double = 0.7
@@ -89,6 +93,11 @@ final class SettingsViewModel: ObservableObject {
         self.privateLLMBaseURL = userDefaults.string(forKey: StorageKey.privateLLMBaseURL) ?? PrivateLocalLLMSettings.default.baseURL
         self.privateLLMAPIKey = userDefaults.string(forKey: StorageKey.privateLLMAPIKey) ?? PrivateLocalLLMSettings.default.apiKey
         self.privateLLMModelName = userDefaults.string(forKey: StorageKey.privateLLMModelName) ?? PrivateLocalLLMSettings.default.modelName
+        if let rawRAGSourceType = userDefaults.string(forKey: StorageKey.ragSourceType),
+           let ragSourceType = RAGSourceType(rawValue: rawRAGSourceType) {
+            self.ragSourceType = ragSourceType
+        }
+        self.isRAGVerboseIndexingEnabled = userDefaults.bool(forKey: StorageKey.isRAGVerboseIndexingEnabled)
         let storedMaxContextTokens = userDefaults.integer(forKey: StorageKey.privateLLMMaxContextTokens)
         if storedMaxContextTokens > 0 {
             self.privateLLMMaxContextTokens = Double(storedMaxContextTokens)
@@ -227,10 +236,12 @@ final class SettingsViewModel: ObservableObject {
                 SettingsUserInfoKey.provider.rawValue: provider,
                 SettingsUserInfoKey.contextStrategy.rawValue: contextStrategy,
                 SettingsUserInfoKey.isTaskPlanningEnabled.rawValue: isTaskPlanningEnabled,
+                SettingsUserInfoKey.ragSourceType.rawValue: ragSourceType,
                 SettingsUserInfoKey.ragAnswerMode.rawValue: ragAnswerMode,
                 SettingsUserInfoKey.ragChunkingStrategy.rawValue: ragChunkingStrategy,
                 SettingsUserInfoKey.ragRetrievalMode.rawValue: ragRetrievalMode,
                 SettingsUserInfoKey.ragEvaluationMode.rawValue: ragEvaluationMode,
+                SettingsUserInfoKey.isRAGVerboseIndexingEnabled.rawValue: isRAGVerboseIndexingEnabled,
                 SettingsUserInfoKey.ragRetrievalSettings.rawValue: ragRetrievalSettings
             ]
         )
@@ -241,6 +252,8 @@ final class SettingsViewModel: ObservableObject {
         userDefaults.set(privateLLMModelName, forKey: StorageKey.privateLLMModelName)
         userDefaults.set(Int(privateLLMMaxContextTokens), forKey: StorageKey.privateLLMMaxContextTokens)
         userDefaults.set(privateLLMRequestTimeoutSeconds, forKey: StorageKey.privateLLMRequestTimeoutSeconds)
+        userDefaults.set(ragSourceType.rawValue, forKey: StorageKey.ragSourceType)
+        userDefaults.set(isRAGVerboseIndexingEnabled, forKey: StorageKey.isRAGVerboseIndexingEnabled)
     }
     
     func applyPreset(_ preset: OllamaPreset) {

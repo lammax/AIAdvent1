@@ -89,6 +89,7 @@
 		13DD3A722F89779200CBB182 /* MCPOrchestrationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A712F89779200CBB182 /* MCPOrchestrationResult.swift */; };
 		13DD3A752F8977CC00CBB182 /* MCPOrchestratorProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A742F8977CC00CBB182 /* MCPOrchestratorProtocol.swift */; };
 		13DD3A772F8977E700CBB182 /* MCPOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A762F8977E700CBB182 /* MCPOrchestrator.swift */; };
+		13DD3A792F91000100CBB182 /* LocalPathPrivacy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13DD3A782F91000100CBB182 /* LocalPathPrivacy.swift */; };
 		13DD3BBE2F8FE20500CBB182 /* rag-evaluation.md in Resources */ = {isa = PBXBuildFile; fileRef = 13DD3BBD2F8FE20500CBB182 /* rag-evaluation.md */; };
 		14AA02012F90000000000001 /* RAGModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01012F90000000000001 /* RAGModels.swift */; };
 		14AA02022F90000000000002 /* EmbeddingServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01022F90000000000002 /* EmbeddingServiceProtocol.swift */; };
@@ -125,6 +126,7 @@
 		14AA02232F90000000000023 /* RAGEmbeddingExecutionModeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01232F90000000000023 /* RAGEmbeddingExecutionModeService.swift */; };
 		14AA02242F90000000000024 /* AdaptiveEmbeddingServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01242F90000000000024 /* AdaptiveEmbeddingServiceProtocol.swift */; };
 		14AA02252F90000000000025 /* AdaptiveEmbeddingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01252F90000000000025 /* AdaptiveEmbeddingService.swift */; };
+		14AA02262F90000000000026 /* RAGMCPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA01262F90000000000026 /* RAGMCPClient.swift */; };
 		14AA04032F90000000000003 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 14AA04022F90000000000002 /* ZIPFoundation */; };
 		15CC10012FA0000000000001 /* LlamaCppBridge in Frameworks */ = {isa = PBXBuildFile; productRef = 15CC10032FA0000000000003 /* LlamaCppBridge */; };
 /* End PBXBuildFile section */
@@ -230,6 +232,7 @@
 		13DD3A712F89779200CBB182 /* MCPOrchestrationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOrchestrationResult.swift; sourceTree = "<group>"; };
 		13DD3A742F8977CC00CBB182 /* MCPOrchestratorProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOrchestratorProtocol.swift; sourceTree = "<group>"; };
 		13DD3A762F8977E700CBB182 /* MCPOrchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPOrchestrator.swift; sourceTree = "<group>"; };
+		13DD3A782F91000100CBB182 /* LocalPathPrivacy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalPathPrivacy.swift; sourceTree = "<group>"; };
 		13DD3BBD2F8FE20500CBB182 /* rag-evaluation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "rag-evaluation.md"; sourceTree = "<group>"; };
 		14AA01012F90000000000001 /* RAGModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGModels.swift; sourceTree = "<group>"; };
 		14AA01022F90000000000002 /* EmbeddingServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddingServiceProtocol.swift; sourceTree = "<group>"; };
@@ -266,6 +269,7 @@
 		14AA01232F90000000000023 /* RAGEmbeddingExecutionModeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGEmbeddingExecutionModeService.swift; sourceTree = "<group>"; };
 		14AA01242F90000000000024 /* AdaptiveEmbeddingServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveEmbeddingServiceProtocol.swift; sourceTree = "<group>"; };
 		14AA01252F90000000000025 /* AdaptiveEmbeddingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveEmbeddingService.swift; sourceTree = "<group>"; };
+		14AA01262F90000000000026 /* RAGMCPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAGMCPClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -615,6 +619,7 @@
 			children = (
 				13BD3AB22F844B4D0059C0A5 /* MCPClientService.swift */,
 				13DD3A622F8960CA00CBB182 /* MCPServerRegistry.swift */,
+				13DD3A782F91000100CBB182 /* LocalPathPrivacy.swift */,
 				13DD3A442F86CA7300CBB182 /* MCPToolExecutor.swift */,
 				13DD3A462F86CAC900CBB182 /* MCPToolExecutorProtocol.swift */,
 				13DD3A642F89610200CBB182 /* MCPToolRouter.swift */,
@@ -696,6 +701,7 @@
 				14AA01232F90000000000023 /* RAGEmbeddingExecutionModeService.swift */,
 				14AA01242F90000000000024 /* AdaptiveEmbeddingServiceProtocol.swift */,
 				14AA01252F90000000000025 /* AdaptiveEmbeddingService.swift */,
+				14AA01262F90000000000026 /* RAGMCPClient.swift */,
 				14AA01042F90000000000004 /* RAGChunker.swift */,
 				14AA01052F90000000000005 /* ZipDocumentExtractorProtocol.swift */,
 				14AA01062F90000000000006 /* ZipDocumentExtractor.swift */,
@@ -895,6 +901,7 @@
 				1305B22E2F75AEF0009A2D6C /* MessageRepository.swift in Sources */,
 				13BD3A362F7E47850059C0A5 /* ContextStrategyProtocol.swift in Sources */,
 				13DD3A632F8960CA00CBB182 /* MCPServerRegistry.swift in Sources */,
+				13DD3A792F91000100CBB182 /* LocalPathPrivacy.swift in Sources */,
 				13BD3A672F82B20C0059C0A5 /* TaskContext.swift in Sources */,
 				14AA02082F90000000000008 /* DocumentIndexingServiceProtocol.swift in Sources */,
 				13BD3A4A2F7EE6810059C0A5 /* MemoryService.swift in Sources */,
@@ -924,6 +931,7 @@
 				14AA02232F90000000000023 /* RAGEmbeddingExecutionModeService.swift in Sources */,
 				14AA02242F90000000000024 /* AdaptiveEmbeddingServiceProtocol.swift in Sources */,
 				14AA02252F90000000000025 /* AdaptiveEmbeddingService.swift in Sources */,
+				14AA02262F90000000000026 /* RAGMCPClient.swift in Sources */,
 				14AA02182F90000000000018 /* RAGTaskMemoryServiceProtocol.swift in Sources */,
 				14AA02192F90000000000019 /* RAGTaskMemoryService.swift in Sources */,
 				13BD3A3B2F7E47CA0059C0A5 /* FactsStrategy.swift in Sources */,

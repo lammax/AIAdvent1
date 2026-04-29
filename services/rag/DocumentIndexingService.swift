@@ -77,6 +77,7 @@ final class DocumentIndexingService: DocumentIndexingServiceProtocol {
             minTokens: counts.min() ?? 0,
             maxTokens: counts.max() ?? 0,
             embeddingModel: embeddingService.model,
+            databasePath: nil,
             duration: Date().timeIntervalSince(startedAt)
         )
     }

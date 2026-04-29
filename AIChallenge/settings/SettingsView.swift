@@ -364,6 +364,19 @@ private struct SettingsRAGTab: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading) {
+                Text("RAG Source")
+
+                Picker("Source", selection: $vm.ragSourceType) {
+                    ForEach(RAGSourceType.allCases, id: \.self) { source in
+                        Text(source.title).tag(source)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Toggle("Verbose Indexing", isOn: $vm.isRAGVerboseIndexingEnabled)
+            }
+
+            VStack(alignment: .leading) {
                 Text("RAG Answer Mode")
                 
                 Picker("Mode", selection: $vm.ragAnswerMode) {

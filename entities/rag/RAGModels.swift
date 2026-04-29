@@ -21,6 +21,20 @@ enum RAGChunkingStrategy: String, Codable, CaseIterable {
     }
 }
 
+enum RAGSourceType: String, Codable, CaseIterable {
+    case mcpServer
+    case builtIn
+
+    var title: String {
+        switch self {
+        case .mcpServer:
+            return "MCP Server"
+        case .builtIn:
+            return "Built-in"
+        }
+    }
+}
+
 enum RAGAnswerMode: String, Codable, CaseIterable {
     case disabled
     case enabled
@@ -389,6 +403,7 @@ struct RAGIndexingSummary {
     let minTokens: Int
     let maxTokens: Int
     let embeddingModel: String
+    let databasePath: String?
     let duration: TimeInterval
 }
 

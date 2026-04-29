@@ -59,6 +59,14 @@ final class MCPOrchestrator: MCPOrchestratorProtocol {
         await router.availableTools()
     }
 
+    func callTool(name: String) async throws -> MCPToolCallResult {
+        let result = try await router.callTool(name: name, arguments: [:])
+        return MCPToolCallResult(
+            toolName: result.toolName,
+            content: LocalPathPrivacy.redact(result.content)
+        )
+    }
+
     func run(
         agentId: String,
         userText: String,
@@ -134,14 +142,14 @@ final class MCPOrchestrator: MCPOrchestratorProtocol {
                 let toolMessage = Message(
                     agentId: agentId,
                     role: .system,
-                    content: """
+                    content: LocalPathPrivacy.redact("""
                     MCP tool result:
                     server: \(serverName)
                     tool: \(result.toolName)
                     arguments: \(formatArguments(plannedCall.arguments))
 
                     \(result.content)
-                    """
+                    """)
                 )
 
                 toolMessages.append(toolMessage)
@@ -155,7 +163,9 @@ final class MCPOrchestrator: MCPOrchestratorProtocol {
                 loopMessages.append(toolMessage)
             } else {
                 return MCPOrchestrationResult(
-                    finalAnswer: llmResponse.trimmingCharacters(in: .whitespacesAndNewlines),
+                    finalAnswer: LocalPathPrivacy.redact(
+                        llmResponse.trimmingCharacters(in: .whitespacesAndNewlines)
+                    ),
                     toolMessages: toolMessages
                 )
             }
@@ -198,9 +208,11 @@ final class MCPOrchestrator: MCPOrchestratorProtocol {
     }
 
     private func formatArguments(_ arguments: [String: Any]) -> String {
-        arguments
+        let text = arguments
             .sorted { $0.key < $1.key }
             .map { "\($0.key)=\($0.value)" }
             .joined(separator: ", ")
+
+        return LocalPathPrivacy.redact(text)
     }
 }

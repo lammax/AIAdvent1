@@ -15,6 +15,7 @@ struct Constants {
     static let mcpServerURI: String = "http://127.0.0.1:3001/mcp"
     static let mcpServerLocalHGitHub_URI: String = "http://localhost:3001/mcp"
     static let mcpServerLocalHUtils_URI: String = "http://localhost:3002/mcp"
+    static let ragMCPServerURI: String = "http://127.0.0.1:3003/mcp"
     static let pollingInterval: TimeInterval = 5
     
     static let defaultOllamaOptions: [String: Any] = [

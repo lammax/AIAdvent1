@@ -33,6 +33,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     private let ragTaskMemoryService: RAGTaskMemoryServiceProtocol
     private let ragMiniChatScenarioRepository: RAGMiniChatScenarioRepositoryProtocol
     private let ragMiniChatScenarioEvaluationService: RAGMiniChatScenarioEvaluationServiceProtocol
+    private let ragMCPClient: RAGMCPClient
     private let promptBuilder = TaskPromptBuilder()
     private let streamer: OllamaStreamer
     
@@ -57,6 +58,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     
     private var strategy: ContextStrategyProtocol
     private var isTaskPlanningEnabled: Bool = false
+    private var ragSourceType: RAGSourceType = .mcpServer
     private var ragAnswerMode: RAGAnswerMode = .disabled
     private var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
     private var ragRetrievalMode: RAGRetrievalMode = .basic
@@ -88,6 +90,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         ragTaskMemoryService: RAGTaskMemoryServiceProtocol = RAGTaskMemoryService(),
         ragMiniChatScenarioRepository: RAGMiniChatScenarioRepositoryProtocol = DefaultRAGMiniChatScenarioRepository(),
         ragMiniChatScenarioEvaluationService: RAGMiniChatScenarioEvaluationServiceProtocol = RAGMiniChatScenarioEvaluationService(),
+        ragMCPClient: RAGMCPClient = RAGMCPClient(),
         invariantService: InvariantServiceProtocol = InvariantService(),
         streamer: OllamaStreamer = OllamaStreamer(),
         maxMessages: Int = 12,
@@ -108,6 +111,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         self.ragTaskMemoryService = ragTaskMemoryService
         self.ragMiniChatScenarioRepository = ragMiniChatScenarioRepository
         self.ragMiniChatScenarioEvaluationService = ragMiniChatScenarioEvaluationService
+        self.ragMCPClient = ragMCPClient
         self.invariantService = invariantService
         self.streamer = streamer
         self.mcpOrchestrator = MCPOrchestrator(
@@ -159,6 +163,26 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             
             let normalizedOptions = normalizeOptions(options)
             self.options = normalizedOptions
+
+            if let developerHelpQuestion = developerHelpQuestion(from: prompt.text) {
+                let userMessage = Message(
+                    agentId: agentId,
+                    role: .user,
+                    content: prompt.text
+                )
+
+                messages.append(userMessage)
+                strategy.onUserMessage(userMessage)
+                await memoryService.appendMessage(userMessage)
+
+                updateMemoryLayers(with: userMessage)
+
+                await answerDeveloperHelp(
+                    question: developerHelpQuestion,
+                    userQuery: prompt.text
+                )
+                return
+            }
             
             if ragEvaluationMode == .builtInQuestions {
                 await runRAGEvaluation()
@@ -209,14 +233,14 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
                     let safeContent: String
 
                     if validation.isValid {
-                        safeContent = finalText
+                        safeContent = LocalPathPrivacy.redact(finalText)
                     } else {
                         let violations = validation.violations.joined(separator: "\n")
                         safeContent = """
                         I can’t recommend that option because it violates the project invariants.
 
                         Violations:
-                        \(violations)
+                        \(LocalPathPrivacy.redact(violations))
 
                         Please choose an option that stays within the defined architecture, stack, and business rules.
                         """
@@ -277,6 +301,130 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             }
         }
     }
+
+    private func developerHelpQuestion(from text: String) -> String? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.hasPrefix("/help") else {
+            return nil
+        }
+
+        let remainder = trimmed.dropFirst("/help".count)
+        guard remainder.isEmpty || remainder.first?.isWhitespace == true else {
+            return nil
+        }
+
+        let question = remainder
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if question.isEmpty {
+            return "Какая структура проекта и где находятся основные модули?"
+        }
+
+        return String(question)
+    }
+
+    private func answerDeveloperHelp(question: String, userQuery: String) async {
+        do {
+            async let gitContext = developerGitContext()
+            let ragQuestion = """
+            Вопрос разработчика о проекте:
+            \(question)
+
+            Ответь на основе README, project/docs, схем данных и API-описаний из RAG-индекса. Если вопрос про структуру проекта, опиши основные модули и их ответственность. Если информации в документации не хватает, прямо скажи, чего не хватает.
+            """
+
+            let run = try await makeRAGAnswerRun(
+                question: ragQuestion,
+                keepSourcesForUnknown: true
+            )
+            let formatted = formatDeveloperHelpAnswer(
+                question: question,
+                ragAnswer: run.formattedAnswer,
+                gitContext: await gitContext
+            )
+            let safeContent = await validatedContent(formatted)
+
+            let assistantMessage = Message(
+                agentId: agentId,
+                role: .assistant,
+                content: safeContent
+            )
+
+            messages.append(assistantMessage)
+            strategy.onAssistantMessage(assistantMessage)
+            await memoryService.appendMessage(assistantMessage)
+
+            await advanceTaskStateIfNeeded(
+                userQuery: userQuery,
+                assistantResponse: safeContent
+            )
+
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(safeContent)
+                self?.onComplete?(self?.makeCompletionChunk(
+                    content: safeContent,
+                    sourceChunk: run.responseChunk
+                ) ?? OllamaChunk(
+                    model: "",
+                    createdAt: Date(),
+                    message: .init(role: .assistant, content: safeContent),
+                    done: true
+                ))
+            }
+        } catch {
+            let message = LocalPathPrivacy.redact("Developer help failed: \(error.localizedDescription)")
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(message)
+            }
+        }
+    }
+
+    private func developerGitContext() async -> String {
+        guard let mcpOrchestrator else {
+            return "Git context: unavailable."
+        }
+
+        await refreshMCPToolsIfNeeded()
+
+        do {
+            let result = try await mcpOrchestrator.callTool(name: "git_current_branch")
+            let content = LocalPathPrivacy.redact(result.content)
+
+            if let info = decodeDeveloperGitBranchInfo(from: content) {
+                let repository = info.repository?.isEmpty == false ? info.repository! : "unknown"
+                return "Git context: repository \(repository), branch \(info.branch)."
+            }
+
+            return "Git context: \(content)"
+        } catch {
+            return LocalPathPrivacy.redact("Git context: unavailable (\(error.localizedDescription)).")
+        }
+    }
+
+    private func decodeDeveloperGitBranchInfo(from text: String) -> DeveloperGitBranchInfo? {
+        guard let data = text.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(DeveloperGitBranchInfo.self, from: data)
+    }
+
+    private func formatDeveloperHelpAnswer(
+        question: String,
+        ragAnswer: String,
+        gitContext: String
+    ) -> String {
+        LocalPathPrivacy.redact("""
+        Ассистент разработчика
+
+        Вопрос:
+        \(question)
+
+        \(gitContext)
+
+        \(ragAnswer)
+        """)
+    }
     
     func startTask(title: String, plan: [String]) {
         Task {
@@ -312,6 +460,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             guard let self else { return }
             
             try? await self.indexingService.deleteAll()
+            _ = try? await self.ragMCPClient.clearIndex()
             await self.ragRetrievalService.invalidateCache()
         }
     }
@@ -327,6 +476,10 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     
     func setRAGAnswerMode(_ mode: RAGAnswerMode) {
         self.ragAnswerMode = mode
+    }
+
+    func setRAGSourceType(_ sourceType: RAGSourceType) {
+        self.ragSourceType = sourceType
     }
     
     func setRAGChunkingStrategy(_ strategy: RAGChunkingStrategy) {
@@ -860,8 +1013,85 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         searchQuestion: String? = nil,
         keepSourcesForUnknown: Bool = false
     ) async throws -> RAGEvaluationAnswerRun {
+        switch ragSourceType {
+        case .mcpServer:
+            return try await makeMCPRAGAnswerRun(
+                question: question,
+                searchQuestion: searchQuestion,
+                keepSourcesForUnknown: keepSourcesForUnknown
+            )
+        case .builtIn:
+            return try await makeBuiltInRAGAnswerRun(
+                question: question,
+                appendingQuestionToContext: appendingQuestionToContext,
+                taskState: taskState,
+                searchQuestion: searchQuestion,
+                keepSourcesForUnknown: keepSourcesForUnknown
+            )
+        }
+    }
+
+    private func makeMCPRAGAnswerRun(
+        question: String,
+        searchQuestion: String?,
+        keepSourcesForUnknown: Bool
+    ) async throws -> RAGEvaluationAnswerRun {
+        let mcpSearchQuery: String?
+        if let searchQuestion {
+            mcpSearchQuery = searchQuestion
+        } else {
+            mcpSearchQuery = await searchQueryForRAGMCP(question: question)
+        }
+        let mcpRun = try await ragMCPClient.answer(
+            question: question,
+            searchQuery: mcpSearchQuery,
+            retrievalMode: ragRetrievalMode,
+            strategy: ragChunkingStrategy,
+            settings: ragRetrievalSettings,
+            includeChunks: true
+        )
+        let retrievedChunks = mcpRun.chunks?.map {
+            $0.makeRetrievedChunk(strategy: ragChunkingStrategy)
+        } ?? []
+        let retrievalResult = RAGRetrievalResult(
+            originalQuestion: mcpRun.retrieval.originalQuestion,
+            rewrittenQuestion: mcpRun.retrieval.searchQuery == mcpRun.retrieval.originalQuestion ? nil : mcpRun.retrieval.searchQuery,
+            candidatesBeforeFiltering: [],
+            chunksAfterFiltering: retrievedChunks
+        )
+        let finalContract: RAGAnswerContract
+        let finalValidation: RAGAnswerValidationResult
+
+        if mcpRun.contract.isUnknown, keepSourcesForUnknown, !retrievedChunks.isEmpty {
+            finalContract = makeUnknownRAGContract(sources: retrievedChunks)
+            finalValidation = ragAnswerValidationService.validate(
+                answer: finalContract,
+                retrievedChunks: retrievedChunks
+            )
+        } else {
+            finalContract = mcpRun.contract
+            finalValidation = mcpRun.validation
+        }
+
+        return RAGEvaluationAnswerRun(
+            contract: finalContract,
+            formattedAnswer: formatRAGAnswer(finalContract, validation: finalValidation),
+            retrievedChunks: retrievedChunks,
+            retrievalResult: retrievalResult,
+            validation: finalValidation,
+            responseChunk: nil
+        )
+    }
+
+    private func makeBuiltInRAGAnswerRun(
+        question: String,
+        appendingQuestionToContext: Bool,
+        taskState: RAGTaskState?,
+        searchQuestion: String?,
+        keepSourcesForUnknown: Bool
+    ) async throws -> RAGEvaluationAnswerRun {
         let evidence = try await retrieveRAGEvidence(question: searchQuestion ?? question)
-        
+
         if isWeakRAGContext(evidence.sources) {
             let contract = keepSourcesForUnknown
                 ? makeUnknownRAGContract(sources: evidence.sources)
@@ -870,7 +1100,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
                 answer: contract,
                 retrievedChunks: evidence.sources
             )
-            
+
             return RAGEvaluationAnswerRun(
                 contract: contract,
                 formattedAnswer: formatRAGAnswer(contract, validation: validation),
@@ -880,7 +1110,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
                 responseChunk: nil
             )
         }
-        
+
         let baseContext = await buildContext()
         let ragMessage = Message(
             agentId: agentId,
@@ -892,7 +1122,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             )
         )
         var context = insert(ragMessage, beforeLastUserMessageIn: baseContext)
-        
+
         if appendingQuestionToContext {
             context.append(
                 Message(
@@ -902,6 +1132,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
                 )
             )
         }
+
         let rawAnswer = try await streamer.send(
             messages: context,
             options: makeAnyOptions(from: options)
@@ -923,7 +1154,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             answer: finalContract,
             retrievedChunks: evidence.sources
         )
-        
+
         return RAGEvaluationAnswerRun(
             contract: finalContract,
             formattedAnswer: formatRAGAnswer(finalContract, validation: finalValidation),
@@ -932,6 +1163,15 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             validation: finalValidation,
             responseChunk: responseChunk
         )
+    }
+
+    private func searchQueryForRAGMCP(question: String) async -> String? {
+        guard ragRetrievalMode != .basic,
+              ragRetrievalSettings.isQueryRewriteEnabled else {
+            return nil
+        }
+
+        return await makeRAGSearchQuery(from: question)
     }
     
     private func retrieveRAGEvidence(
@@ -1531,41 +1771,84 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     }
     
     private func compareEnhancedRAGAnswers(question: String) async {
-        let baseContext = await buildContext()
-        let options = makeAnyOptions(from: self.options)
-        
         do {
-            let basicSources = try await ragRetrievalService.retrieve(
-                question: question,
-                strategy: ragChunkingStrategy,
-                limit: ragRetrievalSettings.topKAfterFiltering
-            )
-            let basicMessage = Message(
-                agentId: agentId,
-                role: .system,
-                content: makeRAGPrompt(from: basicSources)
-            )
-            let basicContext = insert(basicMessage, beforeLastUserMessageIn: baseContext)
-            
-            let searchQuery = await makeRAGSearchQuery(from: question)
-            let enhancedResult = try await ragRetrievalService.retrieve(
-                originalQuestion: question,
-                searchQuery: searchQuery,
-                strategy: ragChunkingStrategy,
-                settings: ragRetrievalSettings
-            )
-            let enhancedMessage = Message(
-                agentId: agentId,
-                role: .system,
-                content: makeRAGPrompt(
-                    from: enhancedResult.chunksAfterFiltering,
-                    retrievalResult: enhancedResult
+            let basicRAG: String
+            let enhancedRAG: String
+            let basicSources: [RAGRetrievedChunk]
+            let enhancedResult: RAGRetrievalResult
+
+            switch ragSourceType {
+            case .mcpServer:
+                let basicRun = try await ragMCPClient.answer(
+                    question: question,
+                    retrievalMode: .basic,
+                    strategy: ragChunkingStrategy,
+                    settings: ragRetrievalSettings,
+                    includeChunks: true
                 )
-            )
-            let enhancedContext = insert(enhancedMessage, beforeLastUserMessageIn: baseContext)
-            
-            let basicRAG = try await streamer.send(messages: basicContext, options: options)
-            let enhancedRAG = try await streamer.send(messages: enhancedContext, options: options)
+                let searchQuery = await searchQueryForRAGMCP(question: question)
+                let enhancedRun = try await ragMCPClient.answer(
+                    question: question,
+                    searchQuery: searchQuery,
+                    retrievalMode: .enhanced,
+                    strategy: ragChunkingStrategy,
+                    settings: ragRetrievalSettings,
+                    includeChunks: true
+                )
+                basicSources = basicRun.chunks?.map {
+                    $0.makeRetrievedChunk(strategy: ragChunkingStrategy)
+                } ?? []
+                let enhancedSources = enhancedRun.chunks?.map {
+                    $0.makeRetrievedChunk(strategy: ragChunkingStrategy)
+                } ?? []
+                enhancedResult = RAGRetrievalResult(
+                    originalQuestion: enhancedRun.retrieval.originalQuestion,
+                    rewrittenQuestion: enhancedRun.retrieval.searchQuery == enhancedRun.retrieval.originalQuestion ? nil : enhancedRun.retrieval.searchQuery,
+                    candidatesBeforeFiltering: [],
+                    chunksAfterFiltering: enhancedSources
+                )
+                basicRAG = formatRAGAnswer(
+                    basicRun.contract,
+                    validation: basicRun.validation
+                )
+                enhancedRAG = formatRAGAnswer(
+                    enhancedRun.contract,
+                    validation: enhancedRun.validation
+                )
+            case .builtIn:
+                let baseContext = await buildContext()
+                let options = makeAnyOptions(from: self.options)
+                basicSources = try await ragRetrievalService.retrieve(
+                    question: question,
+                    strategy: ragChunkingStrategy,
+                    limit: ragRetrievalSettings.topKAfterFiltering
+                )
+                let basicMessage = Message(
+                    agentId: agentId,
+                    role: .system,
+                    content: makeRAGPrompt(from: basicSources)
+                )
+                let basicContext = insert(basicMessage, beforeLastUserMessageIn: baseContext)
+                let searchQuery = await makeRAGSearchQuery(from: question)
+                enhancedResult = try await ragRetrievalService.retrieve(
+                    originalQuestion: question,
+                    searchQuery: searchQuery,
+                    strategy: ragChunkingStrategy,
+                    settings: ragRetrievalSettings
+                )
+                let enhancedMessage = Message(
+                    agentId: agentId,
+                    role: .system,
+                    content: makeRAGPrompt(
+                        from: enhancedResult.chunksAfterFiltering,
+                        retrievalResult: enhancedResult
+                    )
+                )
+                let enhancedContext = insert(enhancedMessage, beforeLastUserMessageIn: baseContext)
+
+                basicRAG = try await streamer.send(messages: basicContext, options: options)
+                enhancedRAG = try await streamer.send(messages: enhancedContext, options: options)
+            }
             let comparison = await validatedContent(
                 makeEnhancedComparisonAnswer(
                     basicRAG: basicRAG,
@@ -1696,7 +1979,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         )
         
         if validation.isValid {
-            return content
+            return LocalPathPrivacy.redact(content)
         }
         
         let violations = validation.violations.joined(separator: "\n")
@@ -1704,7 +1987,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         I can’t recommend that option because it violates the project invariants.
 
         Violations:
-        \(violations)
+        \(LocalPathPrivacy.redact(violations))
 
         Please choose an option that stays within the defined architecture, stack, and business rules.
         """
@@ -2172,6 +2455,11 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     }
     
     // MARK: - MCP
+
+    private struct DeveloperGitBranchInfo: Decodable {
+        let branch: String
+        let repository: String?
+    }
     
     private func refreshMCPToolsIfNeeded() async {
         guard let mcpOrchestrator else { return }

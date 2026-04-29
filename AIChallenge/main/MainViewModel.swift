@@ -22,10 +22,12 @@ class MainViewModel: ObservableObject {
     var userProfile: UserProfile = UserProfile.defaultProfile
     var isTaskPlanningEnabled: Bool = false
     var ragAnswerMode: RAGAnswerMode = .disabled
+    var ragSourceType: RAGSourceType = .mcpServer
     var ragChunkingStrategy: RAGChunkingStrategy = .fixedTokens
     var ragRetrievalMode: RAGRetrievalMode = .basic
     var ragEvaluationMode: RAGEvaluationMode = .disabled
     var ragRetrievalSettings: RAGRetrievalSettings = .default
+    var isRAGVerboseIndexingEnabled: Bool = false
     
     let ollama: OllamaAgent
     
@@ -34,6 +36,7 @@ class MainViewModel: ObservableObject {
     let settingsObserver: SettingsObserver = SettingsObserver()
     let profileObserver: UserProfileObserver = UserProfileObserver()
     private let indexingService: DocumentIndexingServiceProtocol = DocumentIndexingService()
+    private let ragMCPClient: RAGMCPClient
     private var ragStatusLines: [String] = []
     private var pendingAnswerTokens: String = ""
     private var answerFlushWorkItem: DispatchWorkItem?
@@ -43,7 +46,9 @@ class MainViewModel: ObservableObject {
     
     
     init() {
-        self.ollama = OllamaAgent()
+        let ragMCPClient = RAGMCPClient()
+        self.ragMCPClient = ragMCPClient
+        self.ollama = OllamaAgent(ragMCPClient: ragMCPClient)
         setupListeners()
     }
 
@@ -93,6 +98,12 @@ class MainViewModel: ObservableObject {
             self.ragChunkingStrategy = ragChunkingStrategy
             ollama.setRAGChunkingStrategy(ragChunkingStrategy)
         }.store(in: &uns)
+
+        settingsObserver.ragSourceType.sink { [weak self] ragSourceType in
+            guard let self else { return }
+            self.ragSourceType = ragSourceType
+            ollama.setRAGSourceType(ragSourceType)
+        }.store(in: &uns)
         
         settingsObserver.ragAnswerMode.sink { [weak self] ragAnswerMode in
             guard let self else { return }
@@ -110,6 +121,10 @@ class MainViewModel: ObservableObject {
             guard let self else { return }
             self.ragEvaluationMode = ragEvaluationMode
             ollama.setRAGEvaluationMode(ragEvaluationMode)
+        }.store(in: &uns)
+
+        settingsObserver.isRAGVerboseIndexingEnabled.sink { [weak self] isEnabled in
+            self?.isRAGVerboseIndexingEnabled = isEnabled
         }.store(in: &uns)
         
         settingsObserver.ragRetrievalSettings.sink { [weak self] ragRetrievalSettings in
@@ -302,7 +317,11 @@ class MainViewModel: ObservableObject {
     
     func indexDocuments(urls: [URL]) {
         ragStatusLines = []
-        appendRAGStatus("Indexing documents...")
+        appendRAGStatus(
+            ragSourceType == .mcpServer
+            ? "Indexing documents through RAG MCP server..."
+            : "Indexing documents with built-in RAG..."
+        )
         
         Task {
             let accessibleURLs = urls.filter { $0.startAccessingSecurityScopedResource() }
@@ -313,30 +332,41 @@ class MainViewModel: ObservableObject {
             }
             
             do {
-                let progress: (RAGIndexingProgress) async -> Void = { [weak self] event in
-                    await MainActor.run {
-                        self?.appendRAGStatus(event)
+                let summary: RAGIndexingSummary
+
+                switch ragSourceType {
+                case .mcpServer:
+                    guard let zipURL = indexingURLs.first(where: { $0.pathExtension.lowercased() == "zip" }) else {
+                        appendRAGStatus("RAG MCP indexing expects a .zip archive. Please select a zip file.")
+                        return
                     }
+
+                    appendRAGStatus("Uploading zip path to RAG MCP: \(zipURL.lastPathComponent)")
+                    if isRAGVerboseIndexingEnabled {
+                        appendRAGStatus("Tool: rag_index_zip")
+                        appendRAGStatus("Archive: \(zipURL.path)")
+                    }
+                    summary = try await ragMCPClient.indexZip(
+                        url: zipURL,
+                        strategy: ragChunkingStrategy,
+                        replaceExisting: true
+                    )
+                case .builtIn:
+                    let progress: (RAGIndexingProgress) async -> Void = { [weak self] event in
+                        await MainActor.run {
+                            self?.appendRAGStatus(event)
+                        }
+                    }
+
+                    summary = try await indexingService.index(
+                        urls: indexingURLs,
+                        strategy: ragChunkingStrategy,
+                        progress: isRAGVerboseIndexingEnabled ? progress : nil
+                    )
                 }
-                
-                let summary = try await indexingService.index(
-                    urls: indexingURLs,
-                    strategy: ragChunkingStrategy,
-                    progress: progress
-                )
                 ollama.invalidateRAGRetrievalCache()
                 
-                appendRAGStatus(
-                    """
-                    RAG index ready.
-                    
-                    Strategy: \(summary.strategy.title)
-                    chunks: \(summary.chunkCount), avg tokens: \(Int(summary.averageTokens))
-                    min tokens: \(summary.minTokens), max tokens: \(summary.maxTokens)
-                    model: \(summary.embeddingModel)
-                    duration: \(String(format: "%.2f", summary.duration))s
-                    """
-                )
+                appendRAGStatus(makeRAGIndexingSummaryText(summary))
             } catch {
                 print(error)
                 print(error.localizedDescription)
@@ -388,6 +418,27 @@ class MainViewModel: ObservableObject {
         ragStatusLines.append(line)
         ragStatusLines = Array(ragStatusLines.suffix(50))
         ragStatus = ragStatusLines.joined(separator: "\n")
+    }
+
+    private func makeRAGIndexingSummaryText(_ summary: RAGIndexingSummary) -> String {
+        let databaseText: String
+        if isRAGVerboseIndexingEnabled, let databasePath = summary.databasePath {
+            databaseText = "\ndatabase: \(databasePath)"
+        } else {
+            databaseText = ""
+        }
+
+        return """
+        RAG index ready.
+
+        Source: \(ragSourceType.title)
+        Strategy: \(summary.strategy.title)
+        documents: \(summary.documentCount)
+        chunks: \(summary.chunkCount), avg tokens: \(Int(summary.averageTokens))
+        min tokens: \(summary.minTokens), max tokens: \(summary.maxTokens)
+        model: \(summary.embeddingModel)\(databaseText)
+        duration: \(String(format: "%.2f", summary.duration))s
+        """
     }
     
     private func clearRAGStatusDisplay() {

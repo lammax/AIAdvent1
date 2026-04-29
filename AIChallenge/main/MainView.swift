@@ -33,12 +33,17 @@ struct MainView: View {
 //    @State private var isPipelineTest: Bool = false
     
     private var ragImportTypes: [UTType] {
-        [
-            .plainText,
-            .sourceCode,
-            .json,
-            UTType(filenameExtension: "zip") ?? .data
-        ]
+        switch settingsVM.ragSourceType {
+        case .mcpServer:
+            return [UTType(filenameExtension: "zip") ?? .data]
+        case .builtIn:
+            return [
+                .plainText,
+                .sourceCode,
+                .json,
+                UTType(filenameExtension: "zip") ?? .data
+            ]
+        }
     }
     
     private var localModelImportTypes: [UTType] {

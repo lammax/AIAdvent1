@@ -14,10 +14,12 @@ final class SettingsObserver {
     let provider: CurrentValueSubject<LLMProvider, Never> = CurrentValueSubject(.ollama)
     let contextStrategy: CurrentValueSubject<ContextStrategy, Never> = CurrentValueSubject(.facts)
     let isTaskPlanningEnabled: CurrentValueSubject<Bool, Never> = CurrentValueSubject(false)
+    let ragSourceType: CurrentValueSubject<RAGSourceType, Never> = CurrentValueSubject(.mcpServer)
     let ragAnswerMode: CurrentValueSubject<RAGAnswerMode, Never> = CurrentValueSubject(.disabled)
     let ragChunkingStrategy: CurrentValueSubject<RAGChunkingStrategy, Never> = CurrentValueSubject(.fixedTokens)
     let ragRetrievalMode: CurrentValueSubject<RAGRetrievalMode, Never> = CurrentValueSubject(.basic)
     let ragEvaluationMode: CurrentValueSubject<RAGEvaluationMode, Never> = CurrentValueSubject(.disabled)
+    let isRAGVerboseIndexingEnabled: CurrentValueSubject<Bool, Never> = CurrentValueSubject(false)
     let ragRetrievalSettings: CurrentValueSubject<RAGRetrievalSettings, Never> = CurrentValueSubject(.default)
     
     
@@ -47,6 +49,10 @@ final class SettingsObserver {
         if let isTaskPlanningEnabled = notification.userInfo?[SettingsUserInfoKey.isTaskPlanningEnabled.rawValue] as? Bool {
             self.isTaskPlanningEnabled.send(isTaskPlanningEnabled)
         }
+
+        if let ragSourceType = notification.userInfo?[SettingsUserInfoKey.ragSourceType.rawValue] as? RAGSourceType {
+            self.ragSourceType.send(ragSourceType)
+        }
         
         if let ragAnswerMode = notification.userInfo?[SettingsUserInfoKey.ragAnswerMode.rawValue] as? RAGAnswerMode {
             self.ragAnswerMode.send(ragAnswerMode)
@@ -62,6 +68,10 @@ final class SettingsObserver {
         
         if let ragEvaluationMode = notification.userInfo?[SettingsUserInfoKey.ragEvaluationMode.rawValue] as? RAGEvaluationMode {
             self.ragEvaluationMode.send(ragEvaluationMode)
+        }
+
+        if let isRAGVerboseIndexingEnabled = notification.userInfo?[SettingsUserInfoKey.isRAGVerboseIndexingEnabled.rawValue] as? Bool {
+            self.isRAGVerboseIndexingEnabled.send(isRAGVerboseIndexingEnabled)
         }
         
         if let ragRetrievalSettings = notification.userInfo?[SettingsUserInfoKey.ragRetrievalSettings.rawValue] as? RAGRetrievalSettings {

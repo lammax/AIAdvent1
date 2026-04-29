@@ -17,9 +17,11 @@ enum SettingsUserInfoKey: String {
     case provider
     case contextStrategy
     case isTaskPlanningEnabled
+    case ragSourceType
     case ragAnswerMode
     case ragChunkingStrategy
     case ragRetrievalMode
     case ragEvaluationMode
+    case isRAGVerboseIndexingEnabled
     case ragRetrievalSettings
 }

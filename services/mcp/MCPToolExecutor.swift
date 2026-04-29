@@ -110,13 +110,15 @@ actor MCPToolExecutor: MCPToolExecutorProtocol {
     }
 
     private func extractText(from content: [Tool.Content]) -> String {
-        content.compactMap { item -> String? in
+        let text = content.compactMap { item -> String? in
             if case let .text(text, _, _) = item {
                 return text
             }
             return nil
         }
         .joined(separator: "\n")
+
+        return LocalPathPrivacy.redact(text)
     }
 
     func listTools() async throws -> [MCPToolDescriptor] {
@@ -142,8 +144,9 @@ actor MCPToolExecutor: MCPToolExecutorProtocol {
                 )
             }
         } catch {
-            let message = error.localizedDescription.lowercased()
-            print("listTools error: \(error.localizedDescription)")
+            let safeDescription = LocalPathPrivacy.redact(error.localizedDescription)
+            let message = safeDescription.lowercased()
+            print("listTools error: \(safeDescription)")
 
             if message.contains("bad request") || message.contains("session") || message.contains("initialized") {
                 print("Resetting MCP connection and retrying listTools...")
@@ -200,8 +203,9 @@ actor MCPToolExecutor: MCPToolExecutorProtocol {
 
             return MCPToolCallResult(toolName: name, content: text)
         } catch {
-            let message = error.localizedDescription.lowercased()
-            print("callTool error: \(error.localizedDescription)")
+            let safeDescription = LocalPathPrivacy.redact(error.localizedDescription)
+            let message = safeDescription.lowercased()
+            print("callTool error: \(safeDescription)")
 
             if message.contains("bad request") || message.contains("session") || message.contains("initialized") {
                 print("Resetting MCP connection and retrying callTool...")

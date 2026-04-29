@@ -10,6 +10,7 @@ import Foundation
 protocol MCPOrchestratorProtocol: Sendable {
     func refreshTools() async
     func availableTools() async -> [MCPToolDescriptor]
+    func callTool(name: String) async throws -> MCPToolCallResult
     func run(
         agentId: String,
         userText: String,
