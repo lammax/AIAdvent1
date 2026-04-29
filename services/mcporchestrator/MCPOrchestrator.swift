@@ -60,7 +60,11 @@ final class MCPOrchestrator: MCPOrchestratorProtocol {
     }
 
     func callTool(name: String) async throws -> MCPToolCallResult {
-        let result = try await router.callTool(name: name, arguments: [:])
+        try await callTool(name: name, arguments: [:])
+    }
+
+    func callTool(name: String, arguments: [String: Value]) async throws -> MCPToolCallResult {
+        let result = try await router.callTool(name: name, arguments: arguments)
         return MCPToolCallResult(
             toolName: result.toolName,
             content: LocalPathPrivacy.redact(result.content)

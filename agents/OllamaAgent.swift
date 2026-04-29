@@ -12,6 +12,7 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     // MARK: - Constants
     
     private static let systemPrompt = "You are a helpful assistant. Answer concisely."
+    private let developerReviewDiffCharacterLimit = 60_000
     
     // MARK: - Identity
     
@@ -163,6 +164,26 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             
             let normalizedOptions = normalizeOptions(options)
             self.options = normalizedOptions
+
+            if let developerCodeReviewFocus = developerCodeReviewFocus(from: prompt.text) {
+                let userMessage = Message(
+                    agentId: agentId,
+                    role: .user,
+                    content: prompt.text
+                )
+
+                messages.append(userMessage)
+                strategy.onUserMessage(userMessage)
+                await memoryService.appendMessage(userMessage)
+
+                updateMemoryLayers(with: userMessage)
+
+                await answerDeveloperCodeReview(
+                    focus: developerCodeReviewFocus,
+                    userQuery: prompt.text
+                )
+                return
+            }
 
             if let developerHelpQuestion = developerHelpQuestion(from: prompt.text) {
                 let userMessage = Message(
@@ -424,6 +445,276 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
 
         \(ragAnswer)
         """)
+    }
+
+    private func developerCodeReviewFocus(from text: String) -> String? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.hasPrefix("/review") else {
+            return nil
+        }
+
+        let remainder = trimmed.dropFirst("/review".count)
+        guard remainder.isEmpty || remainder.first?.isWhitespace == true else {
+            return nil
+        }
+
+        let focus = remainder
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return focus.isEmpty ? "" : String(focus)
+    }
+
+    private func answerDeveloperCodeReview(focus: String, userQuery: String) async {
+        do {
+            let gitContext = try await developerReviewGitContext()
+            guard !gitContext.diff.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                let noDiffMessage = formatDeveloperCodeReviewNoDiffAnswer(gitContext: gitContext)
+                let safeContent = await validatedContent(noDiffMessage)
+                await completeDeveloperAssistantResponse(
+                    content: safeContent,
+                    userQuery: userQuery,
+                    sourceChunk: nil
+                )
+                return
+            }
+
+            async let ragContext = developerReviewRAGContext(
+                files: gitContext.files,
+                focus: focus
+            )
+
+            let reviewPrompt = makeDeveloperCodeReviewPrompt(
+                gitContext: gitContext,
+                ragContext: await ragContext,
+                focus: focus
+            )
+            let rawReview = try await streamer.send(
+                messages: [
+                    Message(
+                        agentId: agentId,
+                        role: .system,
+                        content: """
+                        You are a senior code reviewer for a local developer assistant. Prioritize concrete bugs, architecture risks, and practical recommendations. Do not reveal absolute local user paths. Do not invent files or behavior that are not supported by the diff or context.
+                        """
+                    ),
+                    Message(
+                        agentId: agentId,
+                        role: .user,
+                        content: reviewPrompt
+                    )
+                ],
+                options: options
+            )
+
+            let formatted = formatDeveloperCodeReviewAnswer(
+                gitContext: gitContext,
+                review: rawReview
+            )
+            let safeContent = await validatedContent(formatted)
+            await completeDeveloperAssistantResponse(
+                content: safeContent,
+                userQuery: userQuery,
+                sourceChunk: streamer.latestChunk
+            )
+        } catch {
+            let message = LocalPathPrivacy.redact("Developer code review failed: \(error.localizedDescription)")
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(message)
+            }
+        }
+    }
+
+    private func developerReviewGitContext() async throws -> DeveloperReviewGitContext {
+        guard let mcpOrchestrator else {
+            throw NSError(
+                domain: "DeveloperCodeReview",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "MCP orchestrator is unavailable."]
+            )
+        }
+
+        await refreshMCPToolsIfNeeded()
+
+        async let changedFilesResult = mcpOrchestrator.callTool(name: "git_changed_files")
+        async let diffResult = mcpOrchestrator.callTool(name: "git_diff")
+
+        let changedFilesToolResult = try await changedFilesResult
+        let diffToolResult = try await diffResult
+        let changedFilesContent = LocalPathPrivacy.redact(changedFilesToolResult.content)
+        let diffContent = LocalPathPrivacy.redact(diffToolResult.content)
+
+        let changedFiles = decodeDeveloperChangedFiles(from: changedFilesContent)
+        let diff = decodeDeveloperGitDiff(from: diffContent)
+
+        return DeveloperReviewGitContext(
+            repository: changedFiles?.repository ?? diff?.repository ?? "unknown",
+            branch: changedFiles?.branch ?? diff?.branch ?? "unknown",
+            files: changedFiles?.files ?? [],
+            diff: diff?.diff ?? diffContent
+        )
+    }
+
+    private func developerReviewRAGContext(files: [DeveloperChangedFile], focus: String) async -> String {
+        let fileList = files.isEmpty
+            ? "No changed files were reported."
+            : files.map { "- \($0.path) (\($0.status))" }.joined(separator: "\n")
+        let focusText = focus.isEmpty ? "Общий code review текущих изменений." : focus
+        let ragQuestion = """
+        Для code review изменений в проекте AIChallenge нужен архитектурный контекст.
+
+        Измененные файлы:
+        \(fileList)
+
+        Фокус ревью:
+        \(focusText)
+
+        Опиши ответственность затронутых модулей, важные ограничения архитектуры, риски вокруг MCP/RAG/LLM flow и проверки, которые стоит выполнить. Если документации недостаточно, скажи об этом явно.
+        """
+
+        do {
+            let run = try await makeRAGAnswerRun(
+                question: ragQuestion,
+                keepSourcesForUnknown: true
+            )
+            return run.formattedAnswer
+        } catch {
+            return LocalPathPrivacy.redact("RAG context unavailable: \(error.localizedDescription)")
+        }
+    }
+
+    private func makeDeveloperCodeReviewPrompt(
+        gitContext: DeveloperReviewGitContext,
+        ragContext: String,
+        focus: String
+    ) -> String {
+        let fileList = gitContext.files.isEmpty
+            ? "No changed files were reported."
+            : gitContext.files.map { "- \($0.path) (\($0.status))" }.joined(separator: "\n")
+        let truncatedDiff = truncatedDeveloperReviewDiff(gitContext.diff)
+        let truncationNote = truncatedDiff.wasTruncated
+            ? "\nDiff note: diff was truncated to \(developerReviewDiffCharacterLimit) characters."
+            : ""
+        let focusText = focus.isEmpty ? "General review of the current repository changes." : focus
+
+        return LocalPathPrivacy.redact("""
+        Review the current local changes for AIChallenge.
+
+        Repository: \(gitContext.repository)
+        Branch: \(gitContext.branch)
+        Focus: \(focusText)
+
+        Changed files:
+        \(fileList)
+
+        RAG context:
+        \(ragContext)
+
+        Diff:
+        \(truncatedDiff.text)
+        \(truncationNote)
+
+        Return the review in this exact structure:
+        Potential Bugs
+        - ...
+
+        Architecture Concerns
+        - ...
+
+        Recommendations
+        - ...
+
+        Tests To Add Or Check
+        - ...
+
+        If there are no findings in a section, say "No clear issues found."
+        """)
+    }
+
+    private func truncatedDeveloperReviewDiff(_ diff: String) -> (text: String, wasTruncated: Bool) {
+        guard diff.count > developerReviewDiffCharacterLimit else {
+            return (diff, false)
+        }
+
+        let endIndex = diff.index(diff.startIndex, offsetBy: developerReviewDiffCharacterLimit)
+        return (String(diff[..<endIndex]), true)
+    }
+
+    private func formatDeveloperCodeReviewAnswer(
+        gitContext: DeveloperReviewGitContext,
+        review: String
+    ) -> String {
+        let fileList = gitContext.files.isEmpty
+            ? "No changed files reported."
+            : gitContext.files.map { "- \($0.path) (\($0.status))" }.joined(separator: "\n")
+
+        return LocalPathPrivacy.redact("""
+        Ассистент разработчика
+
+        Code Review
+
+        Repository: \(gitContext.repository)
+        Branch: \(gitContext.branch)
+
+        Changed files:
+        \(fileList)
+
+        \(review.trimmingCharacters(in: .whitespacesAndNewlines))
+        """)
+    }
+
+    private func formatDeveloperCodeReviewNoDiffAnswer(gitContext: DeveloperReviewGitContext) -> String {
+        let fileList = gitContext.files.isEmpty
+            ? "No changed files reported."
+            : gitContext.files.map { "- \($0.path) (\($0.status))" }.joined(separator: "\n")
+
+        return LocalPathPrivacy.redact("""
+        Ассистент разработчика
+
+        Code Review
+
+        Repository: \(gitContext.repository)
+        Branch: \(gitContext.branch)
+
+        Changed files:
+        \(fileList)
+
+        No staged or unstaged diff was returned by GitHubMCPServer, so there is nothing concrete to review yet.
+        """)
+    }
+
+    private func completeDeveloperAssistantResponse(
+        content: String,
+        userQuery: String,
+        sourceChunk: OllamaChunk?
+    ) async {
+        let safeContent = LocalPathPrivacy.redact(content)
+        let assistantMessage = Message(
+            agentId: agentId,
+            role: .assistant,
+            content: safeContent
+        )
+
+        messages.append(assistantMessage)
+        strategy.onAssistantMessage(assistantMessage)
+        await memoryService.appendMessage(assistantMessage)
+
+        await advanceTaskStateIfNeeded(
+            userQuery: userQuery,
+            assistantResponse: safeContent
+        )
+
+        DispatchQueue.main.async { [weak self] in
+            self?.onToken?(safeContent)
+            self?.onComplete?(self?.makeCompletionChunk(
+                content: safeContent,
+                sourceChunk: sourceChunk
+            ) ?? OllamaChunk(
+                model: "",
+                createdAt: Date(),
+                message: .init(role: .assistant, content: safeContent),
+                done: true
+            ))
+        }
     }
     
     func startTask(title: String, plan: [String]) {
@@ -2459,6 +2750,46 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     private struct DeveloperGitBranchInfo: Decodable {
         let branch: String
         let repository: String?
+    }
+
+    private struct DeveloperChangedFilesInfo: Decodable {
+        let branch: String
+        let repository: String?
+        let files: [DeveloperChangedFile]
+    }
+
+    private struct DeveloperChangedFile: Decodable {
+        let path: String
+        let status: String
+    }
+
+    private struct DeveloperGitDiffInfo: Decodable {
+        let branch: String
+        let repository: String?
+        let diff: String
+    }
+
+    private struct DeveloperReviewGitContext {
+        let repository: String
+        let branch: String
+        let files: [DeveloperChangedFile]
+        let diff: String
+    }
+
+    private func decodeDeveloperChangedFiles(from text: String) -> DeveloperChangedFilesInfo? {
+        guard let data = text.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(DeveloperChangedFilesInfo.self, from: data)
+    }
+
+    private func decodeDeveloperGitDiff(from text: String) -> DeveloperGitDiffInfo? {
+        guard let data = text.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(DeveloperGitDiffInfo.self, from: data)
     }
     
     private func refreshMCPToolsIfNeeded() async {
