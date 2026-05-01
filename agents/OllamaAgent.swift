@@ -14,6 +14,8 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     
     private static let systemPrompt = "You are a helpful assistant. Answer concisely."
     private let developerReviewDiffCharacterLimit = 60_000
+    private let developerFileAssistantReadLimit = 5
+    private let developerFileAssistantDiffCharacterLimit = 80_000
     
     // MARK: - Identity
     
@@ -74,6 +76,8 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     private var currentTaskContext: TaskContext?
     private var cachedMCPTools: [MCPToolDescriptor] = []
     private var hasLoadedMCPTools = false
+    private var developerFileChangeHistory: [DeveloperFileChangeSet] = []
+    private var fileOperationsProjectRootPath: String = ""
     
     // MARK: - Init
     
@@ -165,6 +169,26 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
             
             let normalizedOptions = normalizeOptions(options)
             self.options = normalizedOptions
+
+            if let developerFileRequest = developerFileRequest(from: prompt.text) {
+                let userMessage = Message(
+                    agentId: agentId,
+                    role: .user,
+                    content: prompt.text
+                )
+
+                messages.append(userMessage)
+                strategy.onUserMessage(userMessage)
+                await memoryService.appendMessage(userMessage)
+
+                updateMemoryLayers(with: userMessage)
+
+                await answerDeveloperFileTask(
+                    request: developerFileRequest,
+                    userQuery: prompt.text
+                )
+                return
+            }
 
             if let developerSupportRequest = developerSupportRequest(from: prompt.text) {
                 let userMessage = Message(
@@ -466,6 +490,735 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
 
         \(ragAnswer)
         """)
+    }
+
+    private func developerFileRequest(from text: String) -> DeveloperFileRequest? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.hasPrefix("/files") else {
+            return nil
+        }
+
+        let remainder = trimmed.dropFirst("/files".count)
+        guard remainder.isEmpty || remainder.first?.isWhitespace == true else {
+            return nil
+        }
+
+        var parts = remainder
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(whereSeparator: { $0.isWhitespace })
+            .map(String.init)
+        let isDryRun = parts.removeAllMatches("--dry-run")
+        let isUndo = parts.removeAllMatches("--undo") || parts.first?.lowercased() == "undo"
+        if parts.first?.lowercased() == "undo" {
+            parts.removeFirst()
+        }
+        _ = parts.removeAllMatches("--apply")
+        let goal = parts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return DeveloperFileRequest(
+            goal: goal.isEmpty ? "Проанализируй структуру проекта и подготовь краткий список важных файлов." : goal,
+            isDryRun: isDryRun,
+            isUndo: isUndo
+        )
+    }
+
+    private func answerDeveloperFileTask(request: DeveloperFileRequest, userQuery: String) async {
+        do {
+            if request.isUndo {
+                let formatted = try await undoLastDeveloperFileChange()
+                let safeContent = await validatedContent(formatted)
+                await completeDeveloperAssistantResponse(
+                    content: safeContent,
+                    userQuery: userQuery,
+                    sourceChunk: nil
+                )
+                return
+            }
+
+            let context = try await developerFileWorkspaceContext(goal: request.goal)
+            let modelPlan = try await developerFileOperationPlan(
+                request: request,
+                context: context
+            )
+            let plan = developerFilePlanWithRequiredWrites(
+                modelPlan,
+                request: request,
+                context: context
+            )
+
+            let writes = plan.writes.filter { !$0.path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            var writeResults: [DeveloperProjectWriteFileResult] = []
+            var changes: [DeveloperFileChange] = []
+
+            if !request.isDryRun {
+                for write in writes {
+                    let before = try? await developerReadProjectFile(path: write.path)
+                    let result = try await developerWriteProjectFile(write)
+                    writeResults.append(result)
+                    changes.append(DeveloperFileChange(
+                        path: write.path,
+                        beforeContent: before?.content,
+                        afterContent: write.content,
+                        wasCreated: before == nil
+                    ))
+                }
+
+                if !changes.isEmpty {
+                    developerFileChangeHistory.append(DeveloperFileChangeSet(
+                        id: UUID(),
+                        goal: request.goal,
+                        createdAt: Date(),
+                        changes: changes
+                    ))
+                }
+
+                emitDeveloperFileImmediateCompletion(
+                    request: request,
+                    writeResults: writeResults
+                )
+            }
+
+            let gitContext = try? await developerReviewGitContext()
+            let formatted = formatDeveloperFileAnswer(
+                request: request,
+                context: context,
+                plan: plan,
+                writeResults: writeResults,
+                gitContext: gitContext
+            )
+            let safeContent = await validatedContent(formatted)
+            await completeDeveloperAssistantResponse(
+                content: safeContent,
+                userQuery: userQuery,
+                sourceChunk: streamer.latestChunk
+            )
+        } catch {
+            let message = LocalPathPrivacy.redact("File assistant failed: \(error.localizedDescription)")
+            DispatchQueue.main.async { [weak self] in
+                self?.onToken?(message)
+            }
+        }
+    }
+
+    private func emitDeveloperFileImmediateCompletion(
+        request: DeveloperFileRequest,
+        writeResults: [DeveloperProjectWriteFileResult]
+    ) {
+        guard !request.isDryRun else { return }
+
+        let status: String
+        if writeResults.isEmpty {
+            status = "Ассистент файлов проекта\n\nStatus: Completed. No files were changed.\n\n"
+        } else {
+            let files = writeResults
+                .map { "- \($0.path): \($0.action), \($0.bytesWritten) bytes" }
+                .joined(separator: "\n")
+            status = """
+            Ассистент файлов проекта
+
+            Status: Completed. File changes were written.
+
+            Applied writes:
+            \(files)
+
+            Undo:
+            /files undo
+
+            """
+        }
+
+        let safeStatus = LocalPathPrivacy.redact(status)
+        DispatchQueue.main.async { [weak self] in
+            self?.onToken?(safeStatus)
+        }
+    }
+
+    private func developerFileWorkspaceContext(goal: String) async throws -> DeveloperFileWorkspaceContext {
+        guard let mcpOrchestrator else {
+            throw NSError(
+                domain: "DeveloperFileAssistant",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "MCP orchestrator is unavailable."]
+            )
+        }
+
+        await refreshMCPTools(force: true)
+        try await ensureDeveloperFileToolsAvailable()
+
+        async let searchResult = mcpOrchestrator.callTool(
+            name: "project_search_files",
+            arguments: developerFileToolArguments([
+                "query": .string(goal),
+                "extensions": .array([.string("swift"), .string("md"), .string("json")]),
+                "max_results": .string("40")
+            ])
+        )
+        async let listResult = mcpOrchestrator.callTool(
+            name: "project_list_files",
+            arguments: developerFileToolArguments([
+                "extensions": .array([.string("swift"), .string("md"), .string("json")]),
+                "max_results": .string("120")
+            ])
+        )
+
+        let searchToolResult = try await searchResult
+        let listToolResult = try await listResult
+        let searchText = LocalPathPrivacy.redact(searchToolResult.content)
+        let listText = LocalPathPrivacy.redact(listToolResult.content)
+        let search = decodeDeveloperProjectSearchFiles(from: searchText)
+        let list = decodeDeveloperProjectListFiles(from: listText)
+        let selectedPaths = developerFileContextPaths(
+            goal: goal,
+            search: search,
+            list: list
+        )
+
+        var reads: [DeveloperProjectReadFileResult] = []
+        for path in selectedPaths.prefix(developerFileAssistantReadLimit) {
+            let result = try await mcpOrchestrator.callTool(
+                name: "project_read_file",
+                arguments: developerFileToolArguments([
+                    "path": .string(path),
+                    "max_characters": .string("24000")
+                ])
+            )
+            if let file = decodeDeveloperProjectReadFile(from: LocalPathPrivacy.redact(result.content)) {
+                reads.append(file)
+            }
+        }
+
+        return DeveloperFileWorkspaceContext(
+            repository: search?.repository ?? list?.repository ?? "unknown",
+            goal: goal,
+            searchMatches: search?.matches ?? [],
+            listedFiles: list?.files ?? [],
+            readFiles: reads
+        )
+    }
+
+    private func ensureDeveloperFileToolsAvailable() async throws {
+        guard let mcpOrchestrator else {
+            throw NSError(
+                domain: "DeveloperFileAssistant",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "MCP orchestrator is unavailable."]
+            )
+        }
+
+        let requiredTools: Set<String> = [
+            "project_list_files",
+            "project_search_files",
+            "project_read_file",
+            "project_write_file",
+            "project_delete_file"
+        ]
+        let availableToolNames = Set((await mcpOrchestrator.availableTools()).map(\.name))
+        let missingTools = requiredTools.subtracting(availableToolNames).sorted()
+        guard missingTools.isEmpty else {
+            throw NSError(
+                domain: "DeveloperFileAssistant",
+                code: 6,
+                userInfo: [
+                    NSLocalizedDescriptionKey: """
+                    FileOperationsMCPServer tools are not available in MCPToolRouter.
+
+                    Missing tools: \(missingTools.joined(separator: ", "))
+
+                    Start FileOperationsMCPServer on \(Constants.fileOperationsMCPServerURI), then run /files again. MCPOrchestrator will reload tools automatically.
+                    """
+                ]
+            )
+        }
+    }
+
+    private func developerFileContextPaths(
+        goal: String,
+        search: DeveloperProjectSearchFilesResult?,
+        list: DeveloperProjectListFilesResult?
+    ) -> [String] {
+        var paths: [String] = []
+        let listedFiles = list?.files ?? []
+
+        if isReadmeUpdateGoal(goal),
+           listedFiles.contains("README.md") {
+            paths.append("README.md")
+        }
+
+        for match in search?.matches ?? [] {
+            if !paths.contains(match.path) {
+                paths.append(match.path)
+            }
+        }
+
+        let goalTerms = developerFileSearchTerms(from: goal)
+        for file in listedFiles {
+            let lowercased = file.lowercased()
+            guard goalTerms.contains(where: { lowercased.contains($0) }) else { continue }
+            if !paths.contains(file) {
+                paths.append(file)
+            }
+        }
+
+        for preferred in [
+            "agents/OllamaAgent.swift",
+            "services/mcp/MCPToolRouter.swift",
+            "services/mcporchestrator/MCPOrchestrator.swift",
+            "lib/Constants.swift",
+            "README.md"
+        ] where listedFiles.contains(preferred) && !paths.contains(preferred) {
+            paths.append(preferred)
+        }
+
+        return Array(paths.prefix(max(developerFileAssistantReadLimit, 3)))
+    }
+
+    private func developerFilePlanWithRequiredWrites(
+        _ plan: DeveloperFilePlan,
+        request: DeveloperFileRequest,
+        context: DeveloperFileWorkspaceContext
+    ) -> DeveloperFilePlan {
+        guard !request.isDryRun,
+              isReadmeUpdateGoal(request.goal),
+              !plan.writes.contains(where: { $0.path == "README.md" }) else {
+            return plan
+        }
+
+        let readmeWrite = DeveloperFileWrite(
+            path: "README.md",
+            content: makeDeveloperReadmeContent(context: context),
+            overwrite: true,
+            reason: "User explicitly asked to update README based on the current MCP architecture."
+        )
+
+        return DeveloperFilePlan(
+            summary: plan.summary.isEmpty ? "Updated README from project MCP architecture." : plan.summary,
+            analysis: """
+            \(plan.analysis)
+
+            The model did not return a README write, but the user explicitly requested a README update. The assistant generated a deterministic README from the MCP files it read and the current registered architecture.
+            """,
+            writes: plan.writes + [readmeWrite],
+            checks: plan.checks
+        )
+    }
+
+    private func isReadmeUpdateGoal(_ goal: String) -> Bool {
+        let lowercasedGoal = goal.lowercased()
+        let mentionsReadme = lowercasedGoal.contains("readme")
+        let asksForChange = [
+            "обнови", "обновить", "update", "rewrite", "refresh", "создай", "create"
+        ].contains { lowercasedGoal.contains($0) }
+
+        return mentionsReadme && asksForChange
+    }
+
+    private func makeDeveloperReadmeContent(context: DeveloperFileWorkspaceContext) -> String {
+        let readFiles = context.readFiles.map(\.path).joined(separator: ", ")
+        let architectureFiles = [
+            "agents/OllamaAgent.swift",
+            "services/mcporchestrator/MCPOrchestrator.swift",
+            "services/mcp/MCPToolRouter.swift",
+            "lib/Constants.swift"
+        ].filter { context.listedFiles.contains($0) }
+
+        let architectureFileList = architectureFiles.isEmpty
+            ? "- agents/OllamaAgent.swift\n- services/mcporchestrator/MCPOrchestrator.swift\n- services/mcp/MCPToolRouter.swift\n- lib/Constants.swift"
+            : architectureFiles.map { "- \($0)" }.joined(separator: "\n")
+
+        return LocalPathPrivacy.redact("""
+        # AIChallenge
+
+        AIChallenge is a local AI assistant playground focused on model orchestration, RAG, MCP tools, and project-aware developer workflows.
+
+        ## Current MCP Architecture
+
+        The app separates MCP responsibilities by server:
+
+        - `GitHubMCPServer` provides repository and git context such as branch, changed files, and diff.
+        - `RAGMCPServer` provides documentation and knowledge retrieval.
+        - `SupportMCPServer` provides support-domain data such as tickets and users.
+        - `FileOperationsMCPServer` provides project file operations for the `/files` assistant.
+
+        `OllamaAgent` is the orchestration layer used by commands such as `/help`, `/review`, `/support`, and `/files`. The agent does not call file tools directly. It calls `MCPOrchestrator`, which uses `MCPToolRouter` to route each tool call to the server that registered that tool.
+
+        ## File Assistant
+
+        The `/files` command can inspect and change files through `FileOperationsMCPServer`.
+
+        Supported file tools:
+
+        - `project_list_files`
+        - `project_search_files`
+        - `project_read_file`
+        - `project_write_file`
+        - `project_delete_file`
+
+        Typical commands:
+
+        ```text
+        /files обнови README на основе текущей MCP архитектуры
+        /files --dry-run обнови README на основе текущей MCP архитектуры
+        /files undo
+        ```
+
+        `--dry-run` analyzes and plans changes without writing files. Without `--dry-run`, the assistant may write files and records the latest file changes in memory so `/files undo` can restore or delete the affected files during the current app session.
+
+        ## Project Root
+
+        The file assistant can use the project folder selected in Settings -> Files. The app passes that folder to `FileOperationsMCPServer` as `project_root` for each file operation.
+
+        `FileOperationsMCPServer` can also be started with a default root:
+
+        ```bash
+        cd ../MCP_server
+        swift run FileOperationsMCPServer --project-root ../AIChallenge
+        ```
+
+        ## Important App Files
+
+        \(architectureFileList)
+
+        Files read for the last README update: \(readFiles.isEmpty ? "none" : readFiles).
+
+        ## Verification
+
+        Useful local checks:
+
+        ```bash
+        swift build --product FileOperationsMCPServer
+        xcodebuild build -quiet -project AIChallenge.xcodeproj -scheme AIChallenge -destination 'generic/platform=iOS Simulator'
+        git diff --check
+        ```
+        """)
+    }
+
+    private func developerFileOperationPlan(
+        request: DeveloperFileRequest,
+        context: DeveloperFileWorkspaceContext
+    ) async throws -> DeveloperFilePlan {
+        let prompt = makeDeveloperFilePlanPrompt(
+            request: request,
+            context: context
+        )
+        let rawPlan = try await streamer.send(
+            messages: [
+                Message(
+                    agentId: agentId,
+                    role: .system,
+                    content: """
+                    You are a project file assistant. You may propose concrete file writes only when they follow from the user's goal and the provided file context. Use project-relative paths only. Do not reveal absolute local paths. Return valid JSON only, with no markdown fence.
+                    """
+                ),
+                Message(
+                    agentId: agentId,
+                    role: .user,
+                    content: prompt
+                )
+            ],
+            options: options
+        )
+
+        let safeRawPlan = LocalPathPrivacy.redact(rawPlan)
+        if let plan = decodeDeveloperFilePlan(from: safeRawPlan) {
+            return plan
+        }
+
+        return fallbackDeveloperFilePlan(
+            rawPlan: safeRawPlan,
+            request: request,
+            context: context
+        )
+    }
+
+    private func makeDeveloperFilePlanPrompt(
+        request: DeveloperFileRequest,
+        context: DeveloperFileWorkspaceContext
+    ) -> String {
+        let matches = context.searchMatches.isEmpty
+            ? "No search matches."
+            : context.searchMatches.prefix(30).map { "- \($0.path):\($0.line) \($0.preview)" }.joined(separator: "\n")
+        let files = context.readFiles.map { file in
+            """
+            --- \(file.path)\(file.truncated ? " (truncated)" : "") ---
+            \(file.content)
+            """
+        }.joined(separator: "\n\n")
+
+        return LocalPathPrivacy.redact("""
+        Goal:
+        \(request.goal)
+
+        Mode:
+        \(request.isDryRun ? "dry-run; propose writes but do not assume they will be applied" : "apply; propose writes if the goal requires file creation or modification")
+
+        Repository:
+        \(context.repository)
+
+        Search matches:
+        \(matches)
+
+        Files read:
+        \(files.isEmpty ? "No files could be read." : files)
+
+        Decide what concrete project file work should happen. If the goal is analysis/search/checking only, leave writes as an empty array and put findings in analysis. In dry-run mode, leave writes as an empty array and describe proposed file changes in analysis. In apply mode, if the goal asks to create or update files, include complete new content for each target file. Set overwrite to true when updating a file that already exists in the provided context.
+
+        Return JSON with this exact shape:
+        {
+          "summary": "one sentence",
+          "analysis": "short findings based on the files",
+          "writes": [
+            {
+              "path": "relative/path.md",
+              "content": "complete file content",
+              "overwrite": false,
+              "reason": "why this write is needed"
+            }
+          ],
+          "checks": ["commands or checks to run"]
+        }
+        """)
+    }
+
+    private func developerWriteProjectFile(_ write: DeveloperFileWrite) async throws -> DeveloperProjectWriteFileResult {
+        guard let mcpOrchestrator else {
+            throw NSError(
+                domain: "DeveloperFileAssistant",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "MCP orchestrator is unavailable."]
+            )
+        }
+
+        let result = try await mcpOrchestrator.callTool(
+            name: "project_write_file",
+            arguments: developerFileToolArguments([
+                "path": .string(write.path),
+                "content": .string(write.content),
+                "overwrite": .string(write.overwrite ? "true" : "false")
+            ])
+        )
+        guard let decoded = decodeDeveloperProjectWriteFile(from: LocalPathPrivacy.redact(result.content)) else {
+            throw NSError(
+                domain: "DeveloperFileAssistant",
+                code: 3,
+                userInfo: [NSLocalizedDescriptionKey: "Unable to decode project_write_file result."]
+            )
+        }
+
+        return decoded
+    }
+
+    private func developerReadProjectFile(path: String) async throws -> DeveloperProjectReadFileResult {
+        guard let mcpOrchestrator else {
+            throw NSError(
+                domain: "DeveloperFileAssistant",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "MCP orchestrator is unavailable."]
+            )
+        }
+
+        let result = try await mcpOrchestrator.callTool(
+            name: "project_read_file",
+            arguments: developerFileToolArguments([
+                "path": .string(path),
+                "max_characters": .string("120000")
+            ])
+        )
+        guard let file = decodeDeveloperProjectReadFile(from: LocalPathPrivacy.redact(result.content)) else {
+            throw NSError(
+                domain: "DeveloperFileAssistant",
+                code: 5,
+                userInfo: [NSLocalizedDescriptionKey: "Unable to decode project_read_file result."]
+            )
+        }
+
+        return file
+    }
+
+    private func developerDeleteProjectFile(path: String) async throws {
+        guard let mcpOrchestrator else {
+            throw NSError(
+                domain: "DeveloperFileAssistant",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "MCP orchestrator is unavailable."]
+            )
+        }
+
+        _ = try await mcpOrchestrator.callTool(
+            name: "project_delete_file",
+            arguments: developerFileToolArguments(["path": .string(path)])
+        )
+    }
+
+    private func developerFileToolArguments(_ arguments: [String: Value]) -> [String: Value] {
+        let trimmedPath = fileOperationsProjectRootPath.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedPath.isEmpty else {
+            return arguments
+        }
+
+        var routedArguments = arguments
+        routedArguments["project_root"] = .string(trimmedPath)
+        return routedArguments
+    }
+
+    private func undoLastDeveloperFileChange() async throws -> String {
+        guard let changeSet = developerFileChangeHistory.popLast() else {
+            return LocalPathPrivacy.redact("""
+            Ассистент файлов проекта
+
+            Undo
+
+            No file changes are available to undo in the current app session.
+            """)
+        }
+
+        var restored: [String] = []
+        var deleted: [String] = []
+
+        for change in changeSet.changes.reversed() {
+            if change.wasCreated {
+                try await developerDeleteProjectFile(path: change.path)
+                deleted.append(change.path)
+            } else if let beforeContent = change.beforeContent {
+                _ = try await developerWriteProjectFile(DeveloperFileWrite(
+                    path: change.path,
+                    content: beforeContent,
+                    overwrite: true,
+                    reason: "Undo previous file assistant change."
+                ))
+                restored.append(change.path)
+            }
+        }
+
+        return LocalPathPrivacy.redact("""
+        Ассистент файлов проекта
+
+        Undo
+
+        Reverted last file operation.
+
+        Goal:
+        \(changeSet.goal)
+
+        Restored files:
+        \(restored.isEmpty ? "- none" : restored.map { "- \($0)" }.joined(separator: "\n"))
+
+        Deleted files:
+        \(deleted.isEmpty ? "- none" : deleted.map { "- \($0)" }.joined(separator: "\n"))
+        """)
+    }
+
+    private func formatDeveloperFileAnswer(
+        request: DeveloperFileRequest,
+        context: DeveloperFileWorkspaceContext,
+        plan: DeveloperFilePlan,
+        writeResults: [DeveloperProjectWriteFileResult],
+        gitContext: DeveloperReviewGitContext?
+    ) -> String {
+        let readFiles = context.readFiles.isEmpty
+            ? "No files were read."
+            : context.readFiles.map { "- \($0.path)\($0.truncated ? " (truncated)" : "")" }.joined(separator: "\n")
+        let plannedWrites = plan.writes.isEmpty
+            ? "No file writes were proposed."
+            : plan.writes.map { "- \($0.path): \($0.reason)" }.joined(separator: "\n")
+        let appliedWrites = writeResults.isEmpty
+            ? (request.isDryRun ? "Dry run: no files were changed." : "No files were changed.")
+            : writeResults.map { "- \($0.path): \($0.action), \($0.bytesWritten) bytes" }.joined(separator: "\n")
+        let checks = plan.checks.isEmpty
+            ? "No checks proposed."
+            : plan.checks.map { "- \($0)" }.joined(separator: "\n")
+        let diffText = truncatedDeveloperFileDiff(gitContext?.diff ?? "")
+        let changedFiles = gitContext?.files.isEmpty == false
+            ? gitContext!.files.map { "- \($0.path) (\($0.status))" }.joined(separator: "\n")
+            : "No changed files reported."
+        let completionStatus = developerFileCompletionStatus(
+            request: request,
+            plan: plan,
+            writeResults: writeResults
+        )
+
+        return LocalPathPrivacy.redact("""
+        Ассистент файлов проекта
+
+        Status:
+        \(completionStatus)
+
+        Goal:
+        \(request.goal)
+
+        Repository:
+        \(context.repository)
+
+        Files read:
+        \(readFiles)
+
+        Summary:
+        \(plan.summary)
+
+        Analysis:
+        \(plan.analysis)
+
+        Planned writes:
+        \(plannedWrites)
+
+        Applied writes:
+        \(appliedWrites)
+
+        Checks:
+        \(checks)
+
+        Changed files:
+        \(changedFiles)
+
+        Diff:
+        \(diffText.text.isEmpty ? "No diff available." : diffText.text)
+        \(diffText.wasTruncated ? "\nDiff note: diff was truncated to \(developerFileAssistantDiffCharacterLimit) characters." : "")
+        """)
+    }
+
+    private func developerFileCompletionStatus(
+        request: DeveloperFileRequest,
+        plan: DeveloperFilePlan,
+        writeResults: [DeveloperProjectWriteFileResult]
+    ) -> String {
+        if request.isDryRun {
+            return "Dry run completed. No files were changed. Run the same command without --dry-run to apply changes."
+        }
+
+        if !writeResults.isEmpty {
+            let files = writeResults
+                .map { "\($0.path) (\($0.action), \($0.bytesWritten) bytes)" }
+                .joined(separator: ", ")
+            return "Completed. Updated files: \(files). You can revert the last file operation with /files undo."
+        }
+
+        if plan.writes.isEmpty {
+            return "Completed. No file writes were needed for this request."
+        }
+
+        return "Completed. The operation finished without applied file writes."
+    }
+
+    private func truncatedDeveloperFileDiff(_ diff: String) -> (text: String, wasTruncated: Bool) {
+        guard diff.count > developerFileAssistantDiffCharacterLimit else {
+            return (diff, false)
+        }
+
+        let endIndex = diff.index(diff.startIndex, offsetBy: developerFileAssistantDiffCharacterLimit)
+        return (String(diff[..<endIndex]), true)
+    }
+
+    private func developerFileSearchTerms(from text: String) -> [String] {
+        let stopWords: Set<String> = [
+            "найди", "найти", "обнови", "создай", "проверь", "все", "где",
+            "как", "что", "файл", "файлы", "документацию", "на", "по", "и", "или",
+            "the", "and", "for", "with", "file", "files"
+        ]
+
+        return text
+            .lowercased()
+            .split { !$0.isLetter && !$0.isNumber && $0 != "_" }
+            .map(String.init)
+            .filter { $0.count >= 3 && !stopWords.contains($0) }
     }
 
     private func developerSupportRequest(from text: String) -> DeveloperSupportRequest? {
@@ -1035,11 +1788,6 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         strategy.onAssistantMessage(assistantMessage)
         await memoryService.appendMessage(assistantMessage)
 
-        await advanceTaskStateIfNeeded(
-            userQuery: userQuery,
-            assistantResponse: safeContent
-        )
-
         DispatchQueue.main.async { [weak self] in
             self?.onToken?(safeContent)
             self?.onComplete?(self?.makeCompletionChunk(
@@ -1052,6 +1800,11 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
                 done: true
             ))
         }
+
+        await advanceTaskStateIfNeeded(
+            userQuery: userQuery,
+            assistantResponse: safeContent
+        )
     }
     
     func startTask(title: String, plan: [String]) {
@@ -1124,6 +1877,10 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
     
     func setRAGRetrievalSettings(_ settings: RAGRetrievalSettings) {
         self.ragRetrievalSettings = settings
+    }
+
+    func setFileOperationsProjectRootPath(_ path: String) {
+        self.fileOperationsProjectRootPath = path.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
     func invalidateRAGRetrievalCache() {
@@ -3089,6 +3846,226 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         let repository: String?
     }
 
+    private struct DeveloperFileRequest {
+        let goal: String
+        let isDryRun: Bool
+        let isUndo: Bool
+    }
+
+    private struct DeveloperProjectListFilesResult: Decodable {
+        let repository: String
+        let files: [String]
+    }
+
+    private struct DeveloperProjectSearchFilesResult: Decodable {
+        let repository: String
+        let query: String
+        let matches: [DeveloperProjectSearchMatch]
+    }
+
+    private struct DeveloperProjectSearchMatch: Decodable {
+        let path: String
+        let line: Int
+        let preview: String
+    }
+
+    private struct DeveloperProjectReadFileResult: Decodable {
+        let path: String
+        let content: String
+        let truncated: Bool
+    }
+
+    private struct DeveloperProjectWriteFileResult: Decodable {
+        let path: String
+        let action: String
+        let bytesWritten: Int
+    }
+
+    private struct DeveloperFileWorkspaceContext {
+        let repository: String
+        let goal: String
+        let searchMatches: [DeveloperProjectSearchMatch]
+        let listedFiles: [String]
+        let readFiles: [DeveloperProjectReadFileResult]
+    }
+
+    private struct DeveloperFileChangeSet {
+        let id: UUID
+        let goal: String
+        let createdAt: Date
+        let changes: [DeveloperFileChange]
+    }
+
+    private struct DeveloperFileChange {
+        let path: String
+        let beforeContent: String?
+        let afterContent: String
+        let wasCreated: Bool
+    }
+
+    private struct DeveloperFilePlan: Decodable {
+        let summary: String
+        let analysis: String
+        let writes: [DeveloperFileWrite]
+        let checks: [String]
+
+        init(
+            summary: String,
+            analysis: String,
+            writes: [DeveloperFileWrite],
+            checks: [String]
+        ) {
+            self.summary = summary
+            self.analysis = analysis
+            self.writes = writes
+            self.checks = checks
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.summary = try container.decodeIfPresent(String.self, forKey: .summary) ?? "File assistant prepared a project file plan."
+            self.analysis = try container.decodeIfPresent(String.self, forKey: .analysis) ?? ""
+            self.writes = try container.decodeIfPresent([DeveloperFileWrite].self, forKey: .writes) ?? []
+            self.checks = try container.decodeIfPresent([String].self, forKey: .checks) ?? []
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case summary
+            case analysis
+            case writes
+            case checks
+        }
+    }
+
+    private struct DeveloperFileWrite: Decodable {
+        let path: String
+        let content: String
+        let overwrite: Bool
+        let reason: String
+
+        init(
+            path: String,
+            content: String,
+            overwrite: Bool,
+            reason: String
+        ) {
+            self.path = path
+            self.content = content
+            self.overwrite = overwrite
+            self.reason = reason
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.path = try container.decodeIfPresent(String.self, forKey: .path) ?? ""
+            self.content = try container.decodeIfPresent(String.self, forKey: .content) ?? ""
+            self.overwrite = try container.decodeIfPresent(Bool.self, forKey: .overwrite) ?? false
+            self.reason = try container.decodeIfPresent(String.self, forKey: .reason) ?? "Proposed by file assistant."
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case path
+            case content
+            case overwrite
+            case reason
+        }
+    }
+
+    private func decodeDeveloperProjectListFiles(from text: String) -> DeveloperProjectListFilesResult? {
+        guard let data = text.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(DeveloperProjectListFilesResult.self, from: data)
+    }
+
+    private func decodeDeveloperProjectSearchFiles(from text: String) -> DeveloperProjectSearchFilesResult? {
+        guard let data = text.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(DeveloperProjectSearchFilesResult.self, from: data)
+    }
+
+    private func decodeDeveloperProjectReadFile(from text: String) -> DeveloperProjectReadFileResult? {
+        guard let data = text.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(DeveloperProjectReadFileResult.self, from: data)
+    }
+
+    private func decodeDeveloperProjectWriteFile(from text: String) -> DeveloperProjectWriteFileResult? {
+        guard let data = text.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(DeveloperProjectWriteFileResult.self, from: data)
+    }
+
+    private func decodeDeveloperFilePlan(from text: String) -> DeveloperFilePlan? {
+        let cleaned = text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let jsonText: String
+        if let start = cleaned.firstIndex(of: "{"),
+           let end = cleaned.lastIndex(of: "}"),
+           start <= end {
+            jsonText = String(cleaned[start...end])
+        } else {
+            jsonText = cleaned
+        }
+
+        guard let data = jsonText.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(DeveloperFilePlan.self, from: data)
+    }
+
+    private func fallbackDeveloperFilePlan(
+        rawPlan: String,
+        request: DeveloperFileRequest,
+        context: DeveloperFileWorkspaceContext
+    ) -> DeveloperFilePlan {
+        let readFiles = context.readFiles.isEmpty
+            ? "No files were read."
+            : context.readFiles.map { "- \($0.path)" }.joined(separator: "\n")
+        let matches = context.searchMatches.isEmpty
+            ? "No search matches were found."
+            : context.searchMatches.prefix(10).map { "- \($0.path):\($0.line) \($0.preview)" }.joined(separator: "\n")
+        let modelOutput = rawPlan.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let analysis = LocalPathPrivacy.redact("""
+        The model did not return a strict JSON operation plan, so the assistant preserved the useful analysis instead of failing.
+
+        Goal:
+        \(request.goal)
+
+        Files read:
+        \(readFiles)
+
+        Search matches:
+        \(matches)
+
+        Model output:
+        \(modelOutput.isEmpty ? "No model output was returned." : modelOutput)
+        """)
+
+        return DeveloperFilePlan(
+            summary: "Prepared a file-assistant fallback plan from project search and read context.",
+            analysis: analysis,
+            writes: [],
+            checks: [
+                "Review the files listed above.",
+                request.isDryRun ? "Run /files without --dry-run to apply changes after the plan looks correct." : "Retry with a narrower file goal if file writes are still needed."
+            ]
+        )
+    }
+
     private struct DeveloperSupportRequest {
         let ticketId: String?
         let question: String
@@ -3190,4 +4167,12 @@ final class OllamaAgent: LLMAgentProtocol, @unchecked Sendable {
         self.userProfile = profile
     }
     
+}
+
+private extension Array where Element == String {
+    mutating func removeAllMatches(_ value: String) -> Bool {
+        let originalCount = count
+        removeAll { $0 == value }
+        return count != originalCount
+    }
 }

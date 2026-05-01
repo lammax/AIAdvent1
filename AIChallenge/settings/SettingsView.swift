@@ -15,6 +15,7 @@ struct SettingsView: View {
     @Binding var isOpen: Bool
     @State private var selectedTab: SettingsTab = .general
     let onSelectLocalModel: () -> Void
+    let onSelectProjectFolder: () -> Void
     
     var body: some View {
         GeometryReader { proxy in
@@ -65,6 +66,11 @@ struct SettingsView: View {
                             SettingsContextTab(vm: vm)
                         case .rag:
                             SettingsRAGTab(vm: vm)
+                        case .files:
+                            SettingsFilesTab(
+                                vm: vm,
+                                onSelectProjectFolder: onSelectProjectFolder
+                            )
                         }
                         
                         Button("Apply") {
@@ -98,6 +104,7 @@ private enum SettingsTab: String, CaseIterable {
     case privateLLM
     case context
     case rag
+    case files
     
     var title: String {
         switch self {
@@ -111,6 +118,8 @@ private enum SettingsTab: String, CaseIterable {
             return "Context"
         case .rag:
             return "RAG"
+        case .files:
+            return "Files"
         }
     }
 }
@@ -455,5 +464,50 @@ private struct SettingsRAGTab: View {
             }
         }
         .isHidden(vm.provider == .openRouter, remove: true)
+    }
+}
+
+private struct SettingsFilesTab: View {
+    @ObservedObject var vm: SettingsViewModel
+    let onSelectProjectFolder: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Project Folder")
+                    .font(.headline)
+
+                Button {
+                    onSelectProjectFolder()
+                } label: {
+                    HStack {
+                        Text(vm.fileOperationsProjectRootDisplayName)
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+
+                        Spacer()
+
+                        Image(systemName: "folder")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .contentShape(Rectangle())
+
+                Text(vm.fileOperationsProjectRootStatus)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
+
+            Text("The /files assistant passes this folder to FileOperationsMCPServer as the project root for read, search, write, and undo operations.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
     }
 }

@@ -30,6 +30,7 @@
 		133DA7232F684C7600F8AE82 /* OllamaStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA7222F684C7600F8AE82 /* OllamaStreamer.swift */; };
 		133DA7282F684D1A00F8AE82 /* LLMAgentProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA7272F684D1A00F8AE82 /* LLMAgentProtocol.swift */; };
 		133DA72B2F684F5F00F8AE82 /* LLMURL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133DA72A2F684F5F00F8AE82 /* LLMURL.swift */; };
+		13AFB0462FA4ACF100E29FDD /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 13AFB0452FA4ACF000E29FDD /* README.md */; };
 		13BD3A342F7E46E40059C0A5 /* ContextStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A332F7E46E40059C0A5 /* ContextStrategy.swift */; };
 		13BD3A362F7E47850059C0A5 /* ContextStrategyProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A352F7E47850059C0A5 /* ContextStrategyProtocol.swift */; };
 		13BD3A392F7E47B90059C0A5 /* SlidingWindowStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD3A382F7E47B90059C0A5 /* SlidingWindowStrategy.swift */; };
@@ -174,6 +175,7 @@
 		133DA7222F684C7600F8AE82 /* OllamaStreamer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaStreamer.swift; sourceTree = "<group>"; };
 		133DA7272F684D1A00F8AE82 /* LLMAgentProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMAgentProtocol.swift; sourceTree = "<group>"; };
 		133DA72A2F684F5F00F8AE82 /* LLMURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMURL.swift; sourceTree = "<group>"; };
+		13AFB0452FA4ACF000E29FDD /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		13BD3A332F7E46E40059C0A5 /* ContextStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextStrategy.swift; sourceTree = "<group>"; };
 		13BD3A352F7E47850059C0A5 /* ContextStrategyProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextStrategyProtocol.swift; sourceTree = "<group>"; };
 		13BD3A382F7E47B90059C0A5 /* SlidingWindowStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlidingWindowStrategy.swift; sourceTree = "<group>"; };
@@ -409,6 +411,7 @@
 		133DA6E52F682BFA00F8AE82 = {
 			isa = PBXGroup;
 			children = (
+				13AFB0452FA4ACF000E29FDD /* README.md */,
 				13DD3A6A2F8975CC00CBB182 /* error */,
 				13BD3A762F82C0640059C0A5 /* support */,
 				13BD3A372F7E47A40059C0A5 /* strategy */,
@@ -850,6 +853,7 @@
 			files = (
 				133DA6F62F682BFE00F8AE82 /* Assets.xcassets in Resources */,
 				13BD3AC22F8574EF0059C0A5 /* Claude.md in Resources */,
+				13AFB0462FA4ACF100E29FDD /* README.md in Resources */,
 				13BD3A782F82C0A60059C0A5 /* invariants.md in Resources */,
 				13DD3BBE2F8FE20500CBB182 /* rag-evaluation.md in Resources */,
 			);

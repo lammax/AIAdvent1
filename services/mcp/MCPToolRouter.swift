@@ -21,7 +21,10 @@ actor MCPToolRouter {
                 listedTools = try await server.executor.listTools()
             } catch {
                 print("MCPToolRouter.reload skipped \(server.name): \(LocalPathPrivacy.redact(error.localizedDescription))")
-                continue
+                listedTools = fallbackTools(for: server)
+                if listedTools.isEmpty {
+                    continue
+                }
             }
 
             for tool in listedTools {
@@ -59,5 +62,39 @@ actor MCPToolRouter {
 
     func serverName(for toolName: String) -> String? {
         tools[toolName]?.serverName
+    }
+
+    private func fallbackTools(for server: MCPServerDescriptor) -> [MCPToolDescriptor] {
+        guard server.name == "fileOperations" else {
+            return []
+        }
+
+        return [
+            MCPToolDescriptor(
+                id: "project_list_files",
+                name: "project_list_files",
+                description: "List files in the configured local project repository."
+            ),
+            MCPToolDescriptor(
+                id: "project_search_files",
+                name: "project_search_files",
+                description: "Search text across files in the configured local project repository."
+            ),
+            MCPToolDescriptor(
+                id: "project_read_file",
+                name: "project_read_file",
+                description: "Read a UTF-8 text file from the configured local project repository by relative path."
+            ),
+            MCPToolDescriptor(
+                id: "project_write_file",
+                name: "project_write_file",
+                description: "Create or replace a UTF-8 text file in the configured local project repository by relative path."
+            ),
+            MCPToolDescriptor(
+                id: "project_delete_file",
+                name: "project_delete_file",
+                description: "Delete a text file from the configured local project repository by relative path."
+            )
+        ]
     }
 }

@@ -28,6 +28,7 @@ class MainViewModel: ObservableObject {
     var ragEvaluationMode: RAGEvaluationMode = .disabled
     var ragRetrievalSettings: RAGRetrievalSettings = .default
     var isRAGVerboseIndexingEnabled: Bool = false
+    var fileOperationsProjectRootPath: String = ""
     
     let ollama: OllamaAgent
     
@@ -131,6 +132,12 @@ class MainViewModel: ObservableObject {
             guard let self else { return }
             self.ragRetrievalSettings = ragRetrievalSettings
             ollama.setRAGRetrievalSettings(ragRetrievalSettings)
+        }.store(in: &uns)
+
+        settingsObserver.fileOperationsProjectRootPath.sink { [weak self] path in
+            guard let self else { return }
+            self.fileOperationsProjectRootPath = path
+            ollama.setFileOperationsProjectRootPath(path)
         }.store(in: &uns)
         
         profileObserver.selectedProfile

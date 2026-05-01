@@ -24,4 +24,5 @@ enum SettingsUserInfoKey: String {
     case ragEvaluationMode
     case isRAGVerboseIndexingEnabled
     case ragRetrievalSettings
+    case fileOperationsProjectRootPath
 }

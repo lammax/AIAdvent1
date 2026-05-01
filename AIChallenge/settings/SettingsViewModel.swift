@@ -21,11 +21,14 @@ final class SettingsViewModel: ObservableObject {
         static let privateLLMRequestTimeoutSeconds = "settings.privateLLMRequestTimeoutSeconds"
         static let ragSourceType = "settings.ragSourceType"
         static let isRAGVerboseIndexingEnabled = "settings.isRAGVerboseIndexingEnabled"
+        static let fileOperationsProjectRootPath = "settings.fileOperationsProjectRootPath"
+        static let fileOperationsProjectRootBookmarkData = "settings.fileOperationsProjectRootBookmarkData"
     }
     
     private let localModelFileService: LocalModelFileServiceProtocol
     private let userDefaults: UserDefaults
     private var localModelBookmarkData: Data?
+    private var fileOperationsProjectRootBookmarkData: Data?
     
     @Published var provider: LLMProvider = .ollama
     @Published var contextStrategy: ContextStrategy = .slidingWindow
@@ -71,6 +74,8 @@ final class SettingsViewModel: ObservableObject {
     @Published var privateLLMModelName: String = PrivateLocalLLMSettings.default.modelName
     @Published var privateLLMMaxContextTokens: Double = Double(PrivateLocalLLMSettings.default.maxContextTokens)
     @Published var privateLLMRequestTimeoutSeconds: Double = PrivateLocalLLMSettings.default.requestTimeoutSeconds
+    @Published var fileOperationsProjectRootPath: String = ""
+    @Published var fileOperationsProjectRootStatus: String = "No project folder selected yet."
     
     var localModelDisplayName: String {
         let trimmedPath = localModelPath.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -79,6 +84,15 @@ final class SettingsViewModel: ObservableObject {
         }
         
         return localModelFileName
+    }
+
+    var fileOperationsProjectRootDisplayName: String {
+        let trimmedPath = fileOperationsProjectRootPath.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedPath.isEmpty else {
+            return "Select project folder"
+        }
+
+        return URL(fileURLWithPath: trimmedPath).lastPathComponent
     }
     
     init(
@@ -90,6 +104,8 @@ final class SettingsViewModel: ObservableObject {
         self.backendMode = userDefaults.string(forKey: StorageKey.backendMode) ?? "local_gguf"
         self.localModelPath = userDefaults.string(forKey: StorageKey.localModelPath) ?? ""
         self.localModelBookmarkData = userDefaults.data(forKey: StorageKey.localModelBookmarkData)
+        self.fileOperationsProjectRootPath = userDefaults.string(forKey: StorageKey.fileOperationsProjectRootPath) ?? ""
+        self.fileOperationsProjectRootBookmarkData = userDefaults.data(forKey: StorageKey.fileOperationsProjectRootBookmarkData)
         self.privateLLMBaseURL = userDefaults.string(forKey: StorageKey.privateLLMBaseURL) ?? PrivateLocalLLMSettings.default.baseURL
         self.privateLLMAPIKey = userDefaults.string(forKey: StorageKey.privateLLMAPIKey) ?? PrivateLocalLLMSettings.default.apiKey
         self.privateLLMModelName = userDefaults.string(forKey: StorageKey.privateLLMModelName) ?? PrivateLocalLLMSettings.default.modelName
@@ -121,6 +137,18 @@ final class SettingsViewModel: ObservableObject {
             localModelPath = ""
             localModelStatus = "No local model selected yet."
         }
+
+        if let projectRootURL = resolveStoredProjectRootURL() {
+            fileOperationsProjectRootPath = projectRootURL.path
+            fileOperationsProjectRootStatus = LocalPathPrivacy.redact("""
+            Project folder selected.
+            Folder: \(projectRootURL.lastPathComponent)
+            Path: \(projectRootURL.path)
+            """)
+        } else {
+            fileOperationsProjectRootPath = ""
+            fileOperationsProjectRootStatus = "No project folder selected yet."
+        }
     }
     
     func buildOllamaSettings() -> [String: Any] {
@@ -151,6 +179,7 @@ final class SettingsViewModel: ObservableObject {
             "backend_mode": backendMode,
             "local_model_path": localModelPath,
             "local_model_filename": localModelFileName,
+            "file_operations_project_root_path": fileOperationsProjectRootPath,
             "model": ollamaModel.rawValue,
             "stream": stream,
             "prompt_context": promptContextSettings.asDictionary(),
@@ -200,6 +229,7 @@ final class SettingsViewModel: ObservableObject {
         return [
             "backend_mode": "private_llama_server",
             "private_llm": privateSettings.asDictionary(),
+            "file_operations_project_root_path": fileOperationsProjectRootPath,
             "model": privateSettings.modelName,
             "stream": stream,
             "prompt_context": promptContextSettings.asDictionary(),
@@ -242,7 +272,8 @@ final class SettingsViewModel: ObservableObject {
                 SettingsUserInfoKey.ragRetrievalMode.rawValue: ragRetrievalMode,
                 SettingsUserInfoKey.ragEvaluationMode.rawValue: ragEvaluationMode,
                 SettingsUserInfoKey.isRAGVerboseIndexingEnabled.rawValue: isRAGVerboseIndexingEnabled,
-                SettingsUserInfoKey.ragRetrievalSettings.rawValue: ragRetrievalSettings
+                SettingsUserInfoKey.ragRetrievalSettings.rawValue: ragRetrievalSettings,
+                SettingsUserInfoKey.fileOperationsProjectRootPath.rawValue: fileOperationsProjectRootPath
             ]
         )
         
@@ -254,6 +285,10 @@ final class SettingsViewModel: ObservableObject {
         userDefaults.set(privateLLMRequestTimeoutSeconds, forKey: StorageKey.privateLLMRequestTimeoutSeconds)
         userDefaults.set(ragSourceType.rawValue, forKey: StorageKey.ragSourceType)
         userDefaults.set(isRAGVerboseIndexingEnabled, forKey: StorageKey.isRAGVerboseIndexingEnabled)
+        userDefaults.set(fileOperationsProjectRootPath, forKey: StorageKey.fileOperationsProjectRootPath)
+        if let fileOperationsProjectRootBookmarkData {
+            userDefaults.set(fileOperationsProjectRootBookmarkData, forKey: StorageKey.fileOperationsProjectRootBookmarkData)
+        }
     }
     
     func applyPreset(_ preset: OllamaPreset) {
@@ -303,6 +338,70 @@ final class SettingsViewModel: ObservableObject {
         } catch {
             localModelStatus = "Local model import failed: \(error.localizedDescription)"
         }
+    }
+
+    func importProjectFolder(from url: URL) async {
+        let hasAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if hasAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        do {
+            var isDirectory: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory),
+                  isDirectory.boolValue else {
+                fileOperationsProjectRootStatus = "Project folder selection failed: selected item is not a folder."
+                return
+            }
+
+            let bookmarkData = try localModelFileService.bookmarkData(
+                from: url,
+                preferredFileName: nil
+            )
+            fileOperationsProjectRootBookmarkData = bookmarkData
+            fileOperationsProjectRootPath = url.path
+            userDefaults.set(fileOperationsProjectRootPath, forKey: StorageKey.fileOperationsProjectRootPath)
+            userDefaults.set(bookmarkData, forKey: StorageKey.fileOperationsProjectRootBookmarkData)
+            fileOperationsProjectRootStatus = LocalPathPrivacy.redact("""
+            Project folder selected.
+            Folder: \(url.lastPathComponent)
+            Path: \(url.path)
+            File assistant operations will use this folder as project root.
+            """)
+            apply()
+        } catch {
+            fileOperationsProjectRootStatus = "Project folder selection failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func resolveStoredProjectRootURL() -> URL? {
+        if let bookmarkData = fileOperationsProjectRootBookmarkData {
+            var isStale = false
+            if let url = try? URL(
+                resolvingBookmarkData: bookmarkData,
+                options: [],
+                relativeTo: nil,
+                bookmarkDataIsStale: &isStale
+            ), isDirectory(url) {
+                return url
+            }
+        }
+
+        let trimmedPath = fileOperationsProjectRootPath.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedPath.isEmpty else {
+            return nil
+        }
+
+        let url = URL(fileURLWithPath: trimmedPath)
+        return isDirectory(url) ? url : nil
+    }
+
+    private func isDirectory(_ url: URL) -> Bool {
+        var isDirectory: ObjCBool = false
+        return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+            && isDirectory.boolValue
     }
     
 }

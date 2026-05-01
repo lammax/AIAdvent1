@@ -12,6 +12,7 @@ actor MCPToolExecutor: MCPToolExecutorProtocol {
     private let endpoint: URL
     private var client: Client?
     private var isConnected = false
+    private var isInitialized = false
 
     init(endpoint: URL) {
         self.endpoint = endpoint
@@ -24,6 +25,7 @@ actor MCPToolExecutor: MCPToolExecutorProtocol {
     private func resetConnection() {
         client = nil
         isConnected = false
+        isInitialized = false
     }
 
     private func healthURL() -> URL? {
@@ -122,120 +124,175 @@ actor MCPToolExecutor: MCPToolExecutorProtocol {
     }
 
     func listTools() async throws -> [MCPToolDescriptor] {
-        do {
-            try await connectIfNeeded()
+        try await initializeJSONRPCIfNeeded()
 
-            guard let client else {
-                throw NSError(
-                    domain: "MCP",
-                    code: -1,
-                    userInfo: [NSLocalizedDescriptionKey: "MCP client is missing after connect."]
-                )
-            }
-
-            let (tools, _) = try await client.listTools()
-            print("MCP tools loaded: \(tools.map(\.name))")
-
-            return tools.map {
-                MCPToolDescriptor(
-                    id: UUID().uuidString,
-                    name: $0.name,
-                    description: $0.description
-                )
-            }
-        } catch {
-            let safeDescription = LocalPathPrivacy.redact(error.localizedDescription)
-            let message = safeDescription.lowercased()
-            print("listTools error: \(safeDescription)")
-
-            if message.contains("bad request") || message.contains("session") || message.contains("initialized") {
-                print("Resetting MCP connection and retrying listTools...")
-                resetConnection()
-                try await connectIfNeeded()
-
-                guard let client else {
-                    throw error
-                }
-
-                let (tools, _) = try await client.listTools()
-                print("MCP tools loaded after reconnect: \(tools.map(\.name))")
-
-                return tools.map {
-                    MCPToolDescriptor(
-                        id: UUID().uuidString,
-                        name: $0.name,
-                        description: $0.description
-                    )
-                }
-            }
-
-            throw error
+        let response = try await sendJSONRPC(method: "tools/list", params: [:])
+        if let error = response.error {
+            throw error.asNSError
         }
+
+        guard let tools = response.result?["tools"] as? [[String: Any]] else {
+            throw MCPJSONRPCError.invalidResponse
+        }
+
+        let descriptors = tools.compactMap { tool -> MCPToolDescriptor? in
+            guard let name = tool["name"] as? String else { return nil }
+            return MCPToolDescriptor(
+                id: UUID().uuidString,
+                name: name,
+                description: tool["description"] as? String
+            )
+        }
+
+        print("MCP tools loaded: \(descriptors.map(\.name))")
+        return descriptors
     }
 
     func callTool(name: String, arguments: [String: Value]) async throws -> MCPToolCallResult {
-        do {
-            try await connectIfNeeded()
+        try await initializeJSONRPCIfNeeded()
 
-            guard let client else {
-                throw NSError(
-                    domain: "MCP",
-                    code: -1,
-                    userInfo: [NSLocalizedDescriptionKey: "MCP client is missing after connect."]
-                )
-            }
+        let response = try await sendJSONRPC(
+            method: "tools/call",
+            params: [
+                "name": name,
+                "arguments": try jsonObject(from: arguments)
+            ]
+        )
 
-            let (content, isError) = try await client.callTool(
-                name: name,
-                arguments: arguments
+        if let error = response.error {
+            throw error.asNSError
+        }
+
+        guard let content = response.result?["content"] as? [[String: Any]] else {
+            throw MCPJSONRPCError.invalidResponse
+        }
+
+        let text = LocalPathPrivacy.redact(
+            content
+                .compactMap { $0["text"] as? String }
+                .joined(separator: "\n")
+        )
+
+        if response.result?["isError"] as? Bool == true {
+            print("MCP tool error: \(text)")
+            throw NSError(
+                domain: "MCP",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: text]
             )
+        }
 
-            let text = extractText(from: content)
+        return MCPToolCallResult(toolName: name, content: text)
+    }
 
-            if isError ?? false {
-                print("MCP tool error: \(text)")
-                throw NSError(
-                    domain: "MCP",
-                    code: -1,
-                    userInfo: [NSLocalizedDescriptionKey: text]
-                )
+    private func initializeJSONRPCIfNeeded() async throws {
+        guard !isInitialized else { return }
+
+        try await verifyServerReachable()
+        let response = try await sendJSONRPC(
+            method: "initialize",
+            params: [
+                "protocolVersion": "2024-11-05",
+                "capabilities": [:],
+                "clientInfo": [
+                    "name": "AIChallenge",
+                    "version": "1.0.0"
+                ]
+            ]
+        )
+
+        if let error = response.error {
+            let message = error.message.lowercased()
+            guard message.contains("already initialized") else {
+                throw error.asNSError
             }
+        }
 
-            return MCPToolCallResult(toolName: name, content: text)
-        } catch {
-            let safeDescription = LocalPathPrivacy.redact(error.localizedDescription)
-            let message = safeDescription.lowercased()
-            print("callTool error: \(safeDescription)")
+        isInitialized = true
+    }
 
-            if message.contains("bad request") || message.contains("session") || message.contains("initialized") {
-                print("Resetting MCP connection and retrying callTool...")
-                resetConnection()
-                try await connectIfNeeded()
+    private func sendJSONRPC(method: String, params: [String: Any]) async throws -> MCPJSONRPCResponse {
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 120
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json, text/event-stream", forHTTPHeaderField: "Accept")
+        request.httpBody = try JSONSerialization.data(
+            withJSONObject: [
+                "jsonrpc": "2.0",
+                "id": UUID().uuidString,
+                "method": method,
+                "params": params
+            ],
+            options: []
+        )
 
-                guard let client else {
-                    throw error
-                }
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw MCPJSONRPCError.invalidResponse
+        }
 
-                let (content, isError) = try await client.callTool(
-                    name: name,
-                    arguments: arguments
-                )
+        guard (200...299).contains(http.statusCode) else {
+            let body = LocalPathPrivacy.redact(String(data: data, encoding: .utf8) ?? "<non-utf8>")
+            throw MCPJSONRPCError.httpStatus(http.statusCode, body)
+        }
 
-                let text = extractText(from: content)
+        let object = try JSONSerialization.jsonObject(with: data)
+        guard let dictionary = object as? [String: Any] else {
+            throw MCPJSONRPCError.invalidResponse
+        }
 
-                if isError ?? false {
-                    print("MCP tool error after reconnect: \(text)")
-                    throw NSError(
-                        domain: "MCP",
-                        code: -1,
-                        userInfo: [NSLocalizedDescriptionKey: text]
-                    )
-                }
+        return MCPJSONRPCResponse(dictionary: dictionary)
+    }
 
-                return MCPToolCallResult(toolName: name, content: text)
-            }
+    private func jsonObject(from arguments: [String: Value]) throws -> [String: Any] {
+        let data = try JSONEncoder().encode(arguments)
+        let object = try JSONSerialization.jsonObject(with: data)
+        return object as? [String: Any] ?? [:]
+    }
+}
 
-            throw error
+private struct MCPJSONRPCResponse {
+    let result: [String: Any]?
+    let error: MCPJSONRPCErrorResponse?
+
+    init(dictionary: [String: Any]) {
+        self.result = dictionary["result"] as? [String: Any]
+
+        if let errorDictionary = dictionary["error"] as? [String: Any] {
+            self.error = MCPJSONRPCErrorResponse(
+                code: errorDictionary["code"] as? Int ?? -1,
+                message: errorDictionary["message"] as? String ?? "Unknown MCP JSON-RPC error."
+            )
+        } else {
+            self.error = nil
+        }
+    }
+}
+
+private struct MCPJSONRPCErrorResponse {
+    let code: Int
+    let message: String
+
+    var asNSError: NSError {
+        NSError(
+            domain: "MCP.JSONRPC",
+            code: code,
+            userInfo: [NSLocalizedDescriptionKey: LocalPathPrivacy.redact(message)]
+        )
+    }
+}
+
+private enum MCPJSONRPCError: LocalizedError {
+    case invalidResponse
+    case httpStatus(Int, String)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidResponse:
+            return "Invalid MCP JSON-RPC response."
+        case .httpStatus(let status, let body):
+            return "MCP HTTP \(status): \(body)"
         }
     }
 }

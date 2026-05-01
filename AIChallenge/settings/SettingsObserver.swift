@@ -21,6 +21,9 @@ final class SettingsObserver {
     let ragEvaluationMode: CurrentValueSubject<RAGEvaluationMode, Never> = CurrentValueSubject(.disabled)
     let isRAGVerboseIndexingEnabled: CurrentValueSubject<Bool, Never> = CurrentValueSubject(false)
     let ragRetrievalSettings: CurrentValueSubject<RAGRetrievalSettings, Never> = CurrentValueSubject(.default)
+    let fileOperationsProjectRootPath: CurrentValueSubject<String, Never> = CurrentValueSubject(
+        UserDefaults.standard.string(forKey: "settings.fileOperationsProjectRootPath") ?? ""
+    )
     
     
     init() {
@@ -76,6 +79,10 @@ final class SettingsObserver {
         
         if let ragRetrievalSettings = notification.userInfo?[SettingsUserInfoKey.ragRetrievalSettings.rawValue] as? RAGRetrievalSettings {
             self.ragRetrievalSettings.send(ragRetrievalSettings)
+        }
+
+        if let path = notification.userInfo?[SettingsUserInfoKey.fileOperationsProjectRootPath.rawValue] as? String {
+            self.fileOperationsProjectRootPath.send(path)
         }
     }
     

@@ -13,6 +13,8 @@ final class MCPOrchestrator: MCPOrchestratorProtocol {
     private let router: MCPToolRouter
     private let streamer: OllamaStreamer
     private let maxSteps: Int
+    private let startupGroup = DispatchGroup()
+    private let startupWaitQueue = DispatchQueue(label: "AIChallenge.MCPOrchestrator.startupWait")
 
     init(
         streamer: OllamaStreamer,
@@ -22,51 +24,58 @@ final class MCPOrchestrator: MCPOrchestratorProtocol {
         self.router = MCPToolRouter()
         self.streamer = streamer
         self.maxSteps = maxSteps
-        
+
+        startupGroup.enter()
         Task {
-            await self.registry.register(
+            defer { self.startupGroup.leave() }
+
+            let servers = [
                 MCPServerDescriptor(
                     name: "github",
                     endpoint: URL(string: Constants.mcpServerLocalHGitHub_URI)!,
                     executor: MCPToolExecutor(
                         endpoint: URL(string: Constants.mcpServerLocalHGitHub_URI)!
                     )
-                )
-            )
-
-            await self.registry.register(
+                ),
                 MCPServerDescriptor(
                     name: "utils",
                     endpoint: URL(string: Constants.mcpServerLocalHUtils_URI)!,
                     executor: MCPToolExecutor(
                         endpoint: URL(string: Constants.mcpServerLocalHUtils_URI)!
                     )
-                )
-            )
-
-            await self.registry.register(
+                ),
                 MCPServerDescriptor(
                     name: "support",
                     endpoint: URL(string: Constants.supportMCPServerURI)!,
                     executor: MCPToolExecutor(
                         endpoint: URL(string: Constants.supportMCPServerURI)!
                     )
+                ),
+                MCPServerDescriptor(
+                    name: "fileOperations",
+                    endpoint: URL(string: Constants.fileOperationsMCPServerURI)!,
+                    executor: MCPToolExecutor(
+                        endpoint: URL(string: Constants.fileOperationsMCPServerURI)!
+                    )
                 )
-            )
+            ]
+
+            for server in servers {
+                await self.registry.register(server)
+            }
+
+            await self.reloadToolsFromRegisteredServers()
         }
     }
 
     func refreshTools() async {
-        do {
-            let servers = await registry.allServers()
-            try await router.reload(from: servers)
-        } catch {
-            print("MCPOrchestrator.refreshTools error: \(error.localizedDescription)")
-        }
+        await waitForStartup()
+        await reloadToolsFromRegisteredServers()
     }
 
     func availableTools() async -> [MCPToolDescriptor] {
-        await router.availableTools()
+        await waitForStartup()
+        return await router.availableTools()
     }
 
     func callTool(name: String) async throws -> MCPToolCallResult {
@@ -74,7 +83,15 @@ final class MCPOrchestrator: MCPOrchestratorProtocol {
     }
 
     func callTool(name: String, arguments: [String: Value]) async throws -> MCPToolCallResult {
-        let result = try await router.callTool(name: name, arguments: arguments)
+        await waitForStartup()
+        let result: MCPToolCallResult
+        do {
+            result = try await router.callTool(name: name, arguments: arguments)
+        } catch MCPToolRouterError.toolNotFound {
+            await reloadToolsFromRegisteredServers()
+            result = try await router.callTool(name: name, arguments: arguments)
+        }
+
         return MCPToolCallResult(
             toolName: result.toolName,
             content: LocalPathPrivacy.redact(result.content)
@@ -87,6 +104,7 @@ final class MCPOrchestrator: MCPOrchestratorProtocol {
         baseContext: [Message],
         options: [String: Any]
     ) async throws -> MCPOrchestrationResult? {
+        await waitForStartup()
         let availableTools = await router.availableTools()
         guard !availableTools.isEmpty else { return nil }
 
@@ -228,5 +246,23 @@ final class MCPOrchestrator: MCPOrchestratorProtocol {
             .joined(separator: ", ")
 
         return LocalPathPrivacy.redact(text)
+    }
+
+    private func reloadToolsFromRegisteredServers() async {
+        do {
+            let servers = await registry.allServers()
+            try await router.reload(from: servers)
+        } catch {
+            print("MCPOrchestrator.refreshTools error: \(LocalPathPrivacy.redact(error.localizedDescription))")
+        }
+    }
+
+    private func waitForStartup() async {
+        await withCheckedContinuation { continuation in
+            startupWaitQueue.async {
+                self.startupGroup.wait()
+                continuation.resume()
+            }
+        }
     }
 }

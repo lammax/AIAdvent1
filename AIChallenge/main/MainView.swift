@@ -14,6 +14,7 @@ struct MainView: View {
     private enum ImportTarget {
         case documents
         case localModel
+        case projectFolder
     }
     
     @StateObject private var viewModel = MainViewModel()
@@ -56,6 +57,8 @@ struct MainView: View {
             return ragImportTypes
         case .localModel:
             return localModelImportTypes
+        case .projectFolder:
+            return [.folder]
         case nil:
             return [.data]
         }
@@ -65,7 +68,7 @@ struct MainView: View {
         switch activeImporter {
         case .documents:
             return true
-        case .localModel, .none:
+        case .localModel, .projectFolder, .none:
             return false
         }
     }
@@ -225,6 +228,10 @@ struct MainView: View {
                 onSelectLocalModel: {
                     activeImporter = .localModel
                     isImporterPresented = true
+                },
+                onSelectProjectFolder: {
+                    activeImporter = .projectFolder
+                    isImporterPresented = true
                 }
             )
             
@@ -259,10 +266,17 @@ struct MainView: View {
                 Task {
                     await settingsVM.importLocalModel(from: url)
                 }
+            case (.projectFolder, .success(let urls)):
+                guard let url = urls.first else { return }
+                Task {
+                    await settingsVM.importProjectFolder(from: url)
+                }
             case (.documents, .failure(let error)):
                 viewModel.ragStatus = "Document selection failed: \(error.localizedDescription)"
             case (.localModel, .failure(let error)):
                 settingsVM.localModelStatus = "Local model selection failed: \(error.localizedDescription)"
+            case (.projectFolder, .failure(let error)):
+                settingsVM.fileOperationsProjectRootStatus = "Project folder selection failed: \(error.localizedDescription)"
             case (.none, _):
                 break
             }
